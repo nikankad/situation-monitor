@@ -92,12 +92,12 @@ function transformGdeltArticle(
 export async function fetchCategoryNews(category: NewsCategory): Promise<NewsItem[]> {
 	// Build query from category keywords (GDELT requires OR queries in parentheses)
 	const categoryQueries: Record<NewsCategory, string> = {
-		politics: '(politics OR government OR election OR congress)',
-		tech: '(technology OR software OR startup OR "silicon valley")',
-		finance: '(finance OR "stock market" OR economy OR banking)',
-		gov: '("federal government" OR "white house" OR congress OR regulation)',
-		ai: '("artificial intelligence" OR "machine learning" OR AI OR ChatGPT)',
-		intel: '(intelligence OR security OR military OR defense)'
+		politics: '(diplomacy OR "foreign policy" OR "international relations" OR summit OR treaty OR sanctions OR "bilateral talks")',
+		tech: '(technology OR cybersecurity OR "cyber attack" OR infrastructure OR "critical systems")',
+		finance: '(sanctions OR "trade war" OR tariff OR "economic policy" OR "central bank" OR "currency crisis")',
+		gov: '(government OR "state department" OR pentagon OR "defense ministry" OR NATO OR "united nations")',
+		ai: '("artificial intelligence" OR "machine learning" OR AI OR "autonomous weapons")',
+		intel: '(military OR "armed forces" OR conflict OR war OR "intelligence agency" OR espionage OR "security threat" OR geopolitics)'
 	};
 
 	try {

@@ -35,14 +35,14 @@ export type PanelId =
 	| 'fed';
 
 export const PANELS: Record<PanelId, PanelConfig> = {
-	map: { name: 'Global Map', priority: 1 },
-	politics: { name: 'World / Geopolitical', priority: 1 },
-	tech: { name: 'Technology / AI', priority: 1 },
-	finance: { name: 'Financial', priority: 1 },
-	gov: { name: 'Government / Policy', priority: 2 },
+	map: { name: 'Global Situation', priority: 1 },
+	politics: { name: 'Politics', priority: 1 },
+	tech: { name: 'Tech', priority: 1 },
+	finance: { name: 'Finance', priority: 1 },
+	gov: { name: 'Government', priority: 2 },
 	heatmap: { name: 'Sector Heatmap', priority: 1 },
 	markets: { name: 'Markets', priority: 1 },
-	monitors: { name: 'My Monitors', priority: 1 },
+	monitors: { name: 'Custom Monitors', priority: 1 },
 	commodities: { name: 'Commodities / VIX', priority: 2 },
 	crypto: { name: 'Crypto', priority: 2 },
 	polymarket: { name: 'Polymarket', priority: 2 },
@@ -50,15 +50,15 @@ export const PANELS: Record<PanelId, PanelConfig> = {
 	mainchar: { name: 'Main Character', priority: 2 },
 	printer: { name: 'Money Printer', priority: 2 },
 	contracts: { name: 'Gov Contracts', priority: 3 },
-	ai: { name: 'AI Arms Race', priority: 3 },
+	ai: { name: 'AI', priority: 3 },
 	layoffs: { name: 'Layoffs Tracker', priority: 3 },
-	venezuela: { name: 'Venezuela Situation', priority: 2 },
-	greenland: { name: 'Greenland Situation', priority: 2 },
-	iran: { name: 'Iran Situation', priority: 2 },
+	venezuela: { name: 'Venezuela Watch', priority: 2 },
+	greenland: { name: 'Greenland Watch', priority: 2 },
+	iran: { name: 'Iran Crisis', priority: 2 },
 	leaders: { name: 'World Leaders', priority: 1 },
 	intel: { name: 'Intel Feed', priority: 2 },
-	correlation: { name: 'Correlation Engine', priority: 1 },
-	narrative: { name: 'Narrative Tracker', priority: 1 },
+	correlation: { name: 'Pattern Analysis', priority: 1 },
+	narrative: { name: 'Global Sentiment', priority: 1 },
 	fed: { name: 'Federal Reserve', priority: 1 }
 };
 

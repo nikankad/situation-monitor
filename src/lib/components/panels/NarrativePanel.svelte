@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Panel, Badge } from '$lib/components/common';
-	import { analyzeNarratives } from '$lib/analysis/narrative';
+	import { analyzeSentiment, getSentimentColor, getSentimentEmoji, type SentimentType } from '$lib/analysis/sentiment';
 	import type { NewsItem } from '$lib/types';
 
 	interface Props {
@@ -11,132 +11,186 @@
 
 	let { news = [], loading = false, error = null }: Props = $props();
 
-	const analysis = $derived(analyzeNarratives(news));
+	const sentimentAnalysis = $derived(analyzeSentiment(news, 30));
 
-	function getStatusVariant(status: string): 'default' | 'warning' | 'danger' | 'success' | 'info' {
-		switch (status) {
-			case 'viral':
+	function getSentimentVariant(sentiment: SentimentType): 'default' | 'warning' | 'danger' | 'success' | 'info' {
+		switch (sentiment) {
+			case 'alarming':
 				return 'danger';
-			case 'spreading':
+			case 'critical':
 				return 'warning';
-			case 'emerging':
-				return 'info';
-			case 'crossing':
+			case 'negative':
 				return 'warning';
+			case 'positive':
+				return 'success';
 			default:
 				return 'default';
 		}
 	}
 
-	function getSeverityVariant(
-		severity: string
-	): 'default' | 'warning' | 'danger' | 'success' | 'info' {
-		switch (severity) {
-			case 'high':
-				return 'danger';
-			case 'medium':
-				return 'warning';
-			default:
-				return 'default';
+	function formatScore(score: number): string {
+		if (score > 0) return `+${(score * 100).toFixed(0)}`;
+		return (score * 100).toFixed(0);
+	}
+
+	function getOverallLabel(sentiment: SentimentType): string {
+		switch (sentiment) {
+			case 'alarming': return 'HIGH TENSION';
+			case 'critical': return 'ELEVATED';
+			case 'negative': return 'CONCERNING';
+			case 'positive': return 'STABLE';
+			case 'neutral': return 'NEUTRAL';
 		}
 	}
 </script>
 
-<Panel id="narrative" title="Narrative Tracker" {loading} {error}>
+<Panel id="narrative" title="Global Sentiment" {loading} {error}>
 	{#if news.length === 0 && !loading && !error}
-		<div class="empty-state">Insufficient data for narrative analysis</div>
-	{:else if analysis}
-		<div class="narrative-content">
-			{#if analysis.emergingFringe.length > 0}
-				<div class="section">
-					<div class="section-title">Emerging Fringe</div>
-					{#each analysis.emergingFringe.slice(0, 4) as narrative}
-						<div class="narrative-item">
-							<div class="narrative-header">
-								<span class="narrative-name">{narrative.name}</span>
-								<Badge
-									text={narrative.status.toUpperCase()}
-									variant={getStatusVariant(narrative.status)}
-								/>
-							</div>
-							<div class="narrative-meta">
-								<span class="mention-count">{narrative.count} mentions</span>
-							</div>
-							{#if narrative.sources.length > 0}
-								<div class="narrative-sources">
-									{narrative.sources.slice(0, 3).join(' · ')}
-								</div>
-							{/if}
-						</div>
-					{/each}
+		<div class="empty-state">Insufficient data for sentiment analysis</div>
+	{:else if sentimentAnalysis}
+		<div class="sentiment-content">
+			<!-- Overall Sentiment Gauge -->
+			<div class="overall-sentiment">
+				<div class="sentiment-gauge" style="border-color: {getSentimentColor(sentimentAnalysis.overall)}">
+					<span class="gauge-emoji">{getSentimentEmoji(sentimentAnalysis.overall)}</span>
+					<span class="gauge-label">{getOverallLabel(sentimentAnalysis.overall)}</span>
+					<span class="gauge-score" style="color: {getSentimentColor(sentimentAnalysis.overall)}">
+						{formatScore(sentimentAnalysis.overallScore)}
+					</span>
 				</div>
-			{/if}
+			</div>
 
-			{#if analysis.fringeToMainstream.length > 0}
-				<div class="section">
-					<div class="section-title">Fringe → Mainstream Crossovers</div>
-					{#each analysis.fringeToMainstream.slice(0, 3) as crossover}
-						<div class="crossover-item">
-							<div class="crossover-narrative">{crossover.name}</div>
-							<div class="crossover-path">
-								<span class="from">Fringe ({crossover.fringeCount})</span>
-								<span class="arrow">→</span>
-								<span class="to">Mainstream ({crossover.mainstreamCount})</span>
-							</div>
-							<div class="crossover-level">
-								Crossover level: {Math.round(crossover.crossoverLevel * 100)}%
-							</div>
-						</div>
-					{/each}
+			<!-- Sentiment Distribution -->
+			<div class="section">
+				<div class="section-title">Sentiment Distribution</div>
+				<div class="distribution-bar">
+					{#if sentimentAnalysis.distribution.alarming > 0}
+						<div 
+							class="dist-segment alarming" 
+							style="flex: {sentimentAnalysis.distribution.alarming}"
+							title="Alarming: {sentimentAnalysis.distribution.alarming}"
+						></div>
+					{/if}
+					{#if sentimentAnalysis.distribution.critical > 0}
+						<div 
+							class="dist-segment critical" 
+							style="flex: {sentimentAnalysis.distribution.critical}"
+							title="Critical: {sentimentAnalysis.distribution.critical}"
+						></div>
+					{/if}
+					{#if sentimentAnalysis.distribution.negative > 0}
+						<div 
+							class="dist-segment negative" 
+							style="flex: {sentimentAnalysis.distribution.negative}"
+							title="Negative: {sentimentAnalysis.distribution.negative}"
+						></div>
+					{/if}
+					{#if sentimentAnalysis.distribution.neutral > 0}
+						<div 
+							class="dist-segment neutral" 
+							style="flex: {sentimentAnalysis.distribution.neutral}"
+							title="Neutral: {sentimentAnalysis.distribution.neutral}"
+						></div>
+					{/if}
+					{#if sentimentAnalysis.distribution.positive > 0}
+						<div 
+							class="dist-segment positive" 
+							style="flex: {sentimentAnalysis.distribution.positive}"
+							title="Positive: {sentimentAnalysis.distribution.positive}"
+						></div>
+					{/if}
 				</div>
-			{/if}
+				<div class="distribution-legend">
+					<span class="legend-item"><span class="dot alarming"></span> Alarming ({sentimentAnalysis.distribution.alarming})</span>
+					<span class="legend-item"><span class="dot critical"></span> Critical ({sentimentAnalysis.distribution.critical})</span>
+					<span class="legend-item"><span class="dot negative"></span> Negative ({sentimentAnalysis.distribution.negative})</span>
+					<span class="legend-item"><span class="dot neutral"></span> Neutral ({sentimentAnalysis.distribution.neutral})</span>
+					<span class="legend-item"><span class="dot positive"></span> Positive ({sentimentAnalysis.distribution.positive})</span>
+				</div>
+			</div>
 
-			{#if analysis.narrativeWatch.length > 0}
+			<!-- Top Themes -->
+			{#if sentimentAnalysis.themes.length > 0}
 				<div class="section">
-					<div class="section-title">Narrative Watch</div>
+					<div class="section-title">Active Geopolitical Themes</div>
 					<div class="themes-grid">
-						{#each analysis.narrativeWatch.slice(0, 6) as narrative}
-							<div class="theme-tag">
-								{narrative.name}
-								<span class="theme-count">{narrative.count}</span>
+						{#each sentimentAnalysis.themes as theme}
+							<div class="theme-tag" style="border-left: 3px solid {getSentimentColor(theme.sentiment)}">
+								<span class="theme-emoji">{getSentimentEmoji(theme.sentiment)}</span>
+								<span class="theme-name">{theme.theme}</span>
+								<span class="theme-count">{theme.count}</span>
 							</div>
 						{/each}
 					</div>
 				</div>
 			{/if}
 
-			{#if analysis.disinfoSignals.length > 0}
-				<div class="section">
-					<div class="section-title">Disinfo Signals</div>
-					{#each analysis.disinfoSignals.slice(0, 3) as signal}
-						<div class="disinfo-item">
-							<div class="disinfo-header">
-								<span class="disinfo-name">{signal.name}</span>
-								<Badge
-									text={signal.severity.toUpperCase()}
-									variant={getSeverityVariant(signal.severity)}
-								/>
-							</div>
-							<div class="disinfo-meta">{signal.count} mentions</div>
+			<!-- Top Headlines with Sentiment -->
+			<div class="section">
+				<div class="section-title">Top Headlines Analysis</div>
+				<div class="headlines-list">
+					{#each sentimentAnalysis.topHeadlines.slice(0, 15) as item}
+						<div class="headline-item">
+							<span class="headline-sentiment">{getSentimentEmoji(item.sentiment)}</span>
+							<a href={item.headline.link} target="_blank" rel="noopener" class="headline-text">
+								{item.headline.title?.slice(0, 80)}{item.headline.title && item.headline.title.length > 80 ? '...' : ''}
+							</a>
+							{#if item.keywords.length > 0}
+								<div class="headline-keywords">
+									{item.keywords.slice(0, 3).join(', ')}
+								</div>
+							{/if}
 						</div>
 					{/each}
 				</div>
-			{/if}
-
-			{#if analysis.emergingFringe.length === 0 && analysis.fringeToMainstream.length === 0}
-				<div class="empty-state">No significant narratives detected</div>
-			{/if}
+			</div>
 		</div>
 	{:else}
-		<div class="empty-state">No significant narratives detected</div>
+		<div class="empty-state">No headlines available for analysis</div>
 	{/if}
 </Panel>
 
 <style>
-	.narrative-content {
+	.sentiment-content {
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
+	}
+
+	.overall-sentiment {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem 0;
+	}
+
+	.sentiment-gauge {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 0.75rem 1.5rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 2px solid;
+		border-radius: 8px;
+		min-width: 120px;
+	}
+
+	.gauge-emoji {
+		font-size: 1.5rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.gauge-label {
+		font-size: 0.65rem;
+		font-weight: 600;
+		color: var(--text-primary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.gauge-score {
+		font-size: 0.75rem;
+		font-weight: 700;
+		margin-top: 0.15rem;
 	}
 
 	.section {
@@ -158,82 +212,50 @@
 		margin-bottom: 0.4rem;
 	}
 
-	.narrative-item {
-		padding: 0.4rem 0;
-		border-bottom: 1px solid var(--border);
-	}
-
-	.narrative-item:last-child {
-		border-bottom: none;
-	}
-
-	.narrative-header {
+	.distribution-bar {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 0.2rem;
+		height: 12px;
+		border-radius: 6px;
+		overflow: hidden;
+		background: rgba(255, 255, 255, 0.1);
+		margin-bottom: 0.4rem;
 	}
 
-	.narrative-name {
-		font-size: 0.65rem;
-		font-weight: 500;
-		color: var(--text-primary);
+	.dist-segment {
+		transition: flex 0.3s ease;
 	}
 
-	.narrative-meta {
+	.dist-segment.alarming { background: #ff4444; }
+	.dist-segment.critical { background: #ff8800; }
+	.dist-segment.negative { background: #ffaa44; }
+	.dist-segment.neutral { background: #888888; }
+	.dist-segment.positive { background: #44cc66; }
+
+	.distribution-legend {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.5rem;
-		align-items: center;
-		margin-bottom: 0.15rem;
-	}
-
-	.mention-count {
-		font-size: 0.55rem;
-		color: var(--text-secondary);
-	}
-
-	.narrative-sources {
 		font-size: 0.5rem;
 		color: var(--text-muted);
 	}
 
-	.crossover-item {
-		padding: 0.35rem 0;
-		border-left: 2px solid var(--warning);
-		padding-left: 0.5rem;
-		margin: 0.25rem 0;
-	}
-
-	.crossover-narrative {
-		font-size: 0.6rem;
-		font-weight: 500;
-		color: var(--text-primary);
-	}
-
-	.crossover-path {
+	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
-		font-size: 0.55rem;
-		margin: 0.15rem 0;
+		gap: 0.2rem;
 	}
 
-	.crossover-path .from {
-		color: var(--text-secondary);
+	.dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
 	}
 
-	.crossover-path .arrow {
-		color: var(--warning);
-	}
-
-	.crossover-path .to {
-		color: var(--success);
-	}
-
-	.crossover-level {
-		font-size: 0.5rem;
-		color: var(--text-muted);
-	}
+	.dot.alarming { background: #ff4444; }
+	.dot.critical { background: #ff8800; }
+	.dot.negative { background: #ffaa44; }
+	.dot.neutral { background: #888888; }
+	.dot.positive { background: #44cc66; }
 
 	.themes-grid {
 		display: flex;
@@ -244,41 +266,73 @@
 	.theme-tag {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.25rem;
-		padding: 0.2rem 0.4rem;
+		gap: 0.3rem;
+		padding: 0.25rem 0.5rem;
 		background: rgba(255, 255, 255, 0.05);
 		border-radius: 4px;
 		font-size: 0.55rem;
-		color: var(--text-secondary);
+	}
+
+	.theme-emoji {
+		font-size: 0.6rem;
+	}
+
+	.theme-name {
+		color: var(--text-primary);
+		font-weight: 500;
 	}
 
 	.theme-count {
 		font-size: 0.5rem;
 		color: var(--text-muted);
 		background: rgba(255, 255, 255, 0.1);
-		padding: 0.1rem 0.2rem;
+		padding: 0.1rem 0.25rem;
 		border-radius: 2px;
 	}
 
-	.disinfo-item {
-		padding: 0.3rem 0;
-	}
-
-	.disinfo-header {
+	.headlines-list {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
+		flex-direction: column;
+		gap: 0.4rem;
 	}
 
-	.disinfo-name {
+	.headline-item {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: 0.3rem;
+		padding: 0.3rem 0;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.headline-item:last-child {
+		border-bottom: none;
+	}
+
+	.headline-sentiment {
+		font-size: 0.6rem;
+		flex-shrink: 0;
+	}
+
+	.headline-text {
 		font-size: 0.6rem;
 		color: var(--text-primary);
+		text-decoration: none;
+		line-height: 1.3;
+		flex: 1;
 	}
 
-	.disinfo-meta {
+	.headline-text:hover {
+		color: var(--accent);
+		text-decoration: underline;
+	}
+
+	.headline-keywords {
+		width: 100%;
 		font-size: 0.5rem;
 		color: var(--text-muted);
-		margin-top: 0.1rem;
+		padding-left: 1.1rem;
+		font-style: italic;
 	}
 
 	.empty-state {

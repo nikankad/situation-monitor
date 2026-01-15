@@ -17,15 +17,17 @@
 	import { CACHE_TTLS } from '$lib/config/api';
 	import type { CustomMonitor } from '$lib/types';
 	import { selectedCountry, type SelectedCountry } from '$lib/stores';
-	import { getCountryName } from '$lib/config/countries';
+	import { getCountryName, COUNTRY_ID_TO_NAME } from '$lib/config/countries';
 
 	// Reactive state to track selected country store
 	let selectedCountryState = $state<SelectedCountry>({ name: null });
 
-	// Subscribe to store changes
+	// Subscribe to store changes and apply highlighting
 	$effect(() => {
 		const unsubscribe = selectedCountry.subscribe((value) => {
 			selectedCountryState = value;
+			// Apply highlight when selection changes (e.g., from clear button or external selection)
+			applyCountryHighlight(value.name);
 		});
 		return unsubscribe;
 	});
@@ -39,6 +41,10 @@
 	let { monitors = [], loading = false, error = null }: Props = $props();
 
 	let mapContainer: HTMLDivElement;
+	// Search state
+	let searchQuery = $state('');
+	let searchResults = $state<string[]>([]);
+	let showSearchResults = $state(false);
 	// D3 objects - initialized in initMap, null before initialization
 	// Using 'any' for D3 objects as they're dynamically imported and have complex generic types
 	/* eslint-disable @typescript-eslint/no-explicit-any */
@@ -199,28 +205,49 @@
 	// Apply country highlight styling
 	function applyCountryHighlight(selectedName: string | null): void {
 		if (!mapGroup) return;
+		
+		// Remove any existing highlight overlay
+		mapGroup.selectAll('.country-highlight-overlay').remove();
+		
 		mapGroup
 			.selectAll('path.country')
 			.attr('fill', (feature: GeoJSON.Feature) => {
 				const name = getCountryName(+(feature.id || 0));
 				if (selectedName && name === selectedName) {
-					return '#00cc66'; // Bright green for selected country
+					return '#22ff99'; // Very bright green for selected country
 				}
 				return SANCTIONED_COUNTRY_IDS.includes(+(feature.id || 0)) ? '#2a1a1a' : '#0f3028';
 			})
 			.attr('stroke', (feature: GeoJSON.Feature) => {
 				const name = getCountryName(+(feature.id || 0));
 				if (selectedName && name === selectedName) {
-					return '#00ff88'; // Bright stroke for selected country
+					return '#ffffff'; // White stroke for maximum contrast
 				}
 				return SANCTIONED_COUNTRY_IDS.includes(+(feature.id || 0)) ? '#4a2020' : '#1a5040';
 			})
 			.attr('stroke-width', (feature: GeoJSON.Feature) => {
 				const name = getCountryName(+(feature.id || 0));
 				if (selectedName && name === selectedName) {
-					return 2; // Thicker stroke for selected country
+					return 3; // Much thicker stroke for visibility
 				}
 				return 0.5;
+			})
+			.classed('country-selected', (feature: GeoJSON.Feature) => {
+				const name = getCountryName(+(feature.id || 0));
+				return selectedName !== null && name === selectedName;
+			})
+			.each(function (this: SVGPathElement, feature: GeoJSON.Feature) {
+				const name = getCountryName(+(feature.id || 0));
+				if (selectedName && name === selectedName && path) {
+					// Add striped pattern overlay on top of selected country
+					mapGroup
+						.append('path')
+						.attr('class', 'country-highlight-overlay')
+						.attr('d', path(feature))
+						.attr('fill', 'url(#selected-pattern)')
+						.attr('stroke', 'none')
+						.attr('pointer-events', 'none');
+				}
 			});
 	}
 
@@ -262,6 +289,22 @@
 
 		svg = d3.select(svgEl);
 		svg.attr('viewBox', `0 0 ${WIDTH} ${HEIGHT}`);
+
+		// Add pattern definition for selected country highlight
+		const defs = svg.append('defs');
+		defs.append('pattern')
+			.attr('id', 'selected-pattern')
+			.attr('patternUnits', 'userSpaceOnUse')
+			.attr('width', 6)
+			.attr('height', 6)
+			.attr('patternTransform', 'rotate(45)')
+			.append('line')
+			.attr('x1', 0)
+			.attr('y1', 0)
+			.attr('x2', 0)
+			.attr('y2', 6)
+			.attr('stroke', 'rgba(255, 255, 255, 0.3)')
+			.attr('stroke-width', 2);
 
 		mapGroup = svg.append('g').attr('id', 'mapGroup');
 
@@ -654,6 +697,30 @@
 		svg.transition().duration(300).call(zoom.transform, d3Module.zoomIdentity);
 	}
 
+	function handleSearchInput(query: string): void {
+		searchQuery = query;
+		if (query.trim().length === 0) {
+			searchResults = [];
+			showSearchResults = false;
+			return;
+		}
+
+		// Get all country names from the config and filter by search query
+		const allCountries = Object.values(COUNTRY_ID_TO_NAME);
+		const filtered = allCountries.filter((name) =>
+			name.toLowerCase().includes(query.toLowerCase())
+		);
+		searchResults = filtered.slice(0, 10); // Limit to 10 results
+		showSearchResults = filtered.length > 0;
+	}
+
+	function selectCountryFromSearch(countryName: string): void {
+		selectedCountry.select(countryName);
+		searchQuery = '';
+		searchResults = [];
+		showSearchResults = false;
+	}
+
 	// Reactively update monitors when they change
 	$effect(() => {
 		// Track monitors changes
@@ -689,6 +756,28 @@
 				{/each}
 			</div>
 		{/if}
+		<div class="search-container">
+			<input
+				type="text"
+				class="country-search"
+				placeholder="Search countries..."
+				value={searchQuery}
+				oninput={(e) => handleSearchInput(e.currentTarget.value)}
+				onfocus={() => searchResults.length > 0 && (showSearchResults = true)}
+			/>
+			{#if showSearchResults && searchResults.length > 0}
+				<div class="search-results">
+					{#each searchResults as country}
+						<button
+							class="search-result-item"
+							onclick={() => selectCountryFromSearch(country)}
+						>
+							{country}
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
 		<div class="zoom-controls">
 			<button class="zoom-btn" onclick={zoomIn} title="Zoom in">+</button>
 			<button class="zoom-btn" onclick={zoomOut} title="Zoom out">−</button>
@@ -724,6 +813,70 @@
 	.map-svg {
 		width: 100%;
 		height: 100%;
+	}
+
+	.search-container {
+		position: absolute;
+		top: 0.5rem;
+		left: 0.5rem;
+		z-index: 50;
+		display: flex;
+		flex-direction: column;
+		width: 200px;
+	}
+
+	.country-search {
+		padding: 0.5rem;
+		background: rgba(20, 20, 20, 0.95);
+		border: 1px solid #444;
+		border-radius: 4px;
+		color: #ddd;
+		font-size: 0.75rem;
+		outline: none;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.country-search:focus {
+		border-color: #00cc66;
+		background: rgba(20, 20, 20, 0.98);
+	}
+
+	.search-results {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		background: rgba(10, 10, 10, 0.98);
+		border: 1px solid #333;
+		border-top: none;
+		border-radius: 0 0 4px 4px;
+		max-height: 200px;
+		overflow-y: auto;
+		z-index: 51;
+	}
+
+	.search-result-item {
+		display: block;
+		width: 100%;
+		padding: 0.5rem;
+		background: none;
+		border: none;
+		border-bottom: 1px solid #222;
+		color: #aaa;
+		font-size: 0.75rem;
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.search-result-item:last-child {
+		border-bottom: none;
+	}
+
+	.search-result-item:hover {
+		background: rgba(0, 204, 102, 0.2);
+		color: #00cc66;
 	}
 
 	.map-tooltip {
@@ -838,6 +991,11 @@
 
 	:global(.hotspot-hit) {
 		cursor: pointer;
+	}
+
+	/* Selected country highlight with glow effect */
+	:global(.country-selected) {
+		filter: drop-shadow(0 0 6px rgba(34, 255, 153, 0.6));
 	}
 
 	/* Hide zoom controls on mobile where touch zoom is available */

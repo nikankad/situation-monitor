@@ -8,6 +8,16 @@
 	let { children }: Props = $props();
 </script>
 
-<div class="min-h-screen bg-bg text-text-primary">
+<div class="layout-wrapper">
 	{@render children()}
 </div>
+
+<style>
+	.layout-wrapper {
+		min-height: 100vh;
+		width: 100%;
+		max-width: 100%;
+		background: var(--bg);
+		color: var(--text);
+	}
+</style>

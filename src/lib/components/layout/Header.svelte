@@ -60,27 +60,33 @@
 			</button>
 		</div>
 	</header>
+</div>
 
-	<div class="time-zones">
-		<div class="time-zones-list">
-			{#each timeZones as tz}
-				<div class="time-zone">
-					<span class="tz-label">{tz.label}</span>
-					<span class="tz-time">{formatTimeForZone(tz.zone)}</span>
-				</div>
-			{/each}
-		</div>
-		<div class="refresh-status-subtle">
-			{#if $isRefreshing}
-				<span class="refresh-indicator">●</span>
-			{/if}
-			<span class="status-text-subtle">{lastRefreshText}</span>
-		</div>
+<div class="time-zones">
+	<div class="time-zones-list">
+		{#each timeZones as tz}
+			<div class="time-zone">
+				<span class="tz-label">{tz.label}</span>
+				<span class="tz-time">{formatTimeForZone(tz.zone)}</span>
+			</div>
+		{/each}
+	</div>
+	<div class="refresh-status-subtle">
+		{#if $isRefreshing}
+			<span class="refresh-indicator">●</span>
+		{/if}
+		<span class="status-text-subtle">{lastRefreshText}</span>
 	</div>
 </div>
 
 <style>
 	.header-wrapper {
+		z-index: 100;
+		background: var(--surface);
+		border-bottom: 1px solid var(--border);
+	}
+
+	.time-zones {
 		position: sticky;
 		top: 0;
 		z-index: 100;
