@@ -283,7 +283,7 @@
 			{#each orderedPanels as panelId (panelId)}
 				<div class="panel-slot">
 					{#if panelId === 'politics'}
-						<NewsPanel category="politics" panelId="politics" title="Politics" />
+						<NewsPanel category="politics" panelId="politics" title="Politics" showCountryNews={true} />
 					{:else if panelId === 'tech'}
 						<NewsPanel category="tech" panelId="tech" title="Tech" />
 					{:else if panelId === 'finance'}

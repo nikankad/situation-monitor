@@ -9,9 +9,10 @@
 		category: NewsCategory;
 		panelId: PanelId;
 		title: string;
+		showCountryNews?: boolean; // Only one panel should show country news
 	}
 
-	let { category, panelId, title }: Props = $props();
+	let { category, panelId, title, showCountryNews = false }: Props = $props();
 
 	let countryNewsItems = $state<import('$lib/types').NewsItem[]>([]);
 	let countryNewsLoading = $state(false);
@@ -32,8 +33,9 @@
 	const categoryLoading = $derived($categoryStore.loading);
 	const categoryError = $derived($categoryStore.error);
 
-	// Load country news when country is selected
+	// Load country news when country is selected (only if this panel shows country news)
 	$effect(() => {
+		if (!showCountryNews) return;
 		const selectedCountryName = $selectedCountry.name;
 		if (selectedCountryName) {
 			loadCountryNews(selectedCountryName);
@@ -56,20 +58,21 @@
 		}
 	}
 
-	// Use country news if a country is selected, otherwise use category news
-	const rawItems = $derived($selectedCountry.name ? countryNewsItems : categoryItems);
+	// Use country news if a country is selected AND this panel shows country news, otherwise use category news
+	const shouldShowCountryNews = $derived(showCountryNews && $selectedCountry.name);
+	const rawItems = $derived(shouldShowCountryNews ? countryNewsItems : categoryItems);
 	// Sort by timestamp (most recent first)
 	const items = $derived([...rawItems].sort((a, b) => b.timestamp - a.timestamp));
-	const loading = $derived($selectedCountry.name ? countryNewsLoading : categoryLoading);
-	const error = $derived($selectedCountry.name ? countryNewsError : categoryError);
+	const loading = $derived(shouldShowCountryNews ? countryNewsLoading : categoryLoading);
+	const error = $derived(shouldShowCountryNews ? countryNewsError : categoryError);
 	const count = $derived(items.length);
-	const displayTitle = $derived($selectedCountry.name ? `News: ${$selectedCountry.name}` : title);
+	const displayTitle = $derived(shouldShowCountryNews ? `News: ${$selectedCountry.name}` : title);
 
 </script>
 
 <Panel id={panelId} title={displayTitle} {count} {loading} {error}>
 	{#if items.length === 0 && !loading && !error}
-		<div class="empty-state">{$selectedCountry.name ? `No news available for ${$selectedCountry.name}` : 'No news available'}</div>
+		<div class="empty-state">{shouldShowCountryNews ? `No news available for ${$selectedCountry.name}` : 'No news available'}</div>
 	{:else}
 		<div class="news-list">
 			{#each items.slice(0, 15) as item (item.id)}
