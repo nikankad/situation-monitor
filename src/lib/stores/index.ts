@@ -47,11 +47,20 @@ export {
 	sectors,
 	commodities,
 	crypto,
+	custom,
 	isMarketsLoading,
 	marketsLastUpdated,
 	vix,
 	type MarketsState
 } from './markets';
+
+// Market settings store
+export {
+	marketSettings,
+	customMarkets,
+	type MarketDisplaySettings,
+	type CustomMarket
+} from './market-settings';
 
 // Refresh store
 export {

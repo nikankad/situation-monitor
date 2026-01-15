@@ -9,6 +9,7 @@ export {
 	fetchIndices,
 	fetchSectorPerformance,
 	fetchCommodities,
+	fetchCustomMarkets,
 	fetchAllMarkets
 } from './markets';
 export { fetchPolymarket, fetchWhaleTransactions, fetchGovContracts, fetchLayoffs } from './misc';

@@ -8,3 +8,4 @@ export { default as MonitorFormModal } from './MonitorFormModal.svelte';
 export { default as OnboardingModal } from './OnboardingModal.svelte';
 export { default as LeaderDetailModal } from './LeaderDetailModal.svelte';
 export { default as CountryDetailModal } from './CountryDetailModal.svelte';
+export { default as MarketsConfigModal } from './MarketsConfigModal.svelte';

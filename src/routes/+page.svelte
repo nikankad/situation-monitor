@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 	import { Header, Dashboard } from '$lib/components/layout';
 	import { SettingsModal, MonitorFormModal, OnboardingModal } from '$lib/components/modals';
 	import {
@@ -7,7 +8,6 @@
 		MarketsPanel,
 		HeatmapPanel,
 		CommoditiesPanel,
-		CryptoPanel,
 		MainCharPanel,
 		CorrelationPanel,
 		NarrativePanel,
@@ -31,11 +31,14 @@
 		refresh,
 		allNewsItems,
 		fedIndicators,
-		fedNews
+		fedNews,
+		customMarkets,
+		marketSettings
 	} from '$lib/stores';
 	import {
 		fetchAllNews,
 		fetchAllMarkets,
+		fetchCustomMarkets,
 		fetchPolymarket,
 		fetchWhaleTransactions,
 		fetchGovContracts,
@@ -90,8 +93,31 @@
 			markets.setSectors(data.sectors);
 			markets.setCommodities(data.commodities);
 			markets.setCrypto(data.crypto);
+
+			// Also fetch custom markets if any are configured
+			await loadCustomMarkets();
 		} catch (error) {
 			console.error('Failed to load markets:', error);
+		}
+	}
+
+	async function loadCustomMarkets() {
+		try {
+			// Get custom market symbols from the store
+			const customMarketsMap = get(customMarkets);
+			const customSymbols = Array.from(customMarketsMap.entries()).map(([symbol, name]) => ({
+				symbol,
+				name
+			}));
+
+			if (customSymbols.length > 0) {
+				const customData = await fetchCustomMarkets(customSymbols);
+				markets.setCustom(customData);
+			} else {
+				markets.setCustom([]);
+			}
+		} catch (error) {
+			console.error('Failed to load custom markets:', error);
 		}
 	}
 
@@ -173,6 +199,17 @@
 	function isPanelVisible(id: PanelId): boolean {
 		return $settings.enabled[id] !== false;
 	}
+
+	// Watch for custom market changes and reload when they change
+	let prevCustomMarketsSize = $state(0);
+	$effect(() => {
+		const currentSize = $customMarkets.size;
+		if (prevCustomMarketsSize !== 0 && currentSize !== prevCustomMarketsSize) {
+			// Custom markets have changed, reload them
+			loadCustomMarkets();
+		}
+		prevCustomMarketsSize = currentSize;
+	});
 
 	// Get ordered panel IDs (excluding map which is always first)
 	const orderedPanels = $derived($settings.order.filter(id => id !== 'map' && isPanelVisible(id)));
@@ -298,8 +335,6 @@
 						<HeatmapPanel />
 					{:else if panelId === 'commodities'}
 						<CommoditiesPanel />
-					{:else if panelId === 'crypto'}
-						<CryptoPanel />
 					{:else if panelId === 'mainchar'}
 						<MainCharPanel />
 					{:else if panelId === 'correlation'}

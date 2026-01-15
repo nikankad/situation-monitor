@@ -3,7 +3,6 @@ export { default as NewsPanel } from './NewsPanel.svelte';
 export { default as MarketsPanel } from './MarketsPanel.svelte';
 export { default as HeatmapPanel } from './HeatmapPanel.svelte';
 export { default as CommoditiesPanel } from './CommoditiesPanel.svelte';
-export { default as CryptoPanel } from './CryptoPanel.svelte';
 export { default as MainCharPanel } from './MainCharPanel.svelte';
 export { default as PrinterPanel } from './PrinterPanel.svelte';
 export { default as PolymarketPanel } from './PolymarketPanel.svelte';

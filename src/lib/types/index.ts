@@ -34,6 +34,14 @@ export interface FeedConfig {
 }
 
 /**
+ * Historical price point for charts
+ */
+export interface PricePoint {
+	timestamp: number;
+	price: number;
+}
+
+/**
  * Market data for stocks/crypto
  */
 export interface MarketItem {
@@ -43,6 +51,11 @@ export interface MarketItem {
 	change: number;
 	changePercent: number;
 	type?: 'stock' | 'crypto' | 'commodity' | 'index';
+	high?: number;
+	low?: number;
+	open?: number;
+	previousClose?: number;
+	history?: PricePoint[];
 }
 
 /**
@@ -54,6 +67,11 @@ export interface SectorPerformance {
 	price: number;
 	change: number;
 	changePercent: number;
+	high?: number;
+	low?: number;
+	open?: number;
+	previousClose?: number;
+	type?: 'sector';
 }
 
 /**

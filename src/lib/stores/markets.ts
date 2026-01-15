@@ -38,10 +38,18 @@ export interface MarketsState {
 		lastUpdated: number | null;
 	};
 
+	// Custom user-added markets
+	custom: {
+		items: MarketItem[];
+		loading: boolean;
+		error: string | null;
+		lastUpdated: number | null;
+	};
+
 	initialized: boolean;
 }
 
-type MarketCategory = 'indices' | 'sectors' | 'commodities' | 'crypto';
+type MarketCategory = 'indices' | 'sectors' | 'commodities' | 'crypto' | 'custom';
 
 // Create initial state
 function createInitialState(): MarketsState {
@@ -57,6 +65,7 @@ function createInitialState(): MarketsState {
 		sectors: { ...emptySection },
 		commodities: { ...emptySection },
 		crypto: { ...emptySection },
+		custom: { ...emptySection },
 		initialized: false
 	};
 }
@@ -155,6 +164,21 @@ function createMarketsStore() {
 			update((state) => ({
 				...state,
 				crypto: {
+					items,
+					loading: false,
+					error: null,
+					lastUpdated: Date.now()
+				}
+			}));
+		},
+
+		/**
+		 * Set custom market data
+		 */
+		setCustom(items: MarketItem[]) {
+			update((state) => ({
+				...state,
+				custom: {
 					items,
 					loading: false,
 					error: null,
@@ -268,6 +292,7 @@ export const indices = derived(markets, ($markets) => $markets.indices);
 export const sectors = derived(markets, ($markets) => $markets.sectors);
 export const commodities = derived(markets, ($markets) => $markets.commodities);
 export const crypto = derived(markets, ($markets) => $markets.crypto);
+export const custom = derived(markets, ($markets) => $markets.custom);
 
 // Market status derived stores
 export const isMarketsLoading = derived(
@@ -276,7 +301,8 @@ export const isMarketsLoading = derived(
 		$markets.indices.loading ||
 		$markets.sectors.loading ||
 		$markets.commodities.loading ||
-		$markets.crypto.loading
+		$markets.crypto.loading ||
+		$markets.custom.loading
 );
 
 export const marketsLastUpdated = derived(markets, ($markets) => {
@@ -284,7 +310,8 @@ export const marketsLastUpdated = derived(markets, ($markets) => {
 		$markets.indices.lastUpdated,
 		$markets.sectors.lastUpdated,
 		$markets.commodities.lastUpdated,
-		$markets.crypto.lastUpdated
+		$markets.crypto.lastUpdated,
+		$markets.custom.lastUpdated
 	].filter((t): t is number => t !== null);
 
 	return times.length > 0 ? Math.max(...times) : null;
