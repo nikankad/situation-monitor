@@ -93,6 +93,17 @@
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+		height: 100%;
+		min-height: 0;
+	}
+
+	/* Map panel should have auto height */
+	.panel[data-panel-id='map'] {
+		height: auto;
+	}
+
+	.panel[data-panel-id='map'] :global(.panel-content) {
+		overflow: visible;
 	}
 
 	.panel.draggable {
@@ -198,7 +209,9 @@
 	.panel-content {
 		flex: 1;
 		overflow-y: auto;
+		overflow-x: hidden;
 		padding: 0.5rem;
+		min-height: 0;
 	}
 
 	.panel-content.hidden {

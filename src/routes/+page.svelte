@@ -318,7 +318,7 @@
 			<!-- Map Panel - Full width (always first) -->
 			{#if isPanelVisible('map')}
 				<div class="panel-slot map-slot panel-animate" style="--delay: 0">
-					<MapPanel monitors={$monitors.monitors} />
+					<MapPanel monitors={$monitors.monitors} news={$allNewsItems} />
 				</div>
 			{/if}
 
@@ -673,8 +673,12 @@
 	}
 
 	.map-slot {
-		column-span: all;
 		margin-bottom: 0.5rem;
+		height: auto !important;
+	}
+
+	.panel-slot:not(.map-slot) {
+		height: 100%;
 	}
 
 	.panel-animate {

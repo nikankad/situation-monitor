@@ -23,44 +23,55 @@
 	}
 
 	.dashboard-grid {
-		column-count: 1;
-		column-gap: 0.5rem;
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-rows: auto;
+		grid-auto-rows: 450px;
+		gap: 0.5rem;
 		max-width: 2000px;
 		margin: 0 auto;
 	}
 
-	.dashboard-grid > :global(*) {
-		break-inside: avoid;
-		margin-bottom: 0.5rem;
+	/* Map slot spans full width, first row, auto height */
+	.dashboard-grid > :global(.map-slot) {
+		grid-column: 1 / -1;
+		grid-row: 1;
+		height: auto;
+	}
+
+	/* All panel slots get fixed height */
+	.dashboard-grid > :global(.panel-slot:not(.map-slot)) {
+		height: 450px;
+		min-height: 0;
 	}
 
 	@media (min-width: 600px) {
 		.dashboard-grid {
-			column-count: 2;
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 
 	@media (min-width: 900px) {
 		.dashboard-grid {
-			column-count: 3;
+			grid-template-columns: repeat(3, 1fr);
 		}
 	}
 
 	@media (min-width: 1200px) {
 		.dashboard-grid {
-			column-count: 4;
+			grid-template-columns: repeat(4, 1fr);
 		}
 	}
 
 	@media (min-width: 1600px) {
 		.dashboard-grid {
-			column-count: 5;
+			grid-template-columns: repeat(5, 1fr);
 		}
 	}
 
 	@media (min-width: 2000px) {
 		.dashboard-grid {
-			column-count: 6;
+			grid-template-columns: repeat(6, 1fr);
 		}
 	}
 </style>

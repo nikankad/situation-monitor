@@ -9,7 +9,7 @@
 
 	const lastRefreshText = $derived(
 		$lastRefresh
-			? `Last updated: ${new Date($lastRefresh).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (local)`
+			? `Last updated: ${new Date($lastRefresh).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })} (local)`
 			: 'Never refreshed'
 	);
 

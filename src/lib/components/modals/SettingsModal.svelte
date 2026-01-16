@@ -185,25 +185,29 @@
 			<h3 class="section-title">About</h3>
 			<div class="about-content">
 				<div class="about-logo">SITUATION MONITOR</div>
-				<p class="about-version">v1.0.0</p>
+				<p class="about-version">v2.0.0</p>
 				<p class="about-desc">
-					A real-time geopolitical intelligence dashboard that aggregates and analyzes global news, 
-					market data, and geopolitical events. Built for analysts, researchers, and anyone who 
-					needs to stay informed about world events.
+					A comprehensive real-time geopolitical intelligence platform that aggregates, analyzes, and visualizes 
+					global conflicts, developments, news, market data, and geopolitical events. Designed for analysts, 
+					researchers, traders, and anyone who needs to stay informed about world events as they unfold.
 				</p>
 				<div class="about-features">
 					<div class="feature-item">📰 Multi-source news aggregation</div>
 					<div class="feature-item">📊 Live market & commodity data</div>
-					<div class="feature-item">🗺️ Interactive global map</div>
-					<div class="feature-item">🎯 Sentiment analysis</div>
+					<div class="feature-item">🗺️ Interactive global map with conflicts</div>
+					<div class="feature-item">⚔️ Real-time conflict tracking</div>
+					<div class="feature-item">🎯 Sentiment & narrative analysis</div>
 					<div class="feature-item">🔔 Custom keyword monitors</div>
 					<div class="feature-item">🌐 World leader tracking</div>
+					<div class="feature-item">📈 Pattern correlation analysis</div>
+					<div class="feature-item">🏦 Federal Reserve monitoring</div>
 				</div>
 				<div class="about-sources">
 					<p class="sources-title">Data Sources</p>
 					<p class="sources-list">
 						GDELT Project, Reuters, AP, Foreign Affairs, CSIS, Brookings, CFR, 
-						War on the Rocks, Bellingcat, ISW, and more.
+						War on the Rocks, Bellingcat, ISW, Financial markets, Federal Reserve, 
+						and multiple verified intelligence sources.
 					</p>
 				</div>
 				<p class="about-disclaimer">
@@ -211,7 +215,7 @@
 					through official sources before making decisions.
 				</p>
 				<p class="about-ai-note">
-					🤖 Built with the assistance of AI
+					🤖 Built with the assistance of AI • Enhanced with real-time conflict monitoring
 				</p>
 			</div>
 		</section>
