@@ -38,7 +38,7 @@
 	}
 </script>
 
-<Panel id="leaders" title="World Leaders" {count} {loading} {error}>
+<Panel id="leaders" title="World Leaders" {loading} {error}>
 	{#if leaders.length === 0 && !loading && !error}
 		<div class="empty-state">No leaders data available</div>
 	{:else}

@@ -20,7 +20,7 @@
 	const count = $derived(layoffs.length);
 </script>
 
-<Panel id="layoffs" title="Layoffs Tracker" {count} {loading} {error}>
+<Panel id="layoffs" title="Layoffs Tracker" {loading} {error}>
 	{#if layoffs.length === 0 && !loading && !error}
 		<div class="empty-state">No recent layoffs data</div>
 	{:else}

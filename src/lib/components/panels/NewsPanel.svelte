@@ -70,7 +70,7 @@
 
 </script>
 
-<Panel id={panelId} title={displayTitle} {count} {loading} {error}>
+<Panel id={panelId} title={displayTitle} {loading} {error}>
 	{#if items.length === 0 && !loading && !error}
 		<div class="empty-state">{shouldShowCountryNews ? `No news available for ${$selectedCountry.name}` : 'No news available'}</div>
 	{:else}

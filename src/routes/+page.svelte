@@ -291,6 +291,12 @@
 {#if initialLoading}
 	<div class="loading-screen">
 		<div class="loading-content">
+			<div class="logo-container">
+				<div class="radar-circle"></div>
+				<div class="radar-circle radar-circle-2"></div>
+				<div class="radar-circle radar-circle-3"></div>
+				<div class="radar-sweep"></div>
+			</div>
 			<h1 class="loading-title">SITUATION MONITOR</h1>
 			<div class="loading-bar-container">
 				<div class="loading-bar" style="width: {loadingProgress}%"></div>
@@ -304,21 +310,21 @@
 		</div>
 	</div>
 {:else}
-	<div class="app">
+	<div class="app fade-in">
 		<Header onSettingsClick={() => (settingsOpen = true)} />
 
 	<main class="main-content">
 		<Dashboard>
 			<!-- Map Panel - Full width (always first) -->
 			{#if isPanelVisible('map')}
-				<div class="panel-slot map-slot">
+				<div class="panel-slot map-slot panel-animate" style="--delay: 0">
 					<MapPanel monitors={$monitors.monitors} />
 				</div>
 			{/if}
 
 			<!-- Dynamic panels based on order -->
-			{#each orderedPanels as panelId (panelId)}
-				<div class="panel-slot">
+			{#each orderedPanels as panelId, index (panelId)}
+				<div class="panel-slot panel-animate" style="--delay: {index + 1}">
 					{#if panelId === 'politics'}
 						<NewsPanel category="politics" panelId="politics" title="Politics" showCountryNews={true} />
 					{:else if panelId === 'tech'}
@@ -448,11 +454,108 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--bg);
+		animation: fadeIn 0.3s ease-out;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	.loading-content {
 		text-align: center;
 		padding: 2rem;
+		animation: slideUp 0.6s ease-out;
+	}
+
+	@keyframes slideUp {
+		from {
+			opacity: 0;
+			transform: translateY(30px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.logo-container {
+		position: relative;
+		width: 120px;
+		height: 120px;
+		margin: 0 auto 2rem;
+	}
+
+	.radar-circle {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		border: 2px solid var(--accent);
+		border-radius: 50%;
+		opacity: 0.3;
+	}
+
+	.radar-circle {
+		width: 60px;
+		height: 60px;
+		animation: radarPulse 2s ease-out infinite;
+	}
+
+	.radar-circle-2 {
+		width: 80px;
+		height: 80px;
+		animation-delay: 0.3s;
+	}
+
+	.radar-circle-3 {
+		width: 100px;
+		height: 100px;
+		animation-delay: 0.6s;
+	}
+
+	@keyframes radarPulse {
+		0% {
+			transform: translate(-50%, -50%) scale(0.5);
+			opacity: 0.8;
+		}
+		100% {
+			transform: translate(-50%, -50%) scale(1.5);
+			opacity: 0;
+		}
+	}
+
+	.radar-sweep {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 60px;
+		height: 60px;
+		border-radius: 50%;
+		background: conic-gradient(
+			from 0deg,
+			transparent 0deg,
+			transparent 270deg,
+			var(--accent) 270deg,
+			var(--accent) 360deg
+		);
+		transform: translate(-50%, -50%);
+		animation: radarSweep 2s linear infinite;
+		mask: radial-gradient(circle, transparent 45%, black 45%);
+		-webkit-mask: radial-gradient(circle, transparent 45%, black 45%);
+	}
+
+	@keyframes radarSweep {
+		from {
+			transform: translate(-50%, -50%) rotate(0deg);
+		}
+		to {
+			transform: translate(-50%, -50%) rotate(360deg);
+		}
 	}
 
 	.loading-title {
@@ -462,6 +565,16 @@
 		letter-spacing: 0.2em;
 		margin-bottom: 2rem;
 		text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+		animation: titleGlow 2s ease-in-out infinite;
+	}
+
+	@keyframes titleGlow {
+		0%, 100% {
+			text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+		}
+		50% {
+			text-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
+		}
 	}
 
 	.loading-bar-container {
@@ -478,12 +591,23 @@
 		background: linear-gradient(90deg, var(--accent), #00ffaa);
 		border-radius: 2px;
 		transition: width 0.3s ease;
+		box-shadow: 0 0 10px var(--accent);
 	}
 
 	.loading-status {
 		font-size: 0.75rem;
 		color: var(--text-secondary);
 		margin-bottom: 1rem;
+		animation: statusPulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes statusPulse {
+		0%, 100% {
+			opacity: 0.6;
+		}
+		50% {
+			opacity: 1;
+		}
 	}
 
 	.loading-dots {
@@ -498,6 +622,7 @@
 		background: var(--accent);
 		border-radius: 50%;
 		animation: pulse-dot 1.4s ease-in-out infinite;
+		box-shadow: 0 0 8px var(--accent);
 	}
 
 	.loading-dots .dot:nth-child(2) {
@@ -526,6 +651,21 @@
 		background: var(--bg);
 	}
 
+	.app.fade-in {
+		animation: appFadeIn 0.6s ease-out;
+	}
+
+	@keyframes appFadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
 	.main-content {
 		flex: 1;
 		padding: 0.5rem;
@@ -537,9 +677,27 @@
 		margin-bottom: 0.5rem;
 	}
 
+	.panel-animate {
+		animation: panelSlideIn 0.6s ease-out forwards;
+		animation-delay: calc(var(--delay) * 0.08s);
+		opacity: 0;
+		transform: translateY(20px) scale(0.95);
+	}
+
+	@keyframes panelSlideIn {
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
 	@media (max-width: 768px) {
 		.main-content {
 			padding: 0.25rem;
+		}
+		
+		.panel-animate {
+			animation-delay: calc(var(--delay) * 0.05s);
 		}
 	}
 </style>

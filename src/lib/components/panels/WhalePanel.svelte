@@ -29,7 +29,7 @@
 	}
 </script>
 
-<Panel id="whales" title="Whale Watch" {count} {loading} {error}>
+<Panel id="whales" title="Whale Watch" {loading} {error}>
 	{#if whales.length === 0 && !loading && !error}
 		<div class="empty-state">No whale transactions detected</div>
 	{:else}

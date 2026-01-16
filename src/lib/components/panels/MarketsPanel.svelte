@@ -98,7 +98,7 @@
 	const count = $derived(allOrderedItems().length);
 </script>
 
-<Panel id="markets" title="Markets" {count} {loading} {error}>
+<Panel id="markets" title="Markets" {loading} {error}>
 	{#snippet actions()}
 		<button
 			class="settings-btn"

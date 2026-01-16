@@ -63,7 +63,7 @@
 	}
 </script>
 
-<Panel id="intel" title="Intel Feed" {count} {loading} {error}>
+<Panel id="intel" title="Intel Feed" {loading} {error}>
 	{#if items.length === 0 && !loading && !error}
 		<div class="empty-state">No intel available</div>
 	{:else}
