@@ -210,8 +210,8 @@
 
 	.status-text-subtle {
 		font-size: 0.55rem;
-		color: var(--text-muted);
-		opacity: 0.6;
+		color: var(--text);
+		opacity: 1;
 	}
 
 	.tz-label {

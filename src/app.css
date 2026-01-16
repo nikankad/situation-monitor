@@ -21,6 +21,7 @@
 
 /* Base styles */
 html {
+	font-size: 110%;
 	font-family: 'SF Mono', Monaco, Inconsolata, 'Fira Code', monospace;
 	background-color: var(--bg);
 	color: var(--text);

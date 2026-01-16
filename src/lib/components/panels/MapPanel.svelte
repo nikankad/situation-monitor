@@ -893,7 +893,8 @@
 	}
 
 	.tooltip-line {
-		opacity: 0.7;
+		opacity: 1;
+		color: #fff;
 	}
 
 	.zoom-controls {
