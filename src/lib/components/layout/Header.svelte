@@ -26,12 +26,12 @@
 		{ label: 'JST', zone: 'Asia/Tokyo' }
 	];
 
-	// Update time every minute
+	// Update time every second
 	let currentTime = $state(new Date());
 	$effect(() => {
 		const interval = setInterval(() => {
 			currentTime = new Date();
-		}, 60000); // Update every minute
+		}, 1000); // Update every second
 		return () => clearInterval(interval);
 	});
 
@@ -43,12 +43,23 @@
 			hour12: false
 		});
 	}
+
+	// Local time for header display
+	const localTime = $derived(
+		currentTime.toLocaleTimeString('en-US', {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false
+		})
+	);
 </script>
 
 <div class="header-wrapper">
 	<header class="header">
 		<div class="header-left">
 			<h1 class="logo">SITUATION MONITOR</h1>
+			<span class="local-time">{localTime}</span>
 		</div>
 
 		<div class="header-center"></div>
@@ -106,6 +117,7 @@
 		display: flex;
 		align-items: baseline;
 		flex-shrink: 0;
+		gap: 0.75rem;
 	}
 
 	.logo {
@@ -117,6 +129,15 @@
 		display: flex;
 		align-items: baseline;
 		gap: 0.5rem;
+	}
+
+	.local-time {
+		font-size: 0.85rem;
+		font-weight: 400;
+		color: var(--green);
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+		letter-spacing: 0.05em;
+		opacity: 0.9;
 	}
 
 	.header-center {

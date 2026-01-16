@@ -59,8 +59,6 @@
 
 	// Initial loading state
 	let initialLoading = $state(true);
-	let loadingProgress = $state(0);
-	let loadingStatus = $state('Initializing...');
 
 	// Misc panel data
 	let predictions = $state<Prediction[]>([]);
@@ -240,32 +238,13 @@
 		async function initialLoad() {
 			refresh.startRefresh();
 			try {
-				loadingStatus = 'Monitoring the situation';
-				loadingProgress = 10;
-				await loadNews();
-				
-				loadingStatus = 'Loading market data...';
-				loadingProgress = 40;
-				await loadMarkets();
-				
-				loadingStatus = 'Loading additional data...';
-				loadingProgress = 60;
-				await loadMiscData();
-				
-				loadingStatus = 'Loading world leaders...';
-				loadingProgress = 80;
-				await loadWorldLeaders();
-				
-				loadingStatus = 'Loading Fed data...';
-				loadingProgress = 90;
-				await loadFedData();
-				
-				loadingStatus = 'Complete';
-				loadingProgress = 100;
-				
-				// Small delay to show completion
-				await new Promise(resolve => setTimeout(resolve, 300));
-				
+				await Promise.all([
+					loadNews(),
+					loadMarkets(),
+					loadMiscData(),
+					loadWorldLeaders(),
+					loadFedData()
+				]);
 				refresh.endRefresh();
 				initialLoading = false;
 			} catch (error) {
@@ -298,10 +277,6 @@
 				<div class="radar-sweep"></div>
 			</div>
 			<h1 class="loading-title">SITUATION MONITOR</h1>
-			<div class="loading-bar-container">
-				<div class="loading-bar" style="width: {loadingProgress}%"></div>
-			</div>
-			<p class="loading-status">{loadingStatus}</p>
 			<div class="loading-dots">
 				<span class="dot"></span>
 				<span class="dot"></span>
@@ -536,13 +511,7 @@
 		width: 60px;
 		height: 60px;
 		border-radius: 50%;
-		background: conic-gradient(
-			from 0deg,
-			transparent 0deg,
-			transparent 270deg,
-			var(--accent) 270deg,
-			var(--accent) 360deg
-		);
+		background: conic-gradient(from 0deg, var(--accent) 0deg 90deg, transparent 90deg 360deg);
 		transform: translate(-50%, -50%);
 		animation: radarSweep 2s linear infinite;
 		mask: radial-gradient(circle, transparent 45%, black 45%);
@@ -550,10 +519,10 @@
 	}
 
 	@keyframes radarSweep {
-		from {
+		0% {
 			transform: translate(-50%, -50%) rotate(0deg);
 		}
-		to {
+		100% {
 			transform: translate(-50%, -50%) rotate(360deg);
 		}
 	}
@@ -577,39 +546,7 @@
 		}
 	}
 
-	.loading-bar-container {
-		width: 300px;
-		height: 4px;
-		background: rgba(255, 255, 255, 0.1);
-		border-radius: 2px;
-		overflow: hidden;
-		margin: 0 auto 1rem;
-	}
-
-	.loading-bar {
-		height: 100%;
-		background: linear-gradient(90deg, var(--accent), #00ffaa);
-		border-radius: 2px;
-		transition: width 0.3s ease;
-		box-shadow: 0 0 10px var(--accent);
-	}
-
-	.loading-status {
-		font-size: 0.75rem;
-		color: var(--text-secondary);
-		margin-bottom: 1rem;
-		animation: statusPulse 1.5s ease-in-out infinite;
-	}
-
-	@keyframes statusPulse {
-		0%, 100% {
-			opacity: 0.6;
-		}
-		50% {
-			opacity: 1;
-		}
-	}
-
+	
 	.loading-dots {
 		display: flex;
 		justify-content: center;

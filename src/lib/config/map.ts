@@ -284,7 +284,17 @@ export const CONFLICT_ZONES: ConflictZone[] = [
 	}
 ];
 
+/**
+ * @deprecated Use fetchConflictEventsFromGDELT() from '$lib/api/gdelt-conflicts' instead.
+ * This hardcoded array is kept for backward compatibility but should not be used.
+ * All conflict data should come from live GDELT API calls.
+ * 
+ * The dashboard now uses real-time GDELT GEO 2.0 API data for conflict events,
+ * filtered using QuadClass 3 (verbal conflict) and 4 (material conflict) as per
+ * the GDELT Event schema and CAMEO codebook.
+ */
 export const ACTIVE_CONFLICTS: ActiveConflict[] = [
+	// Note: This data is deprecated. Use fetchConflictEventsFromGDELT() for live data.
 	{
 		id: 'ukraine-russia',
 		name: 'Russia-Ukraine War',

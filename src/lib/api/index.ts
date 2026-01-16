@@ -17,3 +17,12 @@ export type { Prediction, WhaleTransaction, Contract, Layoff } from './misc';
 export { fetchWorldLeaders } from './leaders';
 export { fetchFedIndicators, fetchFedNews, isFredConfigured } from './fred';
 export type { FedIndicators, EconomicIndicator, FedNewsItem, FedNewsType } from './fred';
+
+// GDELT Conflict Events API
+export {
+	fetchConflictEventsFromGDELT,
+	fetchRegionalConflicts,
+	fetchHighIntensityConflicts,
+	aggregateConflictsByCountry
+} from './gdelt-conflicts';
+export type { GdeltConflictEvent, GdeltQuadClass } from './gdelt-conflicts';
