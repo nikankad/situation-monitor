@@ -2,6 +2,9 @@
  * Stores barrel file - re-exports all stores
  */
 
+// Theme store
+export { theme, type Theme } from './theme';
+
 // Settings store
 export {
 	settings,

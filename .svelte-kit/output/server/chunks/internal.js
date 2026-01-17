@@ -878,7 +878,15 @@ const options = {
   service_worker: false,
   service_worker_options: void 0,
   templates: {
-    app: ({ head, body, assets, nonce, env }) => '<!doctype html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<meta name="viewport" content="width=device-width, initial-scale=1" />\n		<meta name="description" content="Real-time global situation monitoring dashboard" />\n		<link rel="icon" href="' + assets + '/favicon.ico" />\n		<title>Situation Monitor</title>\n		' + head + '\n	</head>\n	<body data-sveltekit-preload-data="hover">\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>\n",
+    app: ({ head, body, assets, nonce, env }) => `<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content="Real-time global situation monitoring dashboard" />
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2300ff88' stroke='%23000' stroke-width='2'/><circle cx='50' cy='50' r='35' fill='none' stroke='%23000' stroke-width='2'/><ellipse cx='50' cy='50' rx='15' ry='35' fill='none' stroke='%23000' stroke-width='2'/><line x1='15' y1='50' x2='85' y2='50' stroke='%23000' stroke-width='2'/><line x1='50' y1='15' x2='50' y2='85' stroke='%23000' stroke-width='2'/></svg>" />
+		<title>Situation Monitor</title>
+		` + head + '\n	</head>\n	<body data-sveltekit-preload-data="hover">\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>\n",
     error: ({ status, message }) => '<!doctype html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<title>' + message + `</title>
 
 		<style>
@@ -950,7 +958,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "dc422d"
+  version_hash: "uw9zmg"
 };
 async function get_hooks() {
   let handle;

@@ -8,18 +8,14 @@
 		MarketsPanel,
 		HeatmapPanel,
 		CommoditiesPanel,
-		MainCharPanel,
 		CorrelationPanel,
 		NarrativePanel,
-		MonitorsPanel,
 		MapPanel,
 		WhalePanel,
 		PolymarketPanel,
 		ContractsPanel,
 		LayoffsPanel,
-		IntelPanel,
 		SituationPanel,
-		WorldLeadersPanel,
 		PrinterPanel,
 		FedPanel
 	} from '$lib/components/panels';
@@ -308,26 +304,18 @@
 						<NewsPanel category="finance" panelId="finance" title="Finance" />
 					{:else if panelId === 'gov'}
 						<NewsPanel category="gov" panelId="gov" title="Government" />
-					{:else if panelId === 'ai'}
-						<NewsPanel category="ai" panelId="ai" title="AI" />
 					{:else if panelId === 'markets'}
 						<MarketsPanel />
 					{:else if panelId === 'heatmap'}
 						<HeatmapPanel />
 					{:else if panelId === 'commodities'}
 						<CommoditiesPanel />
-					{:else if panelId === 'mainchar'}
-						<MainCharPanel />
 					{:else if panelId === 'correlation'}
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}
 						<NarrativePanel news={$allNewsItems} />
-					{:else if panelId === 'intel'}
-						<IntelPanel />
 					{:else if panelId === 'fed'}
 						<FedPanel />
-					{:else if panelId === 'leaders'}
-						<WorldLeadersPanel {leaders} loading={leadersLoading} />
 					{:else if panelId === 'venezuela'}
 						<SituationPanel
 							panelId="venezuela"
@@ -392,15 +380,6 @@
 						<LayoffsPanel {layoffs} />
 					{:else if panelId === 'printer'}
 						<PrinterPanel />
-					{:else if panelId === 'monitors'}
-						<MonitorsPanel
-							monitors={$monitors.monitors}
-							matches={$monitors.matches}
-							onCreateMonitor={handleCreateMonitor}
-							onEditMonitor={handleEditMonitor}
-							onDeleteMonitor={handleDeleteMonitor}
-							onToggleMonitor={handleToggleMonitor}
-						/>
 					{/if}
 				</div>
 			{/each}

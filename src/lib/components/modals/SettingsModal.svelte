@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
-	import { settings } from '$lib/stores';
+	import { settings, theme } from '$lib/stores';
 	import { PANELS, NON_DRAGGABLE_PANELS, type PanelId } from '$lib/config';
 
 	interface Props {
@@ -14,6 +14,11 @@
 	// Drag state
 	let draggedPanel = $state<PanelId | null>(null);
 	let dragOverPanel = $state<PanelId | null>(null);
+
+	// Theme toggle
+	function handleToggleTheme() {
+		theme.toggle();
+	}
 
 	function handleTogglePanel(panelId: PanelId) {
 		settings.togglePanel(panelId);
@@ -173,6 +178,35 @@
 		</section>
 
 		<section class="settings-section">
+			<h3 class="section-title">Appearance</h3>
+			<div class="theme-toggle-container">
+				<label class="theme-toggle">
+					<span class="theme-label">Light Mode</span>
+					<input
+						type="checkbox"
+						checked={$theme === 'light'}
+						onchange={handleToggleTheme}
+					/>
+					<span class="toggle-slider"></span>
+				</label>
+			</div>
+		</section>
+
+		<section class="settings-section">
+			<h3 class="section-title">Features</h3>
+			<p class="section-desc">Enable experimental features</p>
+			<label class="feature-toggle">
+				<input
+					type="checkbox"
+					checked={$settings.features.newsSummarization}
+					onchange={() => settings.toggleFeature('newsSummarization')}
+				/>
+				<span class="feature-name">News Summarization</span>
+				<span class="feature-desc">Summarize news articles with local AI (TinyLlama)</span>
+			</label>
+		</section>
+
+		<section class="settings-section">
 			<h3 class="section-title">Dashboard</h3>
 			{#if onReconfigure}
 				<button class="reconfigure-btn" onclick={onReconfigure}> Reconfigure Dashboard </button>
@@ -293,6 +327,58 @@
 		background: rgba(255, 255, 255, 0.05);
 		padding: 0.1rem 0.25rem;
 		border-radius: 2px;
+	}
+
+	.theme-toggle-container {
+		padding: 0.75rem 0;
+	}
+
+	.theme-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.theme-label {
+		font-size: 0.7rem;
+		color: var(--text-primary);
+	}
+
+	.theme-toggle input {
+		display: none;
+	}
+
+	.toggle-slider {
+		position: relative;
+		display: inline-block;
+		width: 44px;
+		height: 24px;
+		background: var(--border);
+		border-radius: 24px;
+		transition: background 0.3s ease;
+	}
+
+	.toggle-slider::before {
+		content: '';
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 20px;
+		height: 20px;
+		background: var(--text-primary);
+		border-radius: 50%;
+		transition: transform 0.3s ease;
+	}
+
+	.theme-toggle input:checked + .toggle-slider {
+		background: var(--accent);
+	}
+
+	.theme-toggle input:checked + .toggle-slider::before {
+		transform: translateX(20px);
 	}
 
 	.reconfigure-btn {
@@ -495,9 +581,45 @@
 		background: rgba(255, 204, 0, 0.1);
 		border: 1px solid rgba(255, 204, 0, 0.2);
 		border-radius: 4px;
-		padding: 0.5rem;
-		line-height: 1.4;
+		padding: 0.4rem;
 		margin: 0;
+	}
+
+	.feature-toggle {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		padding: 0.5rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		cursor: pointer;
+		transition: all 0.15s ease;
+	}
+
+	.feature-toggle:hover {
+		background: rgba(255, 255, 255, 0.05);
+		border-color: var(--accent);
+	}
+
+	.feature-toggle input {
+		display: none;
+	}
+
+	.feature-toggle input:checked + .feature-name {
+		color: var(--accent);
+	}
+
+	.feature-name {
+		font-size: 0.7rem;
+		color: var(--text-primary);
+		font-weight: 500;
+		transition: color 0.15s ease;
+	}
+
+	.feature-desc {
+		font-size: 0.55rem;
+		color: var(--text-muted);
 	}
 
 	.about-ai-note {

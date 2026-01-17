@@ -1,35 +1,40 @@
-import { s as store_get, h as head, a as attr_style, u as unsubscribe_stores, b as stringify } from "../../chunks/index2.js";
-import { d as derived, w as writable, g as get } from "../../chunks/index.js";
-import { B as BROWSER } from "../../chunks/false.js";
-import { X as escape_html } from "../../chunks/context.js";
+import { s as store_get, h as head, u as unsubscribe_stores } from "../../chunks/index2.js";
 import "clsx";
+import { w as writable, d as derived, g as get } from "../../chunks/index.js";
+import { B as BROWSER } from "../../chunks/false.js";
+import "@mlc-ai/web-llm";
 const browser = BROWSER;
+function createThemeStore() {
+  const initialTheme = "dark";
+  const { subscribe, set } = writable(initialTheme);
+  return {
+    subscribe,
+    setTheme: (theme2) => {
+      set(theme2);
+    },
+    toggle: () => {
+      const newTheme = "light";
+      set(newTheme);
+    }
+  };
+}
+createThemeStore();
 const PANELS = {
-  map: { name: "Global Map", priority: 1 },
-  politics: { name: "World / Geopolitical", priority: 1 },
-  tech: { name: "Technology / AI", priority: 1 },
-  finance: { name: "Financial", priority: 1 },
-  gov: { name: "Government / Policy", priority: 2 },
+  map: { name: "Global Situation", priority: 1 },
+  politics: { name: "Politics", priority: 1 },
+  tech: { name: "Tech", priority: 1 },
+  finance: { name: "Finance", priority: 1 },
+  gov: { name: "Government", priority: 2 },
   heatmap: { name: "Sector Heatmap", priority: 1 },
   markets: { name: "Markets", priority: 1 },
-  monitors: { name: "My Monitors", priority: 1 },
-  commodities: { name: "Commodities / VIX", priority: 2 },
-  crypto: { name: "Crypto", priority: 2 },
   polymarket: { name: "Polymarket", priority: 2 },
-  whales: { name: "Whale Watch", priority: 3 },
-  mainchar: { name: "Main Character", priority: 2 },
   printer: { name: "Money Printer", priority: 2 },
   contracts: { name: "Gov Contracts", priority: 3 },
-  ai: { name: "AI Arms Race", priority: 3 },
   layoffs: { name: "Layoffs Tracker", priority: 3 },
-  venezuela: { name: "Venezuela Situation", priority: 2 },
-  greenland: { name: "Greenland Situation", priority: 2 },
-  iran: { name: "Iran Situation", priority: 2 },
-  leaders: { name: "World Leaders", priority: 1 },
-  intel: { name: "Intel Feed", priority: 2 },
-  correlation: { name: "Correlation Engine", priority: 1 },
-  narrative: { name: "Narrative Tracker", priority: 1 },
-  fed: { name: "Federal Reserve", priority: 1 }
+  correlation: { name: "Pattern Analysis", priority: 1 },
+  narrative: { name: "Global Sentiment", priority: 1 },
+  fed: { name: "Federal Reserve", priority: 1 },
+  "today-summary": { name: "Today Summarized", priority: 1 }
 };
 const NON_DRAGGABLE_PANELS = ["map"];
 const ALERT_KEYWORDS = [
@@ -130,13 +135,33 @@ function detectTopics(text) {
   }
   return detected;
 }
+const SECTORS = [
+  { symbol: "XLK", name: "Tech" },
+  { symbol: "XLF", name: "Finance" },
+  { symbol: "XLE", name: "Energy" }
+];
+const COMMODITIES = [
+  { symbol: "^VIX", name: "VIX", display: "VIX" },
+  { symbol: "GC=F", name: "Gold", display: "GOLD" },
+  { symbol: "CL=F", name: "Crude Oil", display: "OIL" }
+];
+const INDICES = [
+  { symbol: "^DJI", name: "Dow Jones", display: "DOW" },
+  { symbol: "^GSPC", name: "S&P 500", display: "S&P" },
+  { symbol: "^IXIC", name: "NASDAQ", display: "NDQ" }
+];
+const CRYPTO = [
+  { id: "bitcoin", symbol: "BTC", name: "Bitcoin" },
+  { id: "ethereum", symbol: "ETH", name: "Ethereum" },
+  { id: "solana", symbol: "SOL", name: "Solana" }
+];
 const PRESETS = {
   "news-junkie": {
     id: "news-junkie",
     name: "News Junkie",
     icon: "📰",
     description: "Stay on top of breaking news across politics, tech, and finance",
-    panels: ["politics", "tech", "finance", "gov", "ai", "mainchar", "map"]
+    panels: ["today-summary", "politics", "tech", "finance", "gov", "map"]
   },
   trader: {
     id: "trader",
@@ -162,8 +187,7 @@ const PRESETS = {
     description: "Global situation awareness and regional hotspots",
     panels: [
       "map",
-      "intel",
-      "leaders",
+      "today-summary",
       "politics",
       "gov",
       "venezuela",
@@ -172,13 +196,6 @@ const PRESETS = {
       "correlation",
       "narrative"
     ]
-  },
-  intel: {
-    id: "intel",
-    name: "Intelligence Analyst",
-    icon: "🔍",
-    description: "Deep analysis, pattern detection, and narrative tracking",
-    panels: ["map", "intel", "leaders", "correlation", "narrative", "mainchar", "politics"]
   },
   minimal: {
     id: "minimal",
@@ -194,27 +211,23 @@ const PRESETS = {
     description: "Kitchen sink - all panels enabled",
     panels: [
       "map",
+      "today-summary",
       "politics",
       "tech",
       "finance",
       "gov",
       "heatmap",
       "markets",
-      "monitors",
       "commodities",
       "crypto",
       "polymarket",
       "whales",
-      "mainchar",
       "printer",
       "contracts",
-      "ai",
       "layoffs",
       "venezuela",
       "greenland",
       "iran",
-      "leaders",
-      "intel",
       "correlation",
       "narrative"
     ]
@@ -1362,7 +1375,7 @@ const COUNTRY_ID_TO_NAME = {
 };
 for (const [id, name] of Object.entries(COUNTRY_ID_TO_NAME)) {
 }
-function getDefaultSettings() {
+function getDefaultSettings$1() {
   const allPanelIds = Object.keys(PANELS);
   return {
     enabled: Object.fromEntries(allPanelIds.map((id) => [id, true])),
@@ -1370,12 +1383,12 @@ function getDefaultSettings() {
     sizes: {}
   };
 }
-function loadFromStorage() {
+function loadFromStorage$1() {
   return {};
 }
 function createSettingsStore() {
-  const defaults = getDefaultSettings();
-  const saved = loadFromStorage();
+  const defaults = getDefaultSettings$1();
+  const saved = loadFromStorage$1();
   const initialState = {
     enabled: { ...defaults.enabled, ...saved.enabled },
     order: saved.order ?? defaults.order,
@@ -1466,7 +1479,7 @@ function createSettingsStore() {
      * Reset all settings to defaults
      */
     reset() {
-      const defaults2 = getDefaultSettings();
+      const defaults2 = getDefaultSettings$1();
       set({ ...defaults2, initialized: true });
     },
     /**
@@ -1884,6 +1897,7 @@ function createInitialState$1() {
     sectors: { ...emptySection },
     commodities: { ...emptySection },
     crypto: { ...emptySection },
+    custom: { ...emptySection },
     initialized: false
   };
 }
@@ -1980,6 +1994,20 @@ function createMarketsStore() {
       }));
     },
     /**
+     * Set custom market data
+     */
+    setCustom(items) {
+      update((state) => ({
+        ...state,
+        custom: {
+          items,
+          loading: false,
+          error: null,
+          lastUpdated: Date.now()
+        }
+      }));
+    },
+    /**
      * Update a single market item
      */
     updateItem(category, symbol, updates) {
@@ -2058,22 +2086,209 @@ derived(markets, ($markets) => $markets.indices);
 derived(markets, ($markets) => $markets.sectors);
 derived(markets, ($markets) => $markets.commodities);
 derived(markets, ($markets) => $markets.crypto);
+derived(markets, ($markets) => $markets.custom);
 derived(
   markets,
-  ($markets) => $markets.indices.loading || $markets.sectors.loading || $markets.commodities.loading || $markets.crypto.loading
+  ($markets) => $markets.indices.loading || $markets.sectors.loading || $markets.commodities.loading || $markets.crypto.loading || $markets.custom.loading
 );
 derived(markets, ($markets) => {
   const times = [
     $markets.indices.lastUpdated,
     $markets.sectors.lastUpdated,
     $markets.commodities.lastUpdated,
-    $markets.crypto.lastUpdated
+    $markets.crypto.lastUpdated,
+    $markets.custom.lastUpdated
   ].filter((t) => t !== null);
   return times.length > 0 ? Math.max(...times) : null;
 });
 derived(markets, ($markets) => {
   return $markets.commodities.items.find((i) => i.symbol === "^VIX") ?? null;
 });
+function getDefaultSettings() {
+  return {
+    indices: {
+      enabled: INDICES.map((i) => i.symbol),
+      order: INDICES.map((i) => i.symbol)
+    },
+    sectors: {
+      enabled: SECTORS.map((s) => s.symbol),
+      order: SECTORS.map((s) => s.symbol)
+    },
+    commodities: {
+      enabled: COMMODITIES.map((c) => c.symbol),
+      order: COMMODITIES.map((c) => c.symbol)
+    },
+    crypto: {
+      enabled: CRYPTO.map((c) => c.symbol),
+      order: CRYPTO.map((c) => c.symbol)
+    },
+    custom: {
+      enabled: [],
+      order: []
+    }
+  };
+}
+function loadCustomMarkets() {
+  return /* @__PURE__ */ new Map();
+}
+const customMarketsMap = writable(loadCustomMarkets());
+const customMarkets = {
+  subscribe: customMarketsMap.subscribe,
+  add(symbol, name) {
+    customMarketsMap.update((m) => {
+      m.set(symbol.toUpperCase(), name);
+      return new Map(m);
+    });
+  },
+  remove(symbol) {
+    customMarketsMap.update((m) => {
+      m.delete(symbol.toUpperCase());
+      return new Map(m);
+    });
+  },
+  getName(symbol) {
+    return get(customMarketsMap).get(symbol.toUpperCase()) || symbol;
+  }
+};
+function cleanSavedSettings(saved) {
+  const validSymbols = {
+    indices: new Set(INDICES.map((i) => i.symbol)),
+    sectors: new Set(SECTORS.map((s) => s.symbol)),
+    commodities: new Set(COMMODITIES.map((c) => c.symbol)),
+    crypto: new Set(CRYPTO.map((c) => c.symbol))
+  };
+  const cleaned = {};
+  if (saved.indices) {
+    cleaned.indices = {
+      enabled: (saved.indices.enabled || []).filter((s) => validSymbols.indices.has(s)),
+      order: (saved.indices.order || []).filter((s) => validSymbols.indices.has(s))
+    };
+  }
+  if (saved.sectors) {
+    cleaned.sectors = {
+      enabled: (saved.sectors.enabled || []).filter((s) => validSymbols.sectors.has(s)),
+      order: (saved.sectors.order || []).filter((s) => validSymbols.sectors.has(s))
+    };
+  }
+  if (saved.commodities) {
+    cleaned.commodities = {
+      enabled: (saved.commodities.enabled || []).filter((s) => validSymbols.commodities.has(s)),
+      order: (saved.commodities.order || []).filter((s) => validSymbols.commodities.has(s))
+    };
+  }
+  if (saved.crypto) {
+    cleaned.crypto = {
+      enabled: (saved.crypto.enabled || []).filter((s) => validSymbols.crypto.has(s)),
+      order: (saved.crypto.order || []).filter((s) => validSymbols.crypto.has(s))
+    };
+  }
+  return cleaned;
+}
+function loadFromStorage() {
+  return {};
+}
+function createMarketSettingsStore() {
+  const defaults = getDefaultSettings();
+  const saved = loadFromStorage();
+  const cleanedSaved = cleanSavedSettings(saved);
+  const initialSettings = {
+    indices: {
+      enabled: cleanedSaved.indices?.enabled ?? defaults.indices.enabled,
+      order: cleanedSaved.indices?.order ?? defaults.indices.order
+    },
+    sectors: {
+      enabled: cleanedSaved.sectors?.enabled ?? defaults.sectors.enabled,
+      order: cleanedSaved.sectors?.order ?? defaults.sectors.order
+    },
+    commodities: {
+      enabled: cleanedSaved.commodities?.enabled ?? defaults.commodities.enabled,
+      order: cleanedSaved.commodities?.order ?? defaults.commodities.order
+    },
+    crypto: {
+      enabled: cleanedSaved.crypto?.enabled ?? defaults.crypto.enabled,
+      order: cleanedSaved.crypto?.order ?? defaults.crypto.order
+    },
+    custom: {
+      enabled: saved.custom?.enabled ?? defaults.custom.enabled,
+      order: saved.custom?.order ?? defaults.custom.order
+    }
+  };
+  const { subscribe, set, update } = writable(initialSettings);
+  let currentSettings = initialSettings;
+  subscribe((value) => {
+    currentSettings = value;
+  });
+  return {
+    subscribe,
+    /**
+     * Toggle market visibility
+     */
+    toggleMarket(category, symbol) {
+      update((settings2) => {
+        const categorySettings = settings2[category];
+        const index = categorySettings.enabled.indexOf(symbol);
+        if (index > -1) {
+          categorySettings.enabled.splice(index, 1);
+        } else {
+          categorySettings.enabled.push(symbol);
+        }
+        return settings2;
+      });
+    },
+    /**
+     * Reorder markets
+     */
+    reorderMarkets(category, newOrder) {
+      update((settings2) => {
+        settings2[category].order = newOrder;
+        return settings2;
+      });
+    },
+    /**
+     * Reset to defaults
+     */
+    reset() {
+      const defaults2 = getDefaultSettings();
+      set(defaults2);
+    },
+    /**
+     * Get enabled and sorted markets for a category
+     */
+    getOrderedMarkets(category) {
+      const categorySettings = currentSettings[category];
+      return categorySettings.order.filter(
+        (symbol) => categorySettings.enabled.includes(symbol)
+      );
+    },
+    /**
+     * Add a custom market
+     */
+    addCustomMarket(symbol, name) {
+      const upperSymbol = symbol.toUpperCase();
+      customMarkets.add(upperSymbol, name);
+      update((settings2) => {
+        if (!settings2.custom.order.includes(upperSymbol)) {
+          settings2.custom.order.push(upperSymbol);
+          settings2.custom.enabled.push(upperSymbol);
+        }
+        return settings2;
+      });
+    },
+    /**
+     * Remove a custom market
+     */
+    removeCustomMarket(symbol) {
+      const upperSymbol = symbol.toUpperCase();
+      customMarkets.remove(upperSymbol);
+      update((settings2) => {
+        settings2.custom.order = settings2.custom.order.filter((s) => s !== upperSymbol);
+        settings2.custom.enabled = settings2.custom.enabled.filter((s) => s !== upperSymbol);
+        return settings2;
+      });
+    }
+  };
+}
+createMarketSettingsStore();
 const REFRESH_STAGES = [
   {
     name: "critical",
@@ -2414,8 +2629,6 @@ createSelectedCountryStore();
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;
-    let loadingProgress = 0;
-    let loadingStatus = "Initializing...";
     function isPanelVisible(id) {
       return store_get($$store_subs ??= {}, "$settings", settings).enabled[id] !== false;
     }
@@ -2428,7 +2641,7 @@ function _page($$renderer, $$props) {
     });
     {
       $$renderer2.push("<!--[-->");
-      $$renderer2.push(`<div class="loading-screen svelte-1uha8ag"><div class="loading-content svelte-1uha8ag"><h1 class="loading-title svelte-1uha8ag">SITUATION MONITOR</h1> <div class="loading-bar-container svelte-1uha8ag"><div class="loading-bar svelte-1uha8ag"${attr_style(`width: ${stringify(loadingProgress)}%`)}></div></div> <p class="loading-status svelte-1uha8ag">${escape_html(loadingStatus)}</p> <div class="loading-dots svelte-1uha8ag"><span class="dot svelte-1uha8ag"></span> <span class="dot svelte-1uha8ag"></span> <span class="dot svelte-1uha8ag"></span></div></div></div>`);
+      $$renderer2.push(`<div class="loading-screen svelte-1uha8ag"><div class="loading-content svelte-1uha8ag"><div class="logo-container svelte-1uha8ag"><div class="radar-circle svelte-1uha8ag"></div> <div class="radar-circle radar-circle-2 svelte-1uha8ag"></div> <div class="radar-circle radar-circle-3 svelte-1uha8ag"></div> <div class="radar-sweep svelte-1uha8ag"></div></div> <h1 class="loading-title svelte-1uha8ag">SITUATION MONITOR</h1> <div class="loading-dots svelte-1uha8ag"><span class="dot svelte-1uha8ag"></span> <span class="dot svelte-1uha8ag"></span> <span class="dot svelte-1uha8ag"></span></div></div></div>`);
     }
     $$renderer2.push(`<!--]-->`);
     if ($$store_subs) unsubscribe_stores($$store_subs);

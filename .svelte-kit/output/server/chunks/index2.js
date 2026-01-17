@@ -896,13 +896,6 @@ function attributes(attrs, css_hash, classes, styles, flags = 0) {
   }
   return attr_str;
 }
-function stringify(value) {
-  return typeof value === "string" ? value : value == null ? "" : value + "";
-}
-function attr_style(value, directives) {
-  var result = to_style(value, directives);
-  return result ? ` style="${escape_html(result, true)}"` : "";
-}
 function store_get(store_values, store_name, store) {
   if (store_name in store_values && store_values[store_name][0] === store) {
     return store_values[store_name][2];
@@ -923,8 +916,6 @@ function unsubscribe_stores(store_values) {
   }
 }
 export {
-  attr_style as a,
-  stringify as b,
   head as h,
   is_passive_event as i,
   render as r,

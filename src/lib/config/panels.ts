@@ -15,15 +15,10 @@ export type PanelId =
 	| 'gov'
 	| 'heatmap'
 	| 'markets'
-	| 'monitors'
 	| 'polymarket'
-	| 'mainchar'
 	| 'printer'
 	| 'contracts'
-	| 'ai'
 	| 'layoffs'
-	| 'leaders'
-	| 'intel'
 	| 'correlation'
 	| 'narrative'
 	| 'fed';
@@ -36,15 +31,10 @@ export const PANELS: Record<PanelId, PanelConfig> = {
 	gov: { name: 'Government', priority: 2 },
 	heatmap: { name: 'Sector Heatmap', priority: 1 },
 	markets: { name: 'Markets', priority: 1 },
-	monitors: { name: 'Custom Monitors', priority: 1 },
 	polymarket: { name: 'Polymarket', priority: 2 },
-	mainchar: { name: 'Main Character', priority: 2 },
 	printer: { name: 'Money Printer', priority: 2 },
 	contracts: { name: 'Gov Contracts', priority: 3 },
-	ai: { name: 'AI', priority: 3 },
 	layoffs: { name: 'Layoffs Tracker', priority: 3 },
-	leaders: { name: 'World Leaders', priority: 1 },
-	intel: { name: 'Intel Feed', priority: 2 },
 	correlation: { name: 'Pattern Analysis', priority: 1 },
 	narrative: { name: 'Global Sentiment', priority: 1 },
 	fed: { name: 'Federal Reserve', priority: 1 }

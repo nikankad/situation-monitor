@@ -18,7 +18,7 @@ export const PRESETS: Record<string, Preset> = {
 		name: 'News Junkie',
 		icon: '📰',
 		description: 'Stay on top of breaking news across politics, tech, and finance',
-		panels: ['politics', 'tech', 'finance', 'gov', 'ai', 'mainchar', 'map']
+		panels: ['politics', 'tech', 'finance', 'gov', 'map']
 	},
 	trader: {
 		id: 'trader',
@@ -44,8 +44,6 @@ export const PRESETS: Record<string, Preset> = {
 		description: 'Global situation awareness and regional hotspots',
 		panels: [
 			'map',
-			'intel',
-			'leaders',
 			'politics',
 			'gov',
 			'venezuela',
@@ -54,13 +52,6 @@ export const PRESETS: Record<string, Preset> = {
 			'correlation',
 			'narrative'
 		]
-	},
-	intel: {
-		id: 'intel',
-		name: 'Intelligence Analyst',
-		icon: '🔍',
-		description: 'Deep analysis, pattern detection, and narrative tracking',
-		panels: ['map', 'intel', 'leaders', 'correlation', 'narrative', 'mainchar', 'politics']
 	},
 	minimal: {
 		id: 'minimal',
@@ -82,21 +73,16 @@ export const PRESETS: Record<string, Preset> = {
 			'gov',
 			'heatmap',
 			'markets',
-			'monitors',
 			'commodities',
 			'crypto',
 			'polymarket',
 			'whales',
-			'mainchar',
 			'printer',
 			'contracts',
-			'ai',
 			'layoffs',
 			'venezuela',
 			'greenland',
 			'iran',
-			'leaders',
-			'intel',
 			'correlation',
 			'narrative'
 		]
@@ -107,7 +93,6 @@ export const PRESET_ORDER = [
 	'news-junkie',
 	'trader',
 	'geopolitics',
-	'intel',
 	'minimal',
 	'everything'
 ];

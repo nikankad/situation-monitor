@@ -64,7 +64,7 @@
 		<div class="header-center"></div>
 
 		<div class="header-right">
-			<button class="header-btn settings-btn" onclick={onSettingsClick} title="Settings">
+			<button class="header-btn settings-btn" onclick={(e) => { e.preventDefault(); onSettingsClick?.(); }} title="Settings">
 				<span class="btn-icon">⚙</span>
 				<span class="btn-label">Settings</span>
 			</button>
@@ -245,6 +245,8 @@
 		align-items: center;
 		gap: 0.3rem;
 		flex-shrink: 0;
+		padding-left: 1rem;
+		border-left: 1px solid var(--border);
 	}
 
 	.refresh-indicator {

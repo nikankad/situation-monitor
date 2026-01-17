@@ -17,8 +17,14 @@ import {
 const STORAGE_KEYS = {
 	panels: 'situationMonitorPanels',
 	order: 'panelOrder',
-	sizes: 'panelSizes'
+	sizes: 'panelSizes',
+	features: 'situationMonitorFeatures'
 } as const;
+
+// Feature flags
+export interface FeatureSettings {
+	newsSummarization: boolean;
+}
 
 // Types
 export interface PanelSettings {
@@ -29,32 +35,38 @@ export interface PanelSettings {
 
 export interface SettingsState extends PanelSettings {
 	initialized: boolean;
+	features: FeatureSettings;
 }
 
 // Default settings
-function getDefaultSettings(): PanelSettings {
+function getDefaultSettings(): PanelSettings & { features: FeatureSettings } {
 	const allPanelIds = Object.keys(PANELS) as PanelId[];
 
 	return {
 		enabled: Object.fromEntries(allPanelIds.map((id) => [id, true])) as Record<PanelId, boolean>,
 		order: allPanelIds,
-		sizes: {} as Record<PanelId, { width?: number; height?: number }>
+		sizes: {} as Record<PanelId, { width?: number; height?: number }>,
+		features: {
+			newsSummarization: false
+		}
 	};
 }
 
 // Load from localStorage
-function loadFromStorage(): Partial<PanelSettings> {
+function loadFromStorage(): Partial<PanelSettings & { features: FeatureSettings }> {
 	if (!browser) return {};
 
 	try {
 		const panels = localStorage.getItem(STORAGE_KEYS.panels);
 		const order = localStorage.getItem(STORAGE_KEYS.order);
 		const sizes = localStorage.getItem(STORAGE_KEYS.sizes);
+		const features = localStorage.getItem(STORAGE_KEYS.features);
 
 		return {
 			enabled: panels ? JSON.parse(panels) : undefined,
 			order: order ? JSON.parse(order) : undefined,
-			sizes: sizes ? JSON.parse(sizes) : undefined
+			sizes: sizes ? JSON.parse(sizes) : undefined,
+			features: features ? JSON.parse(features) : undefined
 		};
 	} catch (e) {
 		console.warn('Failed to load settings from localStorage:', e);
@@ -82,6 +94,7 @@ function createSettingsStore() {
 		enabled: { ...defaults.enabled, ...saved.enabled },
 		order: saved.order ?? defaults.order,
 		sizes: { ...defaults.sizes, ...saved.sizes },
+		features: { ...defaults.features, ...saved.features },
 		initialized: false
 	};
 
@@ -258,6 +271,42 @@ function createSettingsStore() {
 				localStorage.removeItem(ONBOARDING_STORAGE_KEY);
 				localStorage.removeItem(PRESET_STORAGE_KEY);
 			}
+		},
+
+		/**
+		 * Toggle a feature flag
+		 */
+		toggleFeature(featureName: keyof FeatureSettings) {
+			update((state) => {
+				const newFeatures = {
+					...state.features,
+					[featureName]: !state.features[featureName]
+				};
+				saveToStorage('features', newFeatures);
+				return { ...state, features: newFeatures };
+			});
+		},
+
+		/**
+		 * Set a feature flag to a specific value
+		 */
+		setFeature(featureName: keyof FeatureSettings, value: boolean) {
+			update((state) => {
+				const newFeatures = {
+					...state.features,
+					[featureName]: value
+				};
+				saveToStorage('features', newFeatures);
+				return { ...state, features: newFeatures };
+			});
+		},
+
+		/**
+		 * Check if a feature is enabled
+		 */
+		isFeatureEnabled(featureName: keyof FeatureSettings): boolean {
+			const state = get({ subscribe });
+			return state.features[featureName] ?? false;
 		}
 	};
 }
