@@ -15,7 +15,6 @@ A comprehensive real-time geopolitical intelligence platform that aggregates, an
 - 🌐 **World Leader Tracking** - Track statements and activities of key global figures
 - 📈 **Pattern Correlation Analysis** - Discover correlations between events and market movements
 - 🏦 **Federal Reserve Monitoring** - Economic indicators and Fed data integration
-- 🤖 **Local AI Summarization** - Optional TinyLlama-powered news summarization via WebLLM
 
 ## Tech Stack
 
@@ -27,7 +26,6 @@ A comprehensive real-time geopolitical intelligence platform that aggregates, an
   - Finnhub (financial data)
   - Federal Reserve FRED API (economic data)
   - Multiple news sources via proxy
-- **AI**: WebLLM (optional, for local summarization)
 
 ## Getting Started
 
@@ -114,11 +112,7 @@ Access dashboard settings to:
 - Toggle panels on/off
 - Reorder panels via drag-and-drop
 - Switch between light/dark themes
-- Enable experimental features (news summarization)
 - Reset to default configuration
-
-### Local AI (WebLLM)
-Optional feature to summarize news articles using TinyLlama running locally in your browser. No external API calls needed for summarization.
 
 ## Data Sources
 
