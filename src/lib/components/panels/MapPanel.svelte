@@ -140,8 +140,10 @@
 	let searchQuery = $state('');
 	let searchResults = $state<string[]>([]);
 	let showSearchResults = $state(false);
-	// Map filter state - null means show all, otherwise filter to specific type
-	let mapFilter = $state<'conflicts' | 'crisis' | 'tensions' | 'flashpoints' | 'news' | 'hotspots' | null>(null);
+	// Simple layer visibility toggles
+	let showEvents = $state(true);
+	let showHotspots = $state(true);
+	let showNews = $state(true);
 	
 	// Live GDELT conflict events (replaces hardcoded ACTIVE_CONFLICTS)
 	let gdeltConflicts = $state<GdeltConflictEvent[]>([]);
@@ -168,11 +170,11 @@
 	// At medium zoom: show more items
 	// At high zoom: show everything
 	const ZOOM_THRESHOLDS = {
-		showAllHotspots: 3.5,        // Show all hotspots (not just critical/high) - Increased from 2.5
-		showInfrastructure: 4.5,     // Show chokepoints, cables, nuclear, military - Increased from 3.5
-		showAllConflicts: 3.0,       // Show all GDELT conflicts (not just critical/high) - Increased from 2.0
-		showSmallClusters: 2.8,      // Show news clusters with < 10 items - Increased from 2.2 and cluster size 5->10
-		showLabels: 3.5              // Show text labels on icons - Increased from 2.5
+		showAllHotspots: 1.8,        // Show all hotspots (not just critical/high)
+		showInfrastructure: 2.5,     // Show chokepoints, cables, nuclear, military
+		showAllConflicts: 2.8,       // Show all GDELT conflicts at 2.8 zoom
+		showSmallClusters: 1.5,      // Show news clusters with < 5 items
+		showLabels: 2.2              // Show text labels on icons
 	};
 
 	// Tooltip state
@@ -630,22 +632,6 @@
 				.attr('stroke', 'none')
 				.style('pointer-events', 'none');
 
-			// Draw conflict zones
-			CONFLICT_ZONES.forEach((zone) => {
-				mapGroup
-					.append('path')
-					.attr('class', 'conflict-zone')
-					.attr('data-zone', zone.name)
-					.datum({ type: 'Polygon', coordinates: [zone.coords] } as GeoJSON.Polygon)
-					.attr('d', path as unknown as string)
-					.attr('fill', zone.color)
-					.attr('fill-opacity', 0.15)
-					.attr('stroke', zone.color)
-					.attr('stroke-width', 0.5)
-					.attr('stroke-opacity', 0.4)
-					.style('pointer-events', 'none');
-			});
-
 			// Draw all map icons (will be redrawn on zoom)
 			drawMapIcons();
 
@@ -672,8 +658,8 @@
 		const inverseScale = 1 / currentZoomScale;
 		const showLabels = currentZoomScale >= ZOOM_THRESHOLDS.showLabels;
 		
-		// Check if we should show infrastructure icons (only when zoomed in enough and no filter)
-		const showInfrastructure = mapFilter === null && currentZoomScale >= ZOOM_THRESHOLDS.showInfrastructure;
+		// Check if we should show infrastructure icons (only when zoomed in enough)
+		const showInfrastructure = currentZoomScale >= ZOOM_THRESHOLDS.showInfrastructure;
 
 		// Draw chokepoints (only when zoomed in enough and no filter active)
 		if (showInfrastructure) {
@@ -795,9 +781,9 @@
 		});
 		} // End infrastructure filter
 
-		// Draw hotspots (when no filter or hotspots filter active)
+		// Draw hotspots when toggle is on
 		// At low zoom, only show critical/high hotspots
-		if (mapFilter === null || mapFilter === 'hotspots') {
+		if (showHotspots) {
 		const showAllHotspots = currentZoomScale >= ZOOM_THRESHOLDS.showAllHotspots;
 		HOTSPOTS.forEach((h) => {
 			// At lowest zoom, only show critical hotspots
@@ -812,11 +798,11 @@
 					.attr('class', 'map-icon pulse')
 					.attr('cx', x)
 					.attr('cy', y)
-					.attr('r', 4 * inverseScale)
+					.attr('r', 3 * inverseScale)
 					.attr('fill', color)
 					.attr('fill-opacity', 0.15);
 				// Inner dot
-				mapGroup.append('circle').attr('class', 'map-icon').attr('cx', x).attr('cy', y).attr('r', 2 * inverseScale).attr('fill', color).attr('fill-opacity', 0.7);
+				mapGroup.append('circle').attr('class', 'map-icon').attr('cx', x).attr('cy', y).attr('r', 1.5 * inverseScale).attr('fill', color).attr('fill-opacity', 0.7);
 				// Label - only show when zoomed in enough
 				if (showLabels) {
 				mapGroup
@@ -860,26 +846,19 @@
 			// No conflicts to draw - this is normal if GDELT returns no results
 		}
 		
-		// Prepare filtered list of conflicts
-		let conflictsToDisplay = gdeltConflicts;
+		// Prepare filtered list of conflicts based on toggle
+		let conflictsToDisplay: GdeltConflictEvent[] = [];
 
-		if (mapFilter === 'news' || mapFilter === 'hotspots') {
-			conflictsToDisplay = [];
-		} else if (mapFilter !== null) {
-			// Specific filter
-			const typeFilter = mapFilter === 'conflicts' ? 'conflict' : 
-							   mapFilter === 'crisis' ? 'crisis' : 
-							   mapFilter === 'tensions' ? 'tension' : 
-							   mapFilter === 'flashpoints' ? 'development' : null;
-			if (typeFilter) {
-				conflictsToDisplay = gdeltConflicts.filter(c => c.type === typeFilter);
+		if (showEvents) {
+			if (!showAllConflicts) {
+				// Zoomed out - show only top 5 critical conflicts by article count
+				conflictsToDisplay = [...gdeltConflicts]
+					.filter(c => c.severity === 'critical')
+					.sort((a, b) => b.numArticles - a.numArticles)
+					.slice(0, 5);
+			} else {
+				conflictsToDisplay = gdeltConflicts;
 			}
-		} else if (!showAllConflicts) {
-			// Zoomed out default view - show only top 5 critical conflicts by article count
-			conflictsToDisplay = [...gdeltConflicts]
-				.filter(c => c.severity === 'critical')
-				.sort((a, b) => b.numArticles - a.numArticles)
-				.slice(0, 5);
 		}
 		
 		conflictsToDisplay.forEach((conflict) => {
@@ -902,7 +881,7 @@
 						.attr('class', 'map-icon conflict-pulse')
 						.attr('cx', x)
 						.attr('cy', y)
-						.attr('r', 7 * inverseScale)
+						.attr('r', 5 * inverseScale)
 						.attr('fill', 'none')
 						.attr('stroke', color)
 						.attr('stroke-width', 1 * inverseScale)
@@ -916,7 +895,7 @@
 					.attr('x', x)
 					.attr('y', y + 3 * inverseScale)
 					.attr('text-anchor', 'middle')
-					.attr('font-size', `${9 * inverseScale}px`)
+					.attr('font-size', `${7 * inverseScale}px`)
 					.attr('fill', color)
 					.attr('fill-opacity', 0.7)
 					.attr('stroke', '#000')
@@ -1030,8 +1009,8 @@
 		// Remove existing cluster markers
 		mapGroup.selectAll('.news-cluster').remove();
 
-		// Skip drawing if filter is active and not set to 'news'
-		if (mapFilter !== null && mapFilter !== 'news') return;
+		// Skip drawing if news toggle is off
+		if (!showNews) return;
 
 		const clusters = typeof newsClusters === 'function' ? newsClusters() : newsClusters;
 
@@ -1057,11 +1036,11 @@
 			else if (alertRatio > 0.2) color = '#ffaa00'; // Orange for some alerts
 			else if (cluster.alertCount > 0) color = '#ffcc00'; // Yellow for any alerts
 
-			// Size based on count (min 8, max 20) - scaled inversely to zoom
-			const baseRadius = Math.min(20, Math.max(8, 6 + cluster.count * 0.8));
+			// Size based on count (min 5, max 14) - scaled inversely to zoom
+			const baseRadius = Math.min(14, Math.max(5, 4 + cluster.count * 0.5));
 			const radius = baseRadius * inverseScale;
-			const strokeWidth = 1.5 * inverseScale;
-			const fontSize = (baseRadius > 12 ? 9 : 7) * inverseScale;
+			const strokeWidth = 1 * inverseScale;
+			const fontSize = (baseRadius > 8 ? 7 : 5) * inverseScale;
 
 			// Outer pulsing circle for high-alert clusters
 			if (cluster.alertCount >= 3) {
@@ -1312,58 +1291,37 @@
 			{/if}
 		</div>
 		<div class="map-legend">
-			<button 
-				class="legend-item" 
-				class:active={mapFilter === 'conflicts'}
-				onclick={() => { mapFilter = mapFilter === 'conflicts' ? null : 'conflicts'; drawMapIcons(); drawNewsClusters(); }}
+			<button
+				class="legend-btn"
+				class:active={showEvents}
+				onclick={() => { showEvents = !showEvents; drawMapIcons(); }}
+				title="GDELT Events"
 			>
-				<span class="legend-icon">⚔️</span> Active Conflicts
+				⚔
 			</button>
-			<button 
-				class="legend-item" 
-				class:active={mapFilter === 'crisis'}
-				onclick={() => { mapFilter = mapFilter === 'crisis' ? null : 'crisis'; drawMapIcons(); drawNewsClusters(); }}
+			<button
+				class="legend-btn"
+				class:active={showHotspots}
+				onclick={() => { showHotspots = !showHotspots; drawMapIcons(); }}
+				title="Hotspots"
 			>
-				<span class="legend-icon">🚨</span> Crisis Zones
+				<span class="legend-dot hotspot"></span>
 			</button>
-			<button 
-				class="legend-item" 
-				class:active={mapFilter === 'tensions'}
-				onclick={() => { mapFilter = mapFilter === 'tensions' ? null : 'tensions'; drawMapIcons(); drawNewsClusters(); }}
+			<button
+				class="legend-btn"
+				class:active={showNews}
+				onclick={() => { showNews = !showNews; drawNewsClusters(); }}
+				title="News"
 			>
-				<span class="legend-icon">⚡</span> Tensions
+				<span class="legend-dot news"></span>
 			</button>
-			<button 
-				class="legend-item" 
-				class:active={mapFilter === 'flashpoints'}
-				onclick={() => { mapFilter = mapFilter === 'flashpoints' ? null : 'flashpoints'; drawMapIcons(); drawNewsClusters(); }}
-			>
-				<span class="legend-icon">📍</span> Flashpoints
-			</button>
-			<button 
-				class="legend-item" 
-				class:active={mapFilter === 'news'}
-				onclick={() => { mapFilter = mapFilter === 'news' ? null : 'news'; drawMapIcons(); drawNewsClusters(); }}
-			>
-				<span class="legend-dot news"></span> News Clusters
-			</button>
-			<button 
-				class="legend-item" 
-				class:active={mapFilter === 'hotspots'}
-				onclick={() => { mapFilter = mapFilter === 'hotspots' ? null : 'hotspots'; drawMapIcons(); drawNewsClusters(); }}
-			>
-				<span class="legend-dot hotspot"></span> Hotspots
-			</button>
-			<!-- GDELT conflict status -->
-			<div class="gdelt-status">
+			<div class="legend-status" title="GDELT events">
 				{#if conflictsLoading}
-					<span class="status-loading">⟳ Loading...</span>
+					<span class="status-loading">⟳</span>
 				{:else if conflictsError}
-					<span class="status-error">⚠ Error</span>
-				{:else if gdeltConflicts.length === 0}
-					<span class="status-empty">No GDELT results</span>
+					<span class="status-error">!</span>
 				{:else}
-					<span class="status-ok">{gdeltConflicts.length} events</span>
+					<span class="status-ok">{gdeltConflicts.length}</span>
 				{/if}
 			</div>
 		</div>
@@ -1772,72 +1730,80 @@
 
 	.map-legend {
 		position: absolute;
-		top: 0.5rem;
-		right: 0.5rem;
+		bottom: 36px;
+		left: 0.5rem;
 		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-		background: rgba(10, 10, 10, 0.8);
-		padding: 0.3rem 0.5rem;
+		flex-direction: row;
+		align-items: center;
+		gap: 2px;
+		background: rgba(0, 0, 0, 0.75);
+		padding: 4px 6px;
 		border-radius: 4px;
-		font-size: 0.55rem;
+		backdrop-filter: blur(4px);
 	}
 
-	.legend-item {
+	.legend-btn {
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
-		color: #888;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		color: #666;
 		background: none;
 		border: none;
-		padding: 0.15rem 0.3rem;
+		padding: 0;
 		margin: 0;
 		cursor: pointer;
 		border-radius: 3px;
 		transition: all 0.15s ease;
+		font-size: 0.8rem;
+		opacity: 0.55;
+		line-height: 1;
 	}
 
-	.legend-item:hover {
-		background: rgba(68, 255, 136, 0.1);
+	.legend-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
 		color: #aaa;
 	}
 
-	.legend-item.active {
-		background: rgba(68, 255, 136, 0.2);
+	.legend-btn.active {
+		background: rgba(68, 255, 136, 0.25);
 		color: #44ff88;
-	}
-
-	.legend-item.active .legend-icon,
-	.legend-item.active .legend-dot {
 		opacity: 1;
-	}
-
-	.legend-icon {
-		font-size: 0.7rem;
-		opacity: 0.7;
 	}
 
 	.legend-dot {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-	}
-
-	.legend-dot.news {
-		background: #44ff88;
-		opacity: 0.6;
+		opacity: 0.5;
 	}
 
 	.legend-dot.hotspot {
 		background: #ff4444;
-		opacity: 0.6;
 	}
 
-	.gdelt-status {
-		margin-top: 0.3rem;
-		padding-top: 0.3rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
-		font-size: 0.5rem;
+	.legend-dot.news {
+		background: #44ff88;
+	}
+
+	.legend-btn.active .legend-dot {
+		opacity: 1;
+	}
+
+	.legend-status {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 20px;
+		font-size: 0.55rem;
+		font-weight: 700;
+		font-family: monospace;
+		text-align: center;
+		padding: 0 3px;
+		border-left: 1px solid rgba(255, 255, 255, 0.15);
+		color: #888;
 	}
 
 	.status-loading {
@@ -1980,7 +1946,6 @@
 		gap: 2rem;
 		animation: ticker-scroll 30s linear infinite;
 		white-space: nowrap;
-		padding-left: 100%;
 	}
 
 	.ticker-scroll:hover {
