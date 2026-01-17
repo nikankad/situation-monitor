@@ -209,11 +209,10 @@
 
 	.current-time-label {
 		font-size: 0.55rem;
-		font-weight: 600;
+		font-weight: 500;
 		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+		letter-spacing: 0.05em;
 	}
 
 	.current-time-value {
@@ -264,12 +263,14 @@
 		color: var(--text);
 		opacity: 1;
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+		font-weight: 500;
+		letter-spacing: 0.05em;
 	}
 
 	.tz-label {
 		font-size: 0.55rem;
 		color: var(--text-muted);
-		font-weight: 600;
+		font-weight: 500;
 		letter-spacing: 0.05em;
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 	}
@@ -279,6 +280,7 @@
 		color: var(--text-secondary);
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 		font-weight: 500;
+		letter-spacing: 0.05em;
 	}
 
 	@media (max-width: 768px) {
