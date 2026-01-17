@@ -315,7 +315,7 @@ export interface RefreshState {
 export interface SettingsState {
 	panels: Record<string, boolean>;
 	panelOrder: string[];
-	theme: 'dark' | 'light';
+	theme: 'dark';
 }
 
 /**
