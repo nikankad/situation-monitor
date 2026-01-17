@@ -156,9 +156,7 @@ npm run test:coverage
 
 ⚠️ This tool is for informational purposes only. Always verify information through official sources before making decisions.
 
-## License
 
-See [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
@@ -170,9 +168,7 @@ For issues, questions, or suggestions, please open an issue in the repository.
 
 ---
 
-## Fork Notice
-
-This is a fork of [hipcityreg/situation-monitor](https://github.com/hipcityreg/situation-monitor)
+_Fork of [hipcityreg/situation-monitor](https://github.com/hipcityreg/situation-monitor)_
 
 ---
 
