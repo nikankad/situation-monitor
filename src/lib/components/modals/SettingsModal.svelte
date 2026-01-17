@@ -1,24 +1,18 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
-	import { settings, theme } from '$lib/stores';
+	import { settings } from '$lib/stores';
 	import { PANELS, NON_DRAGGABLE_PANELS, type PanelId } from '$lib/config';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
-		onReconfigure?: () => void;
 	}
 
-	let { open = false, onClose, onReconfigure }: Props = $props();
+	let { open = false, onClose }: Props = $props();
 
 	// Drag state
 	let draggedPanel = $state<PanelId | null>(null);
 	let dragOverPanel = $state<PanelId | null>(null);
-
-	// Theme toggle
-	function handleToggleTheme() {
-		theme.toggle();
-	}
 
 	function handleTogglePanel(panelId: PanelId) {
 		settings.togglePanel(panelId);
@@ -178,21 +172,6 @@
 		</section>
 
 		<section class="settings-section">
-			<h3 class="section-title">Appearance</h3>
-			<div class="theme-toggle-container">
-				<label class="theme-toggle">
-					<span class="theme-label">Light Mode</span>
-					<input
-						type="checkbox"
-						checked={$theme === 'light'}
-						onchange={handleToggleTheme}
-					/>
-					<span class="toggle-slider"></span>
-				</label>
-			</div>
-		</section>
-
-		<section class="settings-section">
 			<h3 class="section-title">Features</h3>
 			<p class="section-desc">Enable experimental features</p>
 			<label class="feature-toggle">
@@ -208,10 +187,6 @@
 
 		<section class="settings-section">
 			<h3 class="section-title">Dashboard</h3>
-			{#if onReconfigure}
-				<button class="reconfigure-btn" onclick={onReconfigure}> Reconfigure Dashboard </button>
-				<p class="btn-hint">Choose a preset profile for your panels</p>
-			{/if}
 			<button class="reset-btn" onclick={handleResetPanels}> Reset All Settings </button>
 		</section>
 
@@ -327,80 +302,6 @@
 		background: rgba(255, 255, 255, 0.05);
 		padding: 0.1rem 0.25rem;
 		border-radius: 2px;
-	}
-
-	.theme-toggle-container {
-		padding: 0.75rem 0;
-	}
-
-	.theme-toggle {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		cursor: pointer;
-		user-select: none;
-	}
-
-	.theme-label {
-		font-size: 0.7rem;
-		color: var(--text-primary);
-	}
-
-	.theme-toggle input {
-		display: none;
-	}
-
-	.toggle-slider {
-		position: relative;
-		display: inline-block;
-		width: 44px;
-		height: 24px;
-		background: var(--border);
-		border-radius: 24px;
-		transition: background 0.3s ease;
-	}
-
-	.toggle-slider::before {
-		content: '';
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 20px;
-		height: 20px;
-		background: var(--text-primary);
-		border-radius: 50%;
-		transition: transform 0.3s ease;
-	}
-
-	.theme-toggle input:checked + .toggle-slider {
-		background: var(--accent);
-	}
-
-	.theme-toggle input:checked + .toggle-slider::before {
-		transform: translateX(20px);
-	}
-
-	.reconfigure-btn {
-		padding: 0.5rem 1rem;
-		background: rgba(0, 255, 136, 0.1);
-		border: 1px solid rgba(0, 255, 136, 0.3);
-		border-radius: 4px;
-		color: var(--accent);
-		font-size: 0.7rem;
-		cursor: pointer;
-		transition: all 0.15s ease;
-		margin-bottom: 0.25rem;
-	}
-
-	.reconfigure-btn:hover {
-		background: rgba(0, 255, 136, 0.2);
-	}
-
-	.btn-hint {
-		font-size: 0.6rem;
-		color: var(--text-muted);
-		margin: 0 0 0.75rem;
 	}
 
 	.reset-btn {

@@ -1,19 +1,15 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark';
 
 const THEME_KEY = 'situation-monitor-theme';
 
 function createThemeStore() {
-	// Get initial theme from localStorage or default to dark
-	const initialTheme: Theme = browser
-		? (localStorage.getItem(THEME_KEY) as Theme) || 'dark'
-		: 'dark';
-
+	// Force dark theme and override any stored value
+	const initialTheme: Theme = 'dark';
 	const { subscribe, set } = writable<Theme>(initialTheme);
 
-	// Apply theme to document
 	function applyTheme(theme: Theme) {
 		if (browser) {
 			document.documentElement.setAttribute('data-theme', theme);
@@ -21,23 +17,19 @@ function createThemeStore() {
 		}
 	}
 
-	// Initialize theme on load
 	if (browser) {
 		applyTheme(initialTheme);
 	}
 
 	return {
 		subscribe,
-		setTheme: (theme: Theme) => {
-			set(theme);
-			applyTheme(theme);
+		setTheme: () => {
+			set(initialTheme);
+			applyTheme(initialTheme);
 		},
 		toggle: () => {
-			const newTheme = browser && document.documentElement.getAttribute('data-theme') === 'light' 
-				? 'dark' 
-				: 'light';
-			set(newTheme);
-			applyTheme(newTheme);
+			set(initialTheme);
+			applyTheme(initialTheme);
 		}
 	};
 }

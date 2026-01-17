@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { Header, Dashboard } from '$lib/components/layout';
-	import { SettingsModal, MonitorFormModal, OnboardingModal } from '$lib/components/modals';
+	import { SettingsModal, MonitorFormModal } from '$lib/components/modals';
 	import {
 		NewsPanel,
 		MarketsPanel,
@@ -50,7 +50,6 @@
 	// Modal state
 	let settingsOpen = $state(false);
 	let monitorFormOpen = $state(false);
-	let onboardingOpen = $state(false);
 	let editingMonitor = $state<CustomMonitor | null>(null);
 
 	// Initial loading state
@@ -208,28 +207,9 @@
 	// Get ordered panel IDs (excluding map which is always first)
 	const orderedPanels = $derived($settings.order.filter(id => id !== 'map' && isPanelVisible(id)));
 
-	// Handle preset selection from onboarding
-	function handleSelectPreset(presetId: string) {
-		settings.applyPreset(presetId);
-		onboardingOpen = false;
-		// Refresh data after applying preset
-		handleRefresh();
-	}
-
-	// Show onboarding again (called from settings)
-	function handleReconfigure() {
-		settingsOpen = false;
-		settings.resetOnboarding();
-		onboardingOpen = true;
-	}
 
 	// Initial load
 	onMount(() => {
-		// Check if first visit
-		if (!settings.isOnboardingComplete()) {
-			onboardingOpen = true;
-		}
-
 		// Load initial data and track as refresh
 		async function initialLoad() {
 			refresh.startRefresh();
@@ -390,14 +370,12 @@
 	<SettingsModal
 		open={settingsOpen}
 		onClose={() => (settingsOpen = false)}
-		onReconfigure={handleReconfigure}
 	/>
 	<MonitorFormModal
 		open={monitorFormOpen}
 		onClose={() => (monitorFormOpen = false)}
 		editMonitor={editingMonitor}
 	/>
-	<OnboardingModal open={onboardingOpen} onSelectPreset={handleSelectPreset} />
 </div>
 {/if}
 
