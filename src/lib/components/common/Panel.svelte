@@ -106,13 +106,6 @@
 		overflow: visible;
 	}
 
-	.panel.draggable {
-		cursor: grab;
-	}
-
-	.panel.draggable:active {
-		cursor: grabbing;
-	}
 
 	.panel-header {
 		display: flex;

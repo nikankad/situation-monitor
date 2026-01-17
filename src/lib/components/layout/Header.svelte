@@ -59,7 +59,6 @@
 	<header class="header">
 		<div class="header-left">
 			<h1 class="logo">SITUATION MONITOR</h1>
-			<span class="local-time">{localTime}</span>
 		</div>
 
 		<div class="header-center"></div>
@@ -74,6 +73,10 @@
 </div>
 
 <div class="time-zones">
+	<div class="current-time-display">
+		<span class="current-time-label">Now</span>
+		<span class="current-time-value">{localTime}</span>
+	</div>
 	<div class="time-zones-list">
 		{#each timeZones as tz}
 			<div class="time-zone">
@@ -188,11 +191,37 @@
 	.time-zones {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		justify-content: flex-start;
 		padding: 0.3rem 1rem;
 		background: var(--bg);
 		border-top: 1px solid var(--border);
-		gap: 1rem;
+		gap: 2rem;
+	}
+
+	.current-time-display {
+		display: flex;
+		align-items: baseline;
+		gap: 0.3rem;
+		flex-shrink: 0;
+		padding-right: 1rem;
+		border-right: 1px solid var(--border);
+	}
+
+	.current-time-label {
+		font-size: 0.55rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+	}
+
+	.current-time-value {
+		font-size: 0.55rem;
+		font-weight: 500;
+		color: var(--text-primary);
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+		letter-spacing: 0.05em;
 	}
 
 	.time-zones-list {
@@ -208,7 +237,8 @@
 		display: flex;
 		align-items: baseline;
 		gap: 0.3rem;
-		font-size: 0.65rem;
+		font-size: 0.55rem;
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 	}
 
 	.refresh-status-subtle {
@@ -233,17 +263,21 @@
 		font-size: 0.55rem;
 		color: var(--text);
 		opacity: 1;
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 	}
 
 	.tz-label {
+		font-size: 0.55rem;
 		color: var(--text-muted);
 		font-weight: 600;
 		letter-spacing: 0.05em;
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 	}
 
 	.tz-time {
+		font-size: 0.55rem;
 		color: var(--text-secondary);
-		font-family: 'Courier New', monospace;
+		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 		font-weight: 500;
 	}
 

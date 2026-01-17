@@ -1615,19 +1615,20 @@
 		z-index: 50;
 		display: flex;
 		flex-direction: column;
-		width: 200px;
+		width: 140px;
 	}
 
 	.country-search {
-		padding: 0.5rem;
-		background: rgba(20, 20, 20, 0.95);
-		border: 1px solid #444;
+		padding: 0.35rem 0.5rem;
+		background: rgba(0, 0, 0, 0.75);
+		border: 1px solid #333;
 		border-radius: 4px;
-		color: #ddd;
-		font-size: 0.75rem;
+		color: #aaa;
+		font-size: 0.6rem;
 		outline: none;
 		width: 100%;
 		box-sizing: border-box;
+		backdrop-filter: blur(4px);
 	}
 
 	.country-search:focus {
@@ -1692,16 +1693,16 @@
 
 	.zoom-controls {
 		position: absolute;
-		bottom: 0.5rem;
+		bottom: 40px;
 		right: 0.5rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.2rem;
 	}
 
 	.zoom-btn {
-		width: 2.75rem;
-		height: 2.75rem;
+		width: 2rem;
+		height: 2rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1709,7 +1710,7 @@
 		border: 1px solid #333;
 		border-radius: 4px;
 		color: #aaa;
-		font-size: 1rem;
+		font-size: 0.9rem;
 		cursor: pointer;
 	}
 
