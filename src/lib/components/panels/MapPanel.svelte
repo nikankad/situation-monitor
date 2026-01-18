@@ -483,13 +483,13 @@
 
 		mapGroup = svg.append('g').attr('id', 'mapGroup');
 
-		// Setup zoom - disable scroll wheel, allow touch pinch and buttons
+		// Setup zoom - allow touchpad/wheel zoom, touch pinch, and buttons
 		zoom = d3
 			.zoom<SVGSVGElement, unknown>()
 			.scaleExtent([1, 6])
 			.filter((event) => {
-				// Block scroll wheel zoom (wheel events)
-				if (event.type === 'wheel') return false;
+				// Allow wheel events (touchpad and mouse wheel zoom)
+				if (event.type === 'wheel') return true;
 				// Allow touch events (pinch zoom on mobile)
 				if (event.type.startsWith('touch')) return true;
 				// Allow mouse drag for panning
