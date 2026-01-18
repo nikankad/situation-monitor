@@ -44,7 +44,6 @@
 		"vitest": "^2.0.0"
 	},
 	"dependencies": {
-		"@mlc-ai/web-llm": "^0.2.80",
 		"d3": "^7.9.0",
 		"topojson-client": "^3.1.0"
 	}

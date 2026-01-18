@@ -172,20 +172,6 @@
 		</section>
 
 		<section class="settings-section">
-			<h3 class="section-title">Features</h3>
-			<p class="section-desc">Enable experimental features</p>
-			<label class="feature-toggle">
-				<input
-					type="checkbox"
-					checked={$settings.features.newsSummarization}
-					onchange={() => settings.toggleFeature('newsSummarization')}
-				/>
-				<span class="feature-name">News Summarization</span>
-				<span class="feature-desc">Summarize news articles with local AI (TinyLlama)</span>
-			</label>
-		</section>
-
-		<section class="settings-section">
 			<h3 class="section-title">Dashboard</h3>
 			<button class="reset-btn" onclick={handleResetPanels}> Reset All Settings </button>
 		</section>
@@ -484,43 +470,6 @@
 		border-radius: 4px;
 		padding: 0.4rem;
 		margin: 0;
-	}
-
-	.feature-toggle {
-		display: flex;
-		flex-direction: column;
-		gap: 0.3rem;
-		padding: 0.5rem;
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
-
-	.feature-toggle:hover {
-		background: rgba(255, 255, 255, 0.05);
-		border-color: var(--accent);
-	}
-
-	.feature-toggle input {
-		display: none;
-	}
-
-	.feature-toggle input:checked + .feature-name {
-		color: var(--accent);
-	}
-
-	.feature-name {
-		font-size: 0.7rem;
-		color: var(--text-primary);
-		font-weight: 500;
-		transition: color 0.15s ease;
-	}
-
-	.feature-desc {
-		font-size: 0.55rem;
-		color: var(--text-muted);
 	}
 
 	.about-ai-note {

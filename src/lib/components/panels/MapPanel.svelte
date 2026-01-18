@@ -1041,11 +1041,11 @@
 			else if (alertRatio > 0.2) color = '#ffaa00'; // Orange for some alerts
 			else if (cluster.alertCount > 0) color = '#ffcc00'; // Yellow for any alerts
 
-			// Size based on count (min 5, max 14) - scaled inversely to zoom
-			const baseRadius = Math.min(14, Math.max(5, 4 + cluster.count * 0.5));
+			// Size based on count (min 4, max 10) - scaled inversely to zoom
+			const baseRadius = Math.min(10, Math.max(4, 4 + cluster.count * 0.25));
 			const radius = baseRadius * inverseScale;
 			const strokeWidth = 1 * inverseScale;
-			const fontSize = (baseRadius > 8 ? 7 : 5) * inverseScale;
+			const fontSize = (baseRadius > 6 ? 5 : 4) * inverseScale;
 
 			// Outer pulsing circle for high-alert clusters
 			if (cluster.alertCount >= 3) {
@@ -1080,7 +1080,8 @@
 				.append('text')
 				.attr('class', 'news-cluster')
 				.attr('x', x)
-				.attr('y', y + 3 * inverseScale)
+				.attr('y', y)
+			.attr('dominant-baseline', 'middle')
 				.attr('text-anchor', 'middle')
 				.attr('fill', '#fff')
 				.attr('font-size', `${fontSize}px`)
