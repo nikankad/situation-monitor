@@ -50,8 +50,7 @@ export const PRESETS: Record<string, Preset> = {
 			'greenland',
 			'iran',
 			'correlation',
-			'narrative',
-			'twitter'
+			'narrative'
 		]
 	},
 	minimal: {
@@ -85,8 +84,7 @@ export const PRESETS: Record<string, Preset> = {
 			'greenland',
 			'iran',
 			'correlation',
-			'narrative',
-			'twitter'
+			'narrative'
 		]
 	}
 };

@@ -21,8 +21,7 @@ export type PanelId =
 	| 'layoffs'
 	| 'correlation'
 	| 'narrative'
-	| 'fed'
-	| 'twitter';
+	| 'fed';
 
 export const PANELS: Record<PanelId, PanelConfig> = {
 	map: { name: 'Global Situation', priority: 1 },
@@ -38,8 +37,7 @@ export const PANELS: Record<PanelId, PanelConfig> = {
 	layoffs: { name: 'Layoffs Tracker', priority: 3 },
 	correlation: { name: 'Pattern Analysis', priority: 1 },
 	narrative: { name: 'Global Sentiment', priority: 1 },
-	fed: { name: 'Federal Reserve', priority: 1 },
-	twitter: { name: 'Twitter/X Feed', priority: 1 }
+	fed: { name: 'Federal Reserve', priority: 1 }
 };
 
 export const NON_DRAGGABLE_PANELS: PanelId[] = ['map'];

@@ -17,8 +17,7 @@
 		LayoffsPanel,
 		SituationPanel,
 		PrinterPanel,
-		FedPanel,
-		TwitterPanel
+		FedPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -62,7 +61,6 @@
 	let contracts = $state<Contract[]>([]);
 	let layoffs = $state<Layoff[]>([]);
 	let leaders = $state<WorldLeader[]>([]);
-	let tweets = $state<import('$lib/types').NewsItem[]>([]);
 	let leadersLoading = $state(false);
 
 	// Data fetching
@@ -160,16 +158,6 @@
 		}
 	}
 
-	async function loadTweets() {
-		if (!isPanelVisible('twitter')) return;
-		try {
-			// For now, use demo tweets until we have a working real API
-			tweets = generateDemoTweets();
-		} catch (error) {
-			console.error('Failed to load tweets:', error);
-		}
-	}
-
 	// Refresh handlers
 	async function handleRefresh() {
 		refresh.startRefresh();
@@ -231,8 +219,7 @@
 					loadMarkets(),
 					loadMiscData(),
 					loadWorldLeaders(),
-					loadFedData(),
-					loadTweets()
+					loadFedData()
 				]);
 				refresh.endRefresh();
 				initialLoading = false;
@@ -307,8 +294,6 @@
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}
 						<NarrativePanel news={$allNewsItems} />
-					{:else if panelId === 'twitter'}
-						<TwitterPanel {tweets} />
 					{:else if panelId === 'fed'}
 						<FedPanel />
 					{:else if panelId === 'venezuela'}
