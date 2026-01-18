@@ -16,7 +16,8 @@
 		'Bellingcat (𝕏)',
 		'War Monitor (𝕏)',
 		'Reuters (𝕏)',
-		'AP News (𝕏)'
+		'AP News (𝕏)',
+		'Elon Musk (𝕏)'
 	];
 
 	// Filter tweets from the news items
@@ -48,6 +49,8 @@
 				return '#FF8000';
 			case 'AP News (𝕏)':
 				return '#002868';
+			case 'Elon Musk (𝕏)':
+				return '#00A9FF';
 			default:
 				return '#666';
 		}
@@ -65,6 +68,8 @@
 				return '📰';
 			case 'AP News (𝕏)':
 				return '📡';
+			case 'Elon Musk (𝕏)':
+				return '🚀';
 			default:
 				return '𝕏';
 		}
