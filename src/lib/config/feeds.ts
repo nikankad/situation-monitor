@@ -21,7 +21,10 @@ export const FEEDS: Record<NewsCategory, FeedSource[]> = {
 		{ name: 'AP News', url: 'https://apnews.com/hub/world-news/feed' },
 		{ name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
 		{ name: 'Foreign Affairs', url: 'https://www.foreignaffairs.com/rss.xml' },
-		{ name: 'Foreign Policy', url: 'https://foreignpolicy.com/feed/' }
+		{ name: 'Foreign Policy', url: 'https://foreignpolicy.com/feed/' },
+		// Twitter/X political analysts
+		{ name: 'Reuters (𝕏)', url: 'https://nitter.net/Reuters/rss' },
+		{ name: 'AP News (𝕏)', url: 'https://nitter.net/AP/rss' }
 	],
 	tech: [
 		{ name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab' },
@@ -51,7 +54,11 @@ export const FEEDS: Record<NewsCategory, FeedSource[]> = {
 		{ name: 'CFR', url: 'https://www.cfr.org/rss.xml' },
 		{ name: 'RAND', url: 'https://www.rand.org/blog.xml' },
 		{ name: 'War on the Rocks', url: 'https://warontherocks.com/feed/' },
-		{ name: 'Carnegie Endowment', url: 'https://carnegieendowment.org/rss/solr/?fa=experts' }
+		{ name: 'Carnegie Endowment', url: 'https://carnegieendowment.org/rss/solr/?fa=experts' },
+		// Twitter/X accounts via Nitter RSS
+		{ name: 'ISW Analysis (𝕏)', url: 'https://nitter.net/TheStudyofWar/rss' },
+		{ name: 'Bellingcat (𝕏)', url: 'https://nitter.net/bellingcat/rss' },
+		{ name: 'War Monitor (𝕏)', url: 'https://nitter.net/WarMonitors/rss' }
 	]
 };
 
