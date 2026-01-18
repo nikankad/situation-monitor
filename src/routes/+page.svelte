@@ -17,7 +17,8 @@
 		LayoffsPanel,
 		SituationPanel,
 		PrinterPanel,
-		FedPanel
+		FedPanel,
+		TwitterPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -294,6 +295,8 @@
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}
 						<NarrativePanel news={$allNewsItems} />
+					{:else if panelId === 'twitter'}
+						<TwitterPanel news={$allNewsItems} />
 					{:else if panelId === 'fed'}
 						<FedPanel />
 					{:else if panelId === 'venezuela'}

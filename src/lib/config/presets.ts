@@ -51,7 +51,7 @@ export const PRESETS: Record<string, Preset> = {
 			'iran',
 			'correlation',
 			'narrative',
-			'narrative-tracking'
+			'twitter'
 		]
 	},
 	minimal: {
@@ -86,7 +86,7 @@ export const PRESETS: Record<string, Preset> = {
 			'iran',
 			'correlation',
 			'narrative',
-			'narrative-tracking'
+			'twitter'
 		]
 	}
 };
