@@ -1020,7 +1020,7 @@
 		
 		// Determine minimum cluster size based on zoom level
 		const showSmallClusters = scale >= ZOOM_THRESHOLDS.showSmallClusters;
-		const minClusterSize = showSmallClusters ? 1 : 10; // At low zoom, only show clusters with 10+ items - Increased from 5
+		const minClusterSize = showSmallClusters ? 1 : 2; // At low zoom, show clusters with 2+ items for better visibility
 
 		clusters.forEach((cluster) => {
 			// Skip small clusters when zoomed out
