@@ -29,7 +29,9 @@ export const FEEDS: Record<NewsCategory, FeedSource[]> = {
 	tech: [
 		{ name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab' },
 		{ name: 'MIT Tech Review', url: 'https://www.technologyreview.com/feed/' },
-		{ name: 'Wired', url: 'https://www.wired.com/feed/rss' }
+		{ name: 'Wired', url: 'https://www.wired.com/feed/rss' },
+		// Twitter/X tech influencers
+		{ name: 'Elon Musk (𝕏)', url: 'https://nitter.net/elonmusk/rss' }
 	],
 	finance: [
 		{ name: 'Reuters Business', url: 'https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best' },
