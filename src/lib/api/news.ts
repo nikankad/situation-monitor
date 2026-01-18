@@ -98,6 +98,7 @@ function parseRssXml(xml: string, sourceName: string, category: NewsCategory): N
 			alertKeyword: alert?.keyword || undefined,
 			region: detectRegion(title) ?? undefined,
 			topics: detectTopics(title),
+			description: description || undefined,
 			pubDate,
 			timestamp: pubDate ? new Date(pubDate).getTime() : Date.now()
 		});
