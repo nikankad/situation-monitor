@@ -98,7 +98,12 @@
 			}
 		}
 
-		return Array.from(clusterMap.values()).sort((a, b) => b.count - a.count);
+		return Array.from(clusterMap.values())
+			.map((cluster) => ({
+				...cluster,
+				items: cluster.items.sort((a, b) => b.timestamp - a.timestamp)
+			}))
+			.sort((a, b) => b.count - a.count);
 	});
 
 	// Live events for the ticker (most recent geo-located alerts)

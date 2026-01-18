@@ -58,14 +58,27 @@ export async function fetchWithProxy(url: string): Promise<Response> {
 		if (response.ok) {
 			return response;
 		}
-		// If we get an error response, try fallback
-		logger.warn('API', `Primary proxy failed (${response.status}), trying fallback`);
+		// If we get a 403 or 404, try fallback
+		if (response.status === 403 || response.status === 404) {
+			logger.warn('API', `Primary proxy returned ${response.status}, trying fallback for ${url}`);
+		} else if (!response.ok) {
+			logger.warn('API', `Primary proxy failed (${response.status}), trying fallback`);
+		}
 	} catch (error) {
 		logger.warn('API', 'Primary proxy error, trying fallback:', error);
 	}
 
 	// Fallback to secondary proxy
-	return fetch(CORS_PROXIES.fallback + encodedUrl);
+	try {
+		return await fetch(CORS_PROXIES.fallback + encodedUrl);
+	} catch (error) {
+		logger.error('API', 'Fallback proxy also failed:', error);
+		// Return a failed response rather than throwing
+		return new Response(JSON.stringify({ error: 'Failed to fetch with both proxies' }), {
+			status: 502,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 }
 
 /**
