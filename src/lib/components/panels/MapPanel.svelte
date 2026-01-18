@@ -98,7 +98,12 @@
 			}
 		}
 
-		return Array.from(clusterMap.values()).sort((a, b) => b.count - a.count);
+		return Array.from(clusterMap.values())
+			.map((cluster) => ({
+				...cluster,
+				items: cluster.items.sort((a, b) => b.timestamp - a.timestamp)
+			}))
+			.sort((a, b) => b.count - a.count);
 	});
 
 	// Live events for the ticker (most recent geo-located alerts)
@@ -1020,7 +1025,7 @@
 		
 		// Determine minimum cluster size based on zoom level
 		const showSmallClusters = scale >= ZOOM_THRESHOLDS.showSmallClusters;
-		const minClusterSize = showSmallClusters ? 1 : 10; // At low zoom, only show clusters with 10+ items - Increased from 5
+		const minClusterSize = showSmallClusters ? 1 : 2; // At low zoom, show clusters with 2+ items for better visibility
 
 		clusters.forEach((cluster) => {
 			// Skip small clusters when zoomed out
@@ -1580,8 +1585,8 @@
 										<span class="news-time">{timeAgo(item.timestamp)}</span>
 									</div>
 									<div class="news-item-title">{item.title}</div>
-									{#if item.snippet}
-										<div class="news-item-snippet">{item.snippet}</div>
+									{#if item.description}
+										<div class="news-item-snippet">{item.description.length > 150 ? item.description.substring(0, 150) + '...' : item.description}</div>
 									{/if}
 								</a>
 							{/each}
