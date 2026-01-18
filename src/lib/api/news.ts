@@ -55,6 +55,80 @@ interface GdeltResponse {
 }
 
 /**
+ * Parse RSS XML and extract items
+ */
+function parseRssXml(xml: string, sourceName: string, category: NewsCategory): NewsItem[] {
+	const items: NewsItem[] = [];
+
+	// Simple regex-based XML parsing for RSS items
+	const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+	const titleRegex = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i;
+	const linkRegex = /<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i;
+	const descRegex = /<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i;
+	const pubDateRegex = /<pubDate>([\s\S]*?)<\/pubDate>/i;
+
+	let match;
+	let index = 0;
+	while ((match = itemRegex.exec(xml)) !== null) {
+		const itemXml = match[1];
+
+		const titleMatch = titleRegex.exec(itemXml);
+		const linkMatch = linkRegex.exec(itemXml);
+		const descMatch = descRegex.exec(itemXml);
+		const pubDateMatch = pubDateRegex.exec(itemXml);
+
+		const title = titleMatch?.[1]?.trim() || '';
+		const link = linkMatch?.[1]?.trim() || '';
+		const description = descMatch?.[1]?.trim().replace(/<[^>]*>/g, '') || '';
+		const pubDate = pubDateMatch?.[1]?.trim() || '';
+
+		if (!title || !link) continue;
+
+		const alert = containsAlertKeyword(title);
+		const urlHash = link ? hashCode(link) : Math.random().toString(36).slice(2);
+		const uniqueId = `rss-${category}-${urlHash}-${index}`;
+
+		items.push({
+			id: uniqueId,
+			title,
+			link: link.startsWith('http') ? link : `https://${link}`,
+			source: sourceName,
+			category,
+			isAlert: !!alert,
+			alertKeyword: alert?.keyword || undefined,
+			region: detectRegion(title) ?? undefined,
+			topics: detectTopics(title),
+			pubDate,
+			timestamp: pubDate ? new Date(pubDate).getTime() : Date.now()
+		});
+
+		index++;
+	}
+
+	return items;
+}
+
+/**
+ * Fetch a single RSS feed
+ */
+async function fetchRssFeed(url: string, sourceName: string, category: NewsCategory): Promise<NewsItem[]> {
+	try {
+		logger.log('RSS Feed', `Fetching ${sourceName} from ${url}`);
+		const response = await fetchWithProxy(url);
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}`);
+		}
+
+		const xml = await response.text();
+		return parseRssXml(xml, sourceName, category);
+	} catch (error) {
+		logger.warn('RSS Feed', `Error fetching ${sourceName}:`, error);
+		return [];
+	}
+}
+
+/**
  * Transform GDELT article to NewsItem
  */
 function transformGdeltArticle(
@@ -87,7 +161,7 @@ function transformGdeltArticle(
 }
 
 /**
- * Fetch news for a specific category using GDELT via proxy
+ * Fetch news for a specific category using GDELT and RSS feeds
  */
 export async function fetchCategoryNews(category: NewsCategory): Promise<NewsItem[]> {
 	// Build query from category keywords (GDELT requires OR queries in parentheses)
@@ -99,6 +173,8 @@ export async function fetchCategoryNews(category: NewsCategory): Promise<NewsIte
 		ai: '("artificial intelligence" OR "machine learning" OR AI OR "autonomous weapons")',
 		intel: '(military OR "armed forces" OR conflict OR war OR "intelligence agency" OR espionage OR "security threat" OR geopolitics)'
 	};
+
+	let gdeltArticles: NewsItem[] = [];
 
 	try {
 		// Add English language filter and timespan for fresh results
@@ -118,31 +194,44 @@ export async function fetchCategoryNews(category: NewsCategory): Promise<NewsIte
 		const contentType = response.headers.get('content-type');
 		if (!contentType?.includes('application/json')) {
 			logger.warn('News API', `Non-JSON response for ${category}:`, contentType);
-			return [];
+		} else {
+			const text = await response.text();
+			let data: GdeltResponse;
+			try {
+				data = JSON.parse(text);
+			} catch {
+				logger.warn('News API', `Invalid JSON for ${category}:`, text.slice(0, 100));
+			}
+
+			if (data?.articles) {
+				// Get source names for this category
+				const categoryFeeds = FEEDS[category] || [];
+				const defaultSource = categoryFeeds[0]?.name || 'News';
+
+				gdeltArticles = data.articles.map((article, index) =>
+					transformGdeltArticle(article, category, article.domain || defaultSource, index)
+				);
+			}
 		}
-
-		const text = await response.text();
-		let data: GdeltResponse;
-		try {
-			data = JSON.parse(text);
-		} catch {
-			logger.warn('News API', `Invalid JSON for ${category}:`, text.slice(0, 100));
-			return [];
-		}
-
-		if (!data?.articles) return [];
-
-		// Get source names for this category
-		const categoryFeeds = FEEDS[category] || [];
-		const defaultSource = categoryFeeds[0]?.name || 'News';
-
-		return data.articles.map((article, index) =>
-			transformGdeltArticle(article, category, article.domain || defaultSource, index)
-		);
 	} catch (error) {
-		logger.error('News API', `Error fetching ${category}:`, error);
-		return [];
+		logger.error('News API', `Error fetching ${category} from GDELT:`, error);
 	}
+
+	// Fetch RSS feeds for this category
+	let rssArticles: NewsItem[] = [];
+	try {
+		const categoryFeeds = FEEDS[category] || [];
+		const rssFeedPromises = categoryFeeds.map((feed) =>
+			fetchRssFeed(feed.url, feed.name, category)
+		);
+		const rssResults = await Promise.all(rssFeedPromises);
+		rssArticles = rssResults.flat();
+	} catch (error) {
+		logger.warn('News API', `Error fetching RSS feeds for ${category}:`, error);
+	}
+
+	// Combine GDELT and RSS results, sorted by timestamp
+	return [...gdeltArticles, ...rssArticles].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 }
 
 /** All news categories in fetch order */
