@@ -1585,8 +1585,8 @@
 										<span class="news-time">{timeAgo(item.timestamp)}</span>
 									</div>
 									<div class="news-item-title">{item.title}</div>
-									{#if item.snippet}
-										<div class="news-item-snippet">{item.snippet}</div>
+									{#if item.description}
+										<div class="news-item-snippet">{item.description.length > 150 ? item.description.substring(0, 150) + '...' : item.description}</div>
 									{/if}
 								</a>
 							{/each}
