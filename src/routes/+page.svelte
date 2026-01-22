@@ -23,8 +23,7 @@
 		settings,
 		refresh,
 		allNewsItems,
-		customMarkets,
-		marketSettings
+		customMarkets
 	} from '$lib/stores';
 	import {
 		fetchAllNews,
@@ -32,11 +31,10 @@
 		fetchCustomMarkets,
 		fetchPolymarket,
 		fetchWhaleTransactions,
-		fetchGovContracts,
-		fetchWorldLeaders
+		fetchGovContracts
 	} from '$lib/api';
 	import type { Prediction, WhaleTransaction, Contract } from '$lib/api';
-	import type { CustomMonitor, WorldLeader } from '$lib/types';
+	import type { CustomMonitor } from '$lib/types';
 	import type { PanelId } from '$lib/config';
 
 	// Modal state
@@ -51,8 +49,6 @@
 	let predictions = $state<Prediction[]>([]);
 	let whales = $state<WhaleTransaction[]>([]);
 	let contracts = $state<Contract[]>([]);
-	let leaders = $state<WorldLeader[]>([]);
-	let leadersLoading = $state(false);
 
 	// Data fetching
 	async function loadNews() {
@@ -107,45 +103,16 @@
 
 	async function loadMiscData() {
 		try {
-			const [predictionsData, whalesData, contractsData, layoffsData] = await Promise.all([
+			const [predictionsData, whalesData, contractsData] = await Promise.all([
 				fetchPolymarket(),
 				fetchWhaleTransactions(),
-				fetchGovContracts(),
-				fetchLayoffs()
+				fetchGovContracts()
 			]);
 			predictions = predictionsData;
 			whales = whalesData;
 			contracts = contractsData;
-			layoffs = layoffsData;
 		} catch (error) {
 			console.error('Failed to load misc data:', error);
-		}
-	}
-
-	async function loadWorldLeaders() {
-		if (!isPanelVisible('leaders')) return;
-		leadersLoading = true;
-		try {
-			leaders = await fetchWorldLeaders();
-		} catch (error) {
-			console.error('Failed to load world leaders:', error);
-		} finally {
-			leadersLoading = false;
-		}
-	}
-
-	async function loadFedData() {
-		if (!isPanelVisible('fed')) return;
-		fedIndicators.setLoading(true);
-		fedNews.setLoading(true);
-		try {
-			const [indicatorsData, newsData] = await Promise.all([fetchFedIndicators(), fetchFedNews()]);
-			fedIndicators.setData(indicatorsData);
-			fedNews.setItems(newsData);
-		} catch (error) {
-			console.error('Failed to load Fed data:', error);
-			fedIndicators.setError(String(error));
-			fedNews.setError(String(error));
 		}
 	}
 
@@ -158,25 +125,6 @@
 		} catch (error) {
 			refresh.endRefresh([String(error)]);
 		}
-	}
-
-	// Monitor handlers
-	function handleCreateMonitor() {
-		editingMonitor = null;
-		monitorFormOpen = true;
-	}
-
-	function handleEditMonitor(monitor: CustomMonitor) {
-		editingMonitor = monitor;
-		monitorFormOpen = true;
-	}
-
-	function handleDeleteMonitor(id: string) {
-		monitors.deleteMonitor(id);
-	}
-
-	function handleToggleMonitor(id: string) {
-		monitors.toggleMonitor(id);
 	}
 
 	// Get panel visibility
@@ -208,9 +156,7 @@
 				await Promise.all([
 					loadNews(),
 					loadMarkets(),
-					loadMiscData(),
-					loadWorldLeaders(),
-					loadFedData()
+					loadMiscData()
 				]);
 				refresh.endRefresh();
 				initialLoading = false;
@@ -274,8 +220,6 @@
 						<MarketsPanel />
 					{:else if panelId === 'heatmap'}
 						<HeatmapPanel />
-					{:else if panelId === 'commodities'}
-						<CommoditiesPanel />
 					{:else if panelId === 'correlation'}
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}

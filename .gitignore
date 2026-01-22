@@ -39,3 +39,7 @@ Thumbs.db
 # Misc
 .cache/
 .parcel-cache/
+
+
+#claude 
+.claude

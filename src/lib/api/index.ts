@@ -12,11 +12,9 @@ export {
 	fetchCustomMarkets,
 	fetchAllMarkets
 } from './markets';
-export { fetchPolymarket, fetchWhaleTransactions, fetchGovContracts, fetchLayoffs } from './misc';
-export type { Prediction, WhaleTransaction, Contract, Layoff } from './misc';
+export { fetchPolymarket, fetchWhaleTransactions, fetchGovContracts } from './misc';
+export type { Prediction, WhaleTransaction, Contract } from './misc';
 export { fetchWorldLeaders } from './leaders';
-export { fetchFedIndicators, fetchFedNews, isFredConfigured } from './fred';
-export type { FedIndicators, EconomicIndicator, FedNewsItem, FedNewsType } from './fred';
 
 // GDELT Conflict Events API
 export {

@@ -24,13 +24,6 @@ export interface Contract {
 	amount: number;
 }
 
-export interface Layoff {
-	company: string;
-	count: number;
-	title: string;
-	date: string;
-}
-
 /**
  * Fetch Polymarket predictions
  * Note: Polymarket API requires authentication - currently returns empty data
@@ -52,13 +45,5 @@ export async function fetchWhaleTransactions(): Promise<WhaleTransaction[]> {
  * Note: Would use USASpending.gov API - currently returns empty data
  */
 export async function fetchGovContracts(): Promise<Contract[]> {
-	return [];
-}
-
-/**
- * Fetch layoffs data
- * Note: Would use layoffs.fyi API or similar - currently returns empty data
- */
-export async function fetchLayoffs(): Promise<Layoff[]> {
 	return [];
 }

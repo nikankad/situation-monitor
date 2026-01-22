@@ -80,16 +80,6 @@ export {
 	type RefreshState
 } from './refresh';
 
-// Fed store
-export {
-	fedIndicators,
-	fedNews,
-	isFedLoading,
-	fedVideos,
-	type FedIndicatorsState,
-	type FedNewsState
-} from './fed';
-
 // Selected country store
 export {
 	selectedCountry,

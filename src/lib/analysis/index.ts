@@ -33,13 +33,3 @@ export {
 	type MainCharacterEntry,
 	type MainCharacterResults
 } from './main-character';
-
-// Sentiment analysis
-export {
-	analyzeSentiment,
-	getSentimentColor,
-	getSentimentEmoji,
-	type SentimentType,
-	type HeadlineSentiment,
-	type SentimentSummary
-} from './sentiment';

@@ -70,15 +70,6 @@ export {
 	type Ocean
 } from './map';
 
-// Preset configuration
-export {
-	PRESETS,
-	PRESET_ORDER,
-	ONBOARDING_STORAGE_KEY,
-	PRESET_STORAGE_KEY,
-	type Preset
-} from './presets';
-
 // API configuration
 export { CORS_PROXY_URL, API_DELAYS, CACHE_TTLS, DEBUG, logger, FINNHUB_API_KEY, FINNHUB_BASE_URL } from './api';
 

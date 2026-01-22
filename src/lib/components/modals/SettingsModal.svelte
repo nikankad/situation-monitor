@@ -212,6 +212,13 @@
 				<p class="about-ai-note">
 					🤖 Built with the assistance of AI • Enhanced with real-time conflict monitoring
 				</p>
+				<div class="about-links">
+					<a href="https://github.com/nikankad/situation-monitor" target="_blank" rel="noopener noreferrer" class="link-text">
+						source code
+					</a>
+					<span class="link-divider">•</span>
+					<span>By: <a href="https://github.com/nikankad" target="_blank" rel="noopener noreferrer" class="link-text">Nikan</a></span>
+				</div>
 			</div>
 		</section>
 	</div>
@@ -478,5 +485,31 @@
 		text-align: center;
 		margin: 0;
 		opacity: 0.7;
+	}
+
+	.about-links {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--border);
+		font-size: 0.55rem;
+	}
+
+	.link-text {
+		color: var(--text-muted);
+		text-decoration: none;
+		transition: color 0.2s ease;
+		cursor: pointer;
+	}
+
+	.link-text:hover {
+		color: var(--accent);
+	}
+
+	.link-divider {
+		color: var(--border);
 	}
 </style>

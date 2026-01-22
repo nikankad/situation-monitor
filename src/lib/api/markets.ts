@@ -37,19 +37,6 @@ function hasFinnhubApiKey(): boolean {
 }
 
 /**
- * Finnhub candle response
- */
-interface FinnhubCandle {
-	c: number[]; // Close prices
-	h: number[]; // High prices
-	l: number[]; // Low prices
-	o: number[]; // Open prices
-	t: number[]; // Timestamps (Unix)
-	v: number[]; // Volumes
-	s: string; // Status ("ok" or "no_data")
-}
-
-/**
  * Generate price history from OHLC data for visualization
  * Creates a simplified representation of the day's price action
  */
