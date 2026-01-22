@@ -16,12 +16,9 @@ export type PanelId =
 	| 'heatmap'
 	| 'markets'
 	| 'polymarket'
-	| 'printer'
 	| 'contracts'
-	| 'layoffs'
 	| 'correlation'
-	| 'narrative'
-	| 'fed';
+	| 'narrative';
 
 export const PANELS: Record<PanelId, PanelConfig> = {
 	map: { name: 'Global Situation', priority: 1 },
@@ -32,12 +29,9 @@ export const PANELS: Record<PanelId, PanelConfig> = {
 	heatmap: { name: 'Sector Heatmap', priority: 1 },
 	markets: { name: 'Markets', priority: 1 },
 	polymarket: { name: 'Polymarket', priority: 2 },
-	printer: { name: 'Money Printer', priority: 2 },
 	contracts: { name: 'Gov Contracts', priority: 3 },
-	layoffs: { name: 'Layoffs Tracker', priority: 3 },
 	correlation: { name: 'Pattern Analysis', priority: 1 },
-	narrative: { name: 'Global Sentiment', priority: 1 },
-	fed: { name: 'Federal Reserve', priority: 1 }
+	narrative: { name: 'Global Sentiment', priority: 1 }
 };
 
 export const NON_DRAGGABLE_PANELS: PanelId[] = ['map'];

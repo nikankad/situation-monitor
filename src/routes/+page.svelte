@@ -14,10 +14,7 @@
 		WhalePanel,
 		PolymarketPanel,
 		ContractsPanel,
-		LayoffsPanel,
-		SituationPanel,
-		PrinterPanel,
-		FedPanel
+		SituationPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -26,8 +23,6 @@
 		settings,
 		refresh,
 		allNewsItems,
-		fedIndicators,
-		fedNews,
 		customMarkets,
 		marketSettings
 	} from '$lib/stores';
@@ -38,12 +33,9 @@
 		fetchPolymarket,
 		fetchWhaleTransactions,
 		fetchGovContracts,
-		fetchLayoffs,
-		fetchWorldLeaders,
-		fetchFedIndicators,
-		fetchFedNews
+		fetchWorldLeaders
 	} from '$lib/api';
-	import type { Prediction, WhaleTransaction, Contract, Layoff } from '$lib/api';
+	import type { Prediction, WhaleTransaction, Contract } from '$lib/api';
 	import type { CustomMonitor, WorldLeader } from '$lib/types';
 	import type { PanelId } from '$lib/config';
 
@@ -59,7 +51,6 @@
 	let predictions = $state<Prediction[]>([]);
 	let whales = $state<WhaleTransaction[]>([]);
 	let contracts = $state<Contract[]>([]);
-	let layoffs = $state<Layoff[]>([]);
 	let leaders = $state<WorldLeader[]>([]);
 	let leadersLoading = $state(false);
 
@@ -294,8 +285,6 @@
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}
 						<NarrativePanel news={$allNewsItems} />
-					{:else if panelId === 'fed'}
-						<FedPanel />
 					{:else if panelId === 'venezuela'}
 						<SituationPanel
 							panelId="venezuela"
@@ -356,10 +345,6 @@
 						<PolymarketPanel {predictions} />
 					{:else if panelId === 'contracts'}
 						<ContractsPanel {contracts} />
-					{:else if panelId === 'layoffs'}
-						<LayoffsPanel {layoffs} />
-					{:else if panelId === 'printer'}
-						<PrinterPanel />
 					{/if}
 				</div>
 			{/each}
