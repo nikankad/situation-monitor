@@ -190,7 +190,7 @@ export function analyzeCorrelations(allNews: NewsItem[]): CorrelationResults | n
 
 		if (score >= 15) {
 			const confidence = Math.min(95, Math.round(score * 1.5));
-			const prediction = getPrediction(topic, count);
+			const prediction = generateDynamicPrediction(topic, count, sources.length, delta);
 			const level: PredictiveSignal['level'] =
 				confidence >= 70 ? 'high' : confidence >= 50 ? 'medium' : 'low';
 
@@ -217,25 +217,83 @@ export function analyzeCorrelations(allNews: NewsItem[]): CorrelationResults | n
 }
 
 /**
- * Generate prediction text based on topic and count
+ * Generate dynamic prediction text based on actual data patterns
+ * Analyzes mention count, source diversity, and momentum to create intelligent predictions
  */
-function getPrediction(topic: CorrelationTopic, count: number): string {
-	if (topic.id === 'tariffs' && count >= 4) {
-		return 'Market volatility likely in next 24-48h';
-	}
-	if (topic.id === 'fed-rates') {
-		return 'Expect increased financial sector coverage';
-	}
-	if (topic.id.includes('china') || topic.id.includes('russia')) {
-		return 'Geopolitical escalation narrative forming';
-	}
-	if (topic.id === 'layoffs') {
-		return 'Employment concerns may dominate news cycle';
-	}
+function generateDynamicPrediction(
+	topic: CorrelationTopic,
+	count: number,
+	sourceCount: number,
+	delta: number
+): string {
+	const mentionLevel = count >= 10 ? 'explosive' : count >= 7 ? 'rapid' : count >= 4 ? 'growing' : 'emerging';
+	const sourceLevel =
+		sourceCount >= 6 ? 'widespread' : sourceCount >= 4 ? 'broad' : sourceCount >= 2 ? 'multi-source' : 'focused';
+	const momentumLevel = delta >= 5 ? 'accelerating' : delta >= 3 ? 'building' : delta >= 1 ? 'increasing' : 'stable';
+
+	// Category-based prediction templates
 	if (topic.category === 'Conflict') {
-		return 'Breaking developments likely within hours';
+		if (delta >= 4 && sourceCount >= 4) {
+			return `${mentionLevel.charAt(0).toUpperCase() + mentionLevel.slice(1)} escalation with ${sourceLevel} coverage - expect major developments`;
+		}
+		if (count >= 8) {
+			return 'Conflict narrative spreading rapidly across sources';
+		}
+		return 'Geopolitical tension building with increased reporting';
 	}
-	return 'Topic gaining mainstream traction';
+
+	if (topic.category === 'Economic') {
+		if (count >= 8 && sourceCount >= 5) {
+			return `${mentionLevel} economic impact being reported by ${sourceCount}+ sources`;
+		}
+		if (delta >= 4) {
+			return `${momentumLevel.charAt(0).toUpperCase() + momentumLevel.slice(1)} economic concern with ${mentionLevel} media attention`;
+		}
+		return `${sourceLevel} economic coverage with ${mentionLevel} trend`;
+	}
+
+	if (topic.category === 'Technology') {
+		if (delta >= 5) {
+			return `Tech story ${mentionLevel} with ${sourceLevel} adoption in news cycle`;
+		}
+		if (sourceCount >= 6) {
+			return `Major tech narrative forming - ${sourceCount} independent sources covering`;
+		}
+		return `${mentionLevel} technology trend with ${sourceLevel} coverage`;
+	}
+
+	if (topic.category === 'Policy') {
+		if (count >= 10) {
+			return `Policy development dominating conversation across ${sourceCount} major sources`;
+		}
+		if (delta >= 4) {
+			return `${momentumLevel.charAt(0).toUpperCase() + momentumLevel.slice(1)} policy impact with ${mentionLevel} reporting`;
+		}
+		return `Policy narrative ${mentionLevel} with focus from ${sourceCount} distinct sources`;
+	}
+
+	// Generic predictions based on data patterns
+	if (delta >= 5 && sourceCount >= 5) {
+		return `${mentionLevel} story ${momentumLevel} across ${sourceLevel} sources`;
+	}
+
+	if (count >= 10 && sourceCount >= 6) {
+		return `Major narrative with ${count} mentions from ${sourceCount} independent sources`;
+	}
+
+	if (delta >= 4) {
+		return `Rapidly ${momentumLevel} topic gaining attention across media`;
+	}
+
+	if (sourceCount >= 5) {
+		return `${sourceLevel} consensus forming around this topic`;
+	}
+
+	if (count >= 8) {
+		return `${mentionLevel} topic with sustained media coverage`;
+	}
+
+	return `${mentionLevel} pattern forming with ${sourceLevel} coverage`;
 }
 
 /**
