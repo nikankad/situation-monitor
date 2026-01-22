@@ -5,11 +5,10 @@
 
 	interface Props {
 		news?: NewsItem[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { news = [], loading = false, error = null }: Props = $props();
+	let { news = [], error = null }: Props = $props();
 
 	const analysis = $derived(analyzeCorrelations(news));
 
@@ -46,8 +45,8 @@
 	}
 </script>
 
-<Panel id="correlation" title="Pattern Analysis" {loading} {error}>
-	{#if news.length === 0 && !loading && !error}
+<Panel id="correlation" title="Pattern Analysis" {error}>
+	{#if news.length === 0 && !error}
 		<div class="empty-state">Insufficient data for analysis</div>
 	{:else if analysis}
 		<div class="correlation-content">

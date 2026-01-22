@@ -14,11 +14,10 @@
 		panelId: PanelId;
 		config: SituationConfig;
 		news?: NewsItem[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { panelId, config, news = [], loading = false, error = null }: Props = $props();
+	let { panelId, config, news = [], error = null }: Props = $props();
 
 	// Calculate threat level based on news
 	const threatLevel = $derived(calculateThreatLevel(news, config.criticalKeywords));
@@ -56,7 +55,6 @@
 	title={config.title}
 	status={threatLevel.text}
 	statusClass={threatLevel.level}
-	{loading}
 	{error}
 >
 	<div class="situation-content">
@@ -65,7 +63,7 @@
 			<div class="situation-subtitle">{config.subtitle}</div>
 		</div>
 
-		{#if news.length === 0 && !loading && !error}
+		{#if news.length === 0 && !error}
 			<div class="empty-state">No recent news</div>
 		{:else}
 			<div class="situation-news">

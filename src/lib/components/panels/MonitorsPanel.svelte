@@ -7,7 +7,6 @@
 	interface Props {
 		monitors?: CustomMonitor[];
 		matches?: MonitorMatch[];
-		loading?: boolean;
 		error?: string | null;
 		onCreateMonitor?: () => void;
 		onEditMonitor?: (monitor: CustomMonitor) => void;
@@ -18,7 +17,6 @@
 	let {
 		monitors = [],
 		matches = [],
-		loading = false,
 		error = null,
 		onCreateMonitor,
 		onEditMonitor,
@@ -34,9 +32,9 @@
 	}
 </script>
 
-<Panel id="monitors" title="Custom Monitors" {loading} {error}>
+<Panel id="monitors" title="Custom Monitors" {error}>
 	<div class="monitors-content">
-		{#if monitors.length === 0 && !loading && !error}
+		{#if monitors.length === 0 && !error}
 			<div class="empty-state">
 				<p>No monitors configured</p>
 				{#if onCreateMonitor}

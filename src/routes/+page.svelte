@@ -244,11 +244,6 @@
 				<div class="radar-sweep"></div>
 			</div>
 			<h1 class="loading-title">SITUATION MONITOR</h1>
-			<div class="loading-dots">
-				<span class="dot"></span>
-				<span class="dot"></span>
-				<span class="dot"></span>
-			</div>
 		</div>
 	</div>
 {:else}
@@ -489,39 +484,6 @@
 	}
 
 	
-	.loading-dots {
-		display: flex;
-		justify-content: center;
-		gap: 0.5rem;
-	}
-
-	.loading-dots .dot {
-		width: 8px;
-		height: 8px;
-		background: var(--accent);
-		border-radius: 50%;
-		animation: pulse-dot 1.4s ease-in-out infinite;
-		box-shadow: 0 0 8px var(--accent);
-	}
-
-	.loading-dots .dot:nth-child(2) {
-		animation-delay: 0.2s;
-	}
-
-	.loading-dots .dot:nth-child(3) {
-		animation-delay: 0.4s;
-	}
-
-	@keyframes pulse-dot {
-		0%, 100% {
-			opacity: 0.3;
-			transform: scale(0.8);
-		}
-		50% {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
 
 	.app {
 		min-height: 100vh;

@@ -11,11 +11,10 @@
 
 	interface Props {
 		predictions?: Prediction[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { predictions = [], loading = false, error = null }: Props = $props();
+	let { predictions = [], error = null }: Props = $props();
 
 	const count = $derived(predictions.length);
 
@@ -28,8 +27,8 @@
 	}
 </script>
 
-<Panel id="polymarket" title="Polymarket" {loading} {error}>
-	{#if predictions.length === 0 && !loading && !error}
+<Panel id="polymarket" title="Polymarket" {error}>
+	{#if predictions.length === 0 && !error}
 		<div class="empty-state">No predictions available</div>
 	{:else}
 		<div class="predictions-list">

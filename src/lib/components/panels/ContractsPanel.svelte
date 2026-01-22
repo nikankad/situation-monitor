@@ -10,11 +10,10 @@
 
 	interface Props {
 		contracts?: Contract[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { contracts = [], loading = false, error = null }: Props = $props();
+	let { contracts = [], error = null }: Props = $props();
 
 	const count = $derived(contracts.length);
 
@@ -26,8 +25,8 @@
 	}
 </script>
 
-<Panel id="contracts" title="Gov Contracts" {loading} {error}>
-	{#if contracts.length === 0 && !loading && !error}
+<Panel id="contracts" title="Gov Contracts" {error}>
+	{#if contracts.length === 0 && !error}
 		<div class="empty-state">No contracts available</div>
 	{:else}
 		<div class="contracts-list">

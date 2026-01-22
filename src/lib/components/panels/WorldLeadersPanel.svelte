@@ -6,11 +6,10 @@
 
 	interface Props {
 		leaders?: WorldLeader[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { leaders = [], loading = false, error = null }: Props = $props();
+	let { leaders = [], error = null }: Props = $props();
 
 	const count = $derived(leaders.length);
 
@@ -38,8 +37,8 @@
 	}
 </script>
 
-<Panel id="leaders" title="World Leaders" {loading} {error}>
-	{#if leaders.length === 0 && !loading && !error}
+<Panel id="leaders" title="World Leaders" {error}>
+	{#if leaders.length === 0 && !error}
 		<div class="empty-state">No leaders data available</div>
 	{:else}
 		<div class="leaders-grid">

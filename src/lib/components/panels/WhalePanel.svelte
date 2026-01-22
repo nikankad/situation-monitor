@@ -10,11 +10,10 @@
 
 	interface Props {
 		whales?: WhaleTransaction[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { whales = [], loading = false, error = null }: Props = $props();
+	let { whales = [], error = null }: Props = $props();
 
 	const count = $derived(whales.length);
 
@@ -29,8 +28,8 @@
 	}
 </script>
 
-<Panel id="whales" title="Whale Watch" {loading} {error}>
-	{#if whales.length === 0 && !loading && !error}
+<Panel id="whales" title="Whale Watch" {error}>
+	{#if whales.length === 0 && !error}
 		<div class="empty-state">No whale transactions detected</div>
 	{:else}
 		<div class="whale-list">

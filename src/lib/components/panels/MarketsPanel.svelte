@@ -12,7 +12,6 @@
 	const commoditiesItems = $derived($commodities.items);
 	const cryptoItems = $derived($crypto.items);
 	const customItems = $derived($custom.items);
-	const loading = $derived($indices.loading || $sectors.loading || $commodities.loading || $crypto.loading || $custom.loading);
 	const error = $derived($indices.error || $sectors.error || $commodities.error || $crypto.error || $custom.error);
 
 	// Create maps for quick lookup of names by symbol
@@ -98,7 +97,7 @@
 	const count = $derived(allOrderedItems().length);
 </script>
 
-<Panel id="markets" title="Markets" {loading} {error}>
+<Panel id="markets" title="Markets" {error}>
 	{#snippet actions()}
 		<button
 			class="settings-btn"
@@ -108,7 +107,7 @@
 			⚙
 		</button>
 	{/snippet}
-	{#if allOrderedItems().length === 0 && !loading && !error}
+	{#if allOrderedItems().length === 0 && !error}
 		<div class="empty-state">No market data available</div>
 	{:else}
 		<div class="markets-list">

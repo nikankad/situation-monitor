@@ -1,6 +1,6 @@
 # Situation Monitor
 
-A comprehensive real-time geopolitical intelligence platform that aggregates, analyzes, and visualizes global conflicts, developments, news, market data, and geopolitical events. Designed for analysts, researchers, traders, and anyone who needs to stay informed about world events as they unfold.
+A comprehensive real-time geopolitical intelligence platform that aggregates, analyzes, and visualizes global conflicts, developments, news, market data, and geopolitical events. This is a personal OSINT dashboard built for educational purposes, designed for analysts, researchers, traders, and anyone who needs to stay informed about world events as they unfold.
 
 ![Situation Monitor Dashboard](static/ss.png)
 

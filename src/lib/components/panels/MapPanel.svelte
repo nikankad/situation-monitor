@@ -40,11 +40,10 @@
 	interface Props {
 		monitors?: CustomMonitor[];
 		news?: NewsItem[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { monitors = [], news = [], loading = false, error = null }: Props = $props();
+	let { monitors = [], news = [], error = null }: Props = $props();
 
 	// Geo-located news with coordinates
 	interface GeoNews extends NewsItem {
@@ -1252,7 +1251,7 @@
 	});
 </script>
 
-<Panel id="map" title="World Map" {loading} {error}>
+<Panel id="map" title="World Map" {error}>
 	<div class="map-container" bind:this={mapContainer}>
 		<svg class="map-svg"></svg>
 		{#if tooltipVisible && tooltipContent}

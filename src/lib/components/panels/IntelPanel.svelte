@@ -19,7 +19,7 @@
 	}
 
 	// Destructure store state for cleaner access
-	const { items: storeItems, loading, error } = $derived($intelNews);
+	const { items: storeItems, error } = $derived($intelNews);
 
 	// Infer source type from source name
 	function inferSourceType(source: string): SourceType {
@@ -63,8 +63,8 @@
 	}
 </script>
 
-<Panel id="intel" title="Intel Feed" {loading} {error}>
-	{#if items.length === 0 && !loading && !error}
+<Panel id="intel" title="Intel Feed" {error}>
+	{#if items.length === 0 && !error}
 		<div class="empty-state">No intel available</div>
 	{:else}
 		<div class="intel-list">

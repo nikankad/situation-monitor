@@ -8,7 +8,6 @@
 		count?: number | string | null;
 		status?: string;
 		statusClass?: string;
-		loading?: boolean;
 		error?: string | null;
 		draggable?: boolean;
 		collapsible?: boolean;
@@ -25,7 +24,6 @@
 		count = null,
 		status = '',
 		statusClass = '',
-		loading = false,
 		error = null,
 		draggable = true,
 		collapsible = false,
@@ -53,9 +51,6 @@
 			{#if status}
 				<span class="panel-status {statusClass}">{status}</span>
 			{/if}
-			{#if loading}
-				<span class="panel-loading"></span>
-			{/if}
 		</div>
 
 		{#if header}
@@ -77,8 +72,6 @@
 	<div class="panel-content" class:hidden={collapsed}>
 		{#if error}
 			<div class="error-msg">{error}</div>
-		{:else if loading}
-			<div class="loading-msg">Loading...</div>
 		{:else}
 			{@render children()}
 		{/if}
@@ -162,21 +155,6 @@
 	.panel-status.critical {
 		color: #ff4444;
 		background: rgba(255, 68, 68, 0.15);
-	}
-
-	.panel-loading {
-		width: 12px;
-		height: 12px;
-		border: 2px solid var(--border);
-		border-top-color: var(--accent);
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	.panel-actions {

@@ -3,7 +3,6 @@
 	import { commodities, vix } from '$lib/stores';
 
 	const items = $derived($commodities.items);
-	const loading = $derived($commodities.loading);
 	const error = $derived($commodities.error);
 
 	// VIX status for panel header
@@ -30,10 +29,9 @@
 	title="Commodities / VIX"
 	status={vixStatus}
 	statusClass={vixClass}
-	{loading}
 	{error}
 >
-	{#if items.length === 0 && !loading && !error}
+	{#if items.length === 0 && !error}
 		<div class="empty-state">No commodity data available</div>
 	{:else}
 		<div class="commodities-list">

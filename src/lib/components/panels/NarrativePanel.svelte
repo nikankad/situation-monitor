@@ -5,11 +5,10 @@
 
 	interface Props {
 		news?: NewsItem[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { news = [], loading = false, error = null }: Props = $props();
+	let { news = [], error = null }: Props = $props();
 
 	const sentimentAnalysis = $derived(analyzeSentiment(news, 30));
 
@@ -44,8 +43,8 @@
 	}
 </script>
 
-<Panel id="narrative" title="Global Sentiment" {loading} {error}>
-	{#if news.length === 0 && !loading && !error}
+<Panel id="narrative" title="Global Sentiment" {error}>
+	{#if news.length === 0 && !error}
 		<div class="empty-state">Insufficient data for sentiment analysis</div>
 	{:else if sentimentAnalysis}
 		<div class="sentiment-content">

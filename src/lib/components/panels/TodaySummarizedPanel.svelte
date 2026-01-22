@@ -5,11 +5,10 @@
 
 	interface Props {
 		news?: NewsItem[];
-		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { news = [], loading = false, error = null }: Props = $props();
+	let { news = [], error = null }: Props = $props();
 
 	// WebLLM state
 	let engine: webllm.MLCEngine | null = null;
@@ -183,8 +182,8 @@ Summary:`;
 	});
 </script>
 
-<Panel id="today-summary" title="Today Summarized" {loading} {error}>
-	{#if news.length === 0 && !loading && !error}
+<Panel id="today-summary" title="Today Summarized" {error}>
+	{#if news.length === 0 && !error}
 		<div class="empty-state">No news data available</div>
 	{:else if geopoliticalSummary}
 		<div class="summary-content">

@@ -3,12 +3,11 @@
 	import { sectors } from '$lib/stores';
 
 	const items = $derived($sectors.items);
-	const loading = $derived($sectors.loading);
 	const error = $derived($sectors.error);
 </script>
 
-<Panel id="heatmap" title="Sector Heatmap" {loading} {error}>
-	{#if items.length === 0 && !loading && !error}
+<Panel id="heatmap" title="Sector Heatmap" {error}>
+	{#if items.length === 0 && !error}
 		<div class="empty-state">No sector data available</div>
 	{:else}
 		<div class="heatmap-grid">

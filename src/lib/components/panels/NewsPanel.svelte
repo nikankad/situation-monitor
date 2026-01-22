@@ -15,7 +15,6 @@
 	let { category, panelId, title, showCountryNews = false }: Props = $props();
 
 	let countryNewsItems = $state<import('$lib/types').NewsItem[]>([]);
-	let countryNewsLoading = $state(false);
 	let countryNewsError = $state<string | null>(null);
 
 	// Get the appropriate derived store based on category
@@ -30,7 +29,6 @@
 
 	const categoryStore = $derived(categoryStores[category]);
 	const categoryItems = $derived($categoryStore.items);
-	const categoryLoading = $derived($categoryStore.loading);
 	const categoryError = $derived($categoryStore.error);
 
 	// Load country news when country is selected (only if this panel shows country news)
@@ -46,15 +44,12 @@
 	});
 
 	async function loadCountryNews(countryName: string) {
-		countryNewsLoading = true;
 		countryNewsError = null;
 		try {
 			countryNewsItems = await fetchCountryNews(countryName);
 		} catch (error) {
 			countryNewsError = 'Failed to load country news';
 			console.error('Error fetching country news:', error);
-		} finally {
-			countryNewsLoading = false;
 		}
 	}
 
@@ -63,15 +58,14 @@
 	const rawItems = $derived(shouldShowCountryNews ? countryNewsItems : categoryItems);
 	// Sort by timestamp (most recent first)
 	const items = $derived([...rawItems].sort((a, b) => b.timestamp - a.timestamp));
-	const loading = $derived(shouldShowCountryNews ? countryNewsLoading : categoryLoading);
 	const error = $derived(shouldShowCountryNews ? countryNewsError : categoryError);
 	const count = $derived(items.length);
 	const displayTitle = $derived(shouldShowCountryNews ? `News: ${$selectedCountry.name}` : title);
 
 </script>
 
-<Panel id={panelId} title={displayTitle} {loading} {error}>
-	{#if items.length === 0 && !loading && !error}
+<Panel id={panelId} title={displayTitle} {error}>
+	{#if items.length === 0 && !error}
 		<div class="empty-state">{shouldShowCountryNews ? `No news available for ${$selectedCountry.name}` : 'No news available'}</div>
 	{:else}
 		<div class="news-list">
