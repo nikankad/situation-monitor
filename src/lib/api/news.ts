@@ -5,7 +5,7 @@
 import { FEEDS } from '$lib/config/feeds';
 import type { NewsItem, NewsCategory } from '$lib/types';
 import { containsAlertKeyword, detectRegion, detectTopics } from '$lib/config/keywords';
-import { fetchWithProxy, API_DELAYS, logger } from '$lib/config/api';
+import { fetchWithProxy, logger } from '$lib/config/api';
 
 /**
  * Simple hash function to generate unique IDs from URLs
@@ -18,13 +18,6 @@ function hashCode(str: string): string {
 		hash = hash & hash; // Convert to 32bit integer
 	}
 	return Math.abs(hash).toString(36);
-}
-
-/**
- * Delay helper
- */
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -197,7 +190,7 @@ export async function fetchCategoryNews(category: NewsCategory): Promise<NewsIte
 			logger.warn('News API', `Non-JSON response for ${category}:`, contentType);
 		} else {
 			const text = await response.text();
-			let data: GdeltResponse;
+			let data: GdeltResponse | undefined;
 			try {
 				data = JSON.parse(text);
 			} catch {
@@ -244,19 +237,24 @@ function createEmptyNewsResult(): Record<NewsCategory, NewsItem[]> {
 }
 
 /**
- * Fetch all news - sequential with delays to avoid rate limiting
+ * Fetch all news - parallel fetching for speed
  */
 export async function fetchAllNews(): Promise<Record<NewsCategory, NewsItem[]>> {
 	const result = createEmptyNewsResult();
 
-	for (let i = 0; i < NEWS_CATEGORIES.length; i++) {
-		const category = NEWS_CATEGORIES[i];
+	// Fetch all categories in parallel for speed
+	const categoryPromises = NEWS_CATEGORIES.map((category) =>
+		fetchCategoryNews(category).then((items) => ({
+			category,
+			items
+		}))
+	);
 
-		if (i > 0) {
-			await delay(API_DELAYS.betweenCategories);
-		}
+	const results = await Promise.all(categoryPromises);
 
-		result[category] = await fetchCategoryNews(category);
+	// Map results back to the result object
+	for (const { category, items } of results) {
+		result[category] = items;
 	}
 
 	return result;

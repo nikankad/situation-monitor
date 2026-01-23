@@ -33,6 +33,7 @@
 		fetchWhaleTransactions,
 		fetchGovContracts
 	} from '$lib/api';
+	import { loadCachedNews, loadCachedMarkets, saveCachedNews, saveCachedMarkets } from '$lib/services/sessionCache';
 	import type { Prediction, WhaleTransaction, Contract } from '$lib/api';
 	import type { CustomMonitor } from '$lib/types';
 	import type { PanelId } from '$lib/config';
@@ -61,6 +62,8 @@
 			Object.entries(data).forEach(([category, items]) => {
 				news.setItems(category as keyof typeof data, items);
 			});
+			// Save to cache for next visit
+			saveCachedNews(data);
 		} catch (error) {
 			categories.forEach((cat) => news.setError(cat, String(error)));
 		}
@@ -75,7 +78,16 @@
 			markets.setCrypto(data.crypto);
 
 			// Also fetch custom markets if any are configured
-			await loadCustomMarkets();
+			const customMarketsData = await loadCustomMarkets();
+
+			// Save to cache for next visit
+			saveCachedMarkets({
+				indices: data.indices,
+				sectors: data.sectors,
+				commodities: data.commodities,
+				crypto: data.crypto,
+				custom: customMarketsData
+			});
 		} catch (error) {
 			console.error('Failed to load markets:', error);
 		}
@@ -90,14 +102,17 @@
 				name
 			}));
 
+			let customData: typeof import('$lib/api').MarketItem[] = [];
 			if (customSymbols.length > 0) {
-				const customData = await fetchCustomMarkets(customSymbols);
+				customData = await fetchCustomMarkets(customSymbols);
 				markets.setCustom(customData);
 			} else {
 				markets.setCustom([]);
 			}
+			return customData;
 		} catch (error) {
 			console.error('Failed to load custom markets:', error);
+			return [];
 		}
 	}
 
@@ -147,25 +162,62 @@
 	const orderedPanels = $derived($settings.order.filter(id => id !== 'map' && isPanelVisible(id)));
 
 
-	// Initial load
+	// Initial load with multi-stage approach and session caching
 	onMount(() => {
-		// Load initial data and track as refresh
+		// Load initial data with stages
 		async function initialLoad() {
 			refresh.startRefresh();
+			const errors: string[] = [];
+
 			try {
-				await Promise.all([
-					loadNews(),
-					loadMarkets(),
-					loadMiscData()
-				]);
-				refresh.endRefresh();
+				// Try to load from cache first for instant display
+				const cachedNews = loadCachedNews();
+				const cachedMarkets = loadCachedMarkets();
+
+				if (cachedNews) {
+					Object.entries(cachedNews.data).forEach(([category, items]) => {
+						news.setItems(category as any, items);
+					});
+				}
+
+				if (cachedMarkets) {
+					markets.setIndices(cachedMarkets.data.indices);
+					markets.setSectors(cachedMarkets.data.sectors);
+					markets.setCommodities(cachedMarkets.data.commodities);
+					markets.setCrypto(cachedMarkets.data.crypto);
+					markets.setCustom(cachedMarkets.data.custom);
+				}
+
+				// Show UI immediately with cached (or empty) data
 				initialLoading = false;
+
+				// Critical stage: news + markets (fetch fresh data in background)
+				try {
+					await Promise.all([loadNews(), loadMarkets()]);
+				} catch (error) {
+					errors.push(`Critical stage error: ${String(error)}`);
+				}
+
+				// Secondary stage: defer misc data to after UI is visible
+				// Use a small delay to let rendering complete first
+				setTimeout(async () => {
+					try {
+						await loadMiscData();
+					} catch (error) {
+						errors.push(`Secondary stage error: ${String(error)}`);
+					}
+				}, 100);
+
+				// Wrap up refresh after critical stage
+				refresh.endRefresh(errors);
 			} catch (error) {
-				refresh.endRefresh([String(error)]);
+				errors.push(String(error));
+				refresh.endRefresh(errors);
 				// Still show the app even if there was an error
 				initialLoading = false;
 			}
 		}
+
 		initialLoad();
 		refresh.setupAutoRefresh(handleRefresh);
 
