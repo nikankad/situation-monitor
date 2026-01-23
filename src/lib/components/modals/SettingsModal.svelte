@@ -124,7 +124,6 @@
 							onchange={() => handleTogglePanel(panelId)}
 						/>
 						<span class="panel-name">{config.name}</span>
-						<span class="panel-priority">P{config.priority}</span>
 					</label>
 				{/each}
 			</div>
@@ -287,14 +286,6 @@
 		flex: 1;
 		font-size: 0.65rem;
 		color: var(--text-primary);
-	}
-
-	.panel-priority {
-		font-size: 0.5rem;
-		color: var(--text-muted);
-		background: rgba(255, 255, 255, 0.05);
-		padding: 0.1rem 0.25rem;
-		border-radius: 2px;
 	}
 
 	.reset-btn {
