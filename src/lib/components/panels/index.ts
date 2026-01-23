@@ -2,15 +2,10 @@
 export { default as NewsPanel } from './NewsPanel.svelte';
 export { default as MarketsPanel } from './MarketsPanel.svelte';
 export { default as HeatmapPanel } from './HeatmapPanel.svelte';
-export { default as CommoditiesPanel } from './CommoditiesPanel.svelte';
-export { default as MainCharPanel } from './MainCharPanel.svelte';
 export { default as PolymarketPanel } from './PolymarketPanel.svelte';
 export { default as WhalePanel } from './WhalePanel.svelte';
 export { default as ContractsPanel } from './ContractsPanel.svelte';
-export { default as IntelPanel } from './IntelPanel.svelte';
 export { default as SituationPanel } from './SituationPanel.svelte';
 export { default as CorrelationPanel } from './CorrelationPanel.svelte';
 export { default as NarrativePanel } from './NarrativePanel.svelte';
-export { default as MonitorsPanel } from './MonitorsPanel.svelte';
 export { default as MapPanel } from './MapPanel.svelte';
-export { default as WorldLeadersPanel } from './WorldLeadersPanel.svelte';

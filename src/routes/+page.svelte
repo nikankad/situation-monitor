@@ -7,7 +7,6 @@
 		NewsPanel,
 		MarketsPanel,
 		HeatmapPanel,
-		CommoditiesPanel,
 		CorrelationPanel,
 		NarrativePanel,
 		MapPanel,
