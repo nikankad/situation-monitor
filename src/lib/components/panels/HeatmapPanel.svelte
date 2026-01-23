@@ -11,7 +11,7 @@
 	let containerWidth = $state(800);
 	let containerHeight = $state(300);
 
-	// Generate color based on change percent
+	// Generate color based on change percent (green to red gradient)
 	function getColor(changePercent: number): string {
 		if (changePercent >= 3) return '#00dd00';
 		if (changePercent >= 2) return '#44dd44';
@@ -25,38 +25,39 @@
 		return '#dd0000';
 	}
 
-	// Calculate treemap layout
+	// Calculate squarified treemap layout (creates more square boxes)
 	async function generateTreemap() {
 		if (items.length === 0) return;
 
 		const d3 = await import('d3');
 
-		// Create hierarchy
+		// Create hierarchy with market cap values
 		const root = d3.hierarchy({ children: items })
 			.sum((d: any) => d.marketCap || 1000)
 			.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-		// Calculate treemap
-		const treemap = d3.treemap()
+		// Use squarified treemap for more balanced square-like rectangles
+		const treemap = d3.treemapSquarify()
 			.size([containerWidth, containerHeight])
-			.paddingTop(0)
+			.paddingTop(4)
 			.paddingRight(4)
-			.paddingBottom(0)
-			.paddingLeft(4);
+			.paddingBottom(4)
+			.paddingLeft(4)
+			.round(true);
 
 		treemap(root);
 
 		// Extract leaf nodes with positioning
 		treemapData = root.leaves().map((node: any) => ({
 			...node.data,
-			x: node.x0,
-			y: node.y0,
-			width: node.x1 - node.x0,
-			height: node.y1 - node.y0
+			x: Math.round(node.x0),
+			y: Math.round(node.y0),
+			width: Math.round(node.x1 - node.x0),
+			height: Math.round(node.y1 - node.y0)
 		}));
 	}
 
-	// Handle resize
+	// Handle container resize
 	function handleResize() {
 		if (containerRef) {
 			containerWidth = containerRef.offsetWidth;
@@ -65,7 +66,7 @@
 		}
 	}
 
-	// Watch for items changes
+	// Regenerate treemap when items change
 	$effect(() => {
 		if (items.length > 0) {
 			generateTreemap();
@@ -101,6 +102,7 @@
 					>
 						<div class="box-content">
 							<div class="sector-name">{sector.name}</div>
+							<div class="sector-symbol">{sector.symbol}</div>
 							<div class="sector-change">
 								{sector.changePercent > 0 ? '+' : ''}{sector.changePercent.toFixed(2)}%
 							</div>
@@ -128,8 +130,7 @@
 
 	.treemap-box {
 		position: absolute;
-		border: 1px solid rgba(0, 0, 0, 0.3);
-		border-radius: 2px;
+		border: 1px solid rgba(0, 0, 0, 0.25);
 		overflow: hidden;
 		display: flex;
 		align-items: center;
@@ -139,8 +140,7 @@
 	}
 
 	.treemap-box:hover {
-		filter: brightness(1.15);
-		border-color: rgba(255, 255, 255, 0.5);
+		filter: brightness(1.15) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
 	}
 
 	.box-content {
@@ -148,26 +148,34 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 0.25rem;
+		padding: 0.5rem;
 		text-align: center;
 		width: 100%;
 		height: 100%;
 	}
 
 	.sector-name {
-		font-size: 0.7rem;
-		font-weight: 600;
+		font-size: 0.75rem;
+		font-weight: 700;
 		color: white;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+		line-height: 1;
+		margin-bottom: 0.1rem;
+	}
+
+	.sector-symbol {
+		font-size: 0.65rem;
+		color: rgba(255, 255, 255, 0.85);
 		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 		line-height: 1;
-		margin-bottom: 0.15rem;
+		margin-bottom: 0.05rem;
 	}
 
 	.sector-change {
-		font-size: 0.65rem;
-		font-weight: 500;
+		font-size: 0.7rem;
+		font-weight: 600;
 		color: white;
-		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 		line-height: 1;
 	}
 
@@ -189,6 +197,10 @@
 
 		.sector-name {
 			font-size: 0.65rem;
+		}
+
+		.sector-symbol {
+			font-size: 0.6rem;
 		}
 
 		.sector-change {
