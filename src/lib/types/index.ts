@@ -72,6 +72,7 @@ export interface SectorPerformance {
 	open?: number;
 	previousClose?: number;
 	type?: 'sector';
+	marketCap?: number;
 }
 
 /**

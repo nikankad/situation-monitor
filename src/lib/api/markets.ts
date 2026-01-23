@@ -95,6 +95,21 @@ const INDEX_ETF_MAP: Record<string, string> = {
 	'^RUT': 'IWM' // Russell 2000 -> iShares Russell 2000 ETF
 };
 
+// Sector market cap estimates (in billions, for treemap sizing)
+// These are approximate values for treemap visualization proportions
+const SECTOR_MARKET_CAPS: Record<string, number> = {
+	'XLK': 11000, // Technology/Communication: ~11T
+	'XLF': 5000, // Financials: ~5T
+	'XLV': 4500, // Healthcare: ~4.5T
+	'XLY': 3500, // Consumer Discretionary: ~3.5T
+	'XLI': 3000, // Industrials: ~3T
+	'XLP': 2500, // Consumer Staples: ~2.5T
+	'XLE': 2000, // Energy: ~2T
+	'XLRE': 1500, // Real Estate: ~1.5T
+	'XLU': 1500, // Utilities: ~1.5T
+	'XLB': 1000 // Materials: ~1T
+};
+
 /**
  * Fetch a quote from Finnhub
  */
@@ -236,7 +251,8 @@ export async function fetchSectorPerformance(): Promise<SectorPerformance[]> {
 			high: quote?.h ?? NaN,
 			low: quote?.l ?? NaN,
 			open: quote?.o ?? NaN,
-			previousClose: quote?.pc ?? NaN
+			previousClose: quote?.pc ?? NaN,
+			marketCap: SECTOR_MARKET_CAPS[sector.symbol] ?? 1000
 		}));
 	} catch (error) {
 		logger.error('Markets API', 'Error fetching sectors:', error);
