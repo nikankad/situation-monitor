@@ -27,34 +27,42 @@
 
 	// Calculate squarified treemap layout (creates more square boxes)
 	async function generateTreemap() {
-		if (items.length === 0) return;
+		if (items.length === 0 || containerWidth === 0 || containerHeight === 0) {
+			return;
+		}
 
-		const d3 = await import('d3');
+		try {
+			const d3 = await import('d3');
 
-		// Create hierarchy with market cap values
-		const root = d3.hierarchy({ children: items })
-			.sum((d: any) => d.marketCap || 1000)
-			.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+			// Create hierarchy with market cap values
+			const root = d3.hierarchy({ children: items })
+				.sum((d: any) => d.marketCap || 1000)
+				.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-		// Use squarified treemap for more balanced square-like rectangles
-		const treemap = d3.treemapSquarify()
-			.size([containerWidth, containerHeight])
-			.paddingTop(4)
-			.paddingRight(4)
-			.paddingBottom(4)
-			.paddingLeft(4)
-			.round(true);
+			// Use squarified treemap for more balanced square-like rectangles
+			const treemap = d3.treemapSquarify()
+				.size([containerWidth, containerHeight])
+				.paddingTop(4)
+				.paddingRight(4)
+				.paddingBottom(4)
+				.paddingLeft(4)
+				.round(true);
 
-		treemap(root);
+			treemap(root);
 
-		// Extract leaf nodes with positioning
-		treemapData = root.leaves().map((node: any) => ({
-			...node.data,
-			x: Math.round(node.x0),
-			y: Math.round(node.y0),
-			width: Math.round(node.x1 - node.x0),
-			height: Math.round(node.y1 - node.y0)
-		}));
+			// Extract leaf nodes with positioning
+			const newData = root.leaves().map((node: any) => ({
+				...node.data,
+				x: Math.round(node.x0),
+				y: Math.round(node.y0),
+				width: Math.round(node.x1 - node.x0),
+				height: Math.round(node.y1 - node.y0)
+			}));
+
+			treemapData = newData;
+		} catch (err) {
+			console.error('Error generating treemap:', err);
+		}
 	}
 
 	// Handle container resize
@@ -68,23 +76,34 @@
 
 	// Regenerate treemap when items change
 	$effect(() => {
-		if (items.length > 0) {
-			generateTreemap();
+		if (items.length > 0 && containerWidth > 0 && containerHeight > 0) {
+			generateTreemap().catch(err => console.error('Error generating treemap:', err));
 		}
 	});
 
 	onMount(() => {
-		handleResize();
+		// Small delay to ensure container has rendered
+		setTimeout(() => {
+			handleResize();
+		}, 100);
+
 		const observer = new ResizeObserver(handleResize);
-		observer.observe(containerRef);
+		if (containerRef) {
+			observer.observe(containerRef);
+		}
+
 		return () => observer.disconnect();
 	});
 </script>
 
 <Panel id="heatmap" title="Sector Heatmap" {error}>
 	<div class="heatmap-container" bind:this={containerRef}>
-		{#if items.length === 0 && !error}
-			<div class="empty-state">No sector data available</div>
+		{#if items.length === 0}
+			<div class="empty-state">
+				{error ? `Error: ${error}` : 'No sector data available'}
+			</div>
+		{:else if treemapData.length === 0}
+			<div class="empty-state">Loading sector heatmap...</div>
 		{:else}
 			<div class="treemap" style="width: 100%; height: 100%; position: relative;">
 				{#each treemapData as sector (sector.symbol)}
