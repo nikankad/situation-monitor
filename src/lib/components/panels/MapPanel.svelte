@@ -98,10 +98,24 @@
 		}
 
 		return Array.from(clusterMap.values())
-			.map((cluster) => ({
-				...cluster,
-				items: cluster.items.sort((a, b) => b.timestamp - a.timestamp)
-			}))
+			.map((cluster) => {
+				// Sort: alerts first, then by recency
+				const sorted = cluster.items.sort((a, b) => {
+					// Prioritize alerts
+					if (a.isAlert && !b.isAlert) return -1;
+					if (!a.isAlert && b.isAlert) return 1;
+					// Within same alert status, sort by recency
+					return b.timestamp - a.timestamp;
+				});
+
+				// Keep top 8 items (prioritizes alerts + recent news)
+				const topItems = sorted.slice(0, 8);
+
+				return {
+					...cluster,
+					items: topItems
+				};
+			})
 			.sort((a, b) => b.count - a.count);
 	});
 
@@ -1029,7 +1043,10 @@
 		clusters.forEach((cluster) => {
 			// Skip small clusters when zoomed out
 			if (cluster.count < minClusterSize) return;
-			
+
+			// Only show clusters with alerts or multiple items (important news)
+			if (cluster.alertCount === 0 && cluster.count < 3) return;
+
 			const [x, y] = projection([cluster.lon, cluster.lat]) || [0, 0];
 			if (!x || !y) return;
 
