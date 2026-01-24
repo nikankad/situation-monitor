@@ -81,6 +81,13 @@ function parseRssXml(xml: string, sourceName: string, category: NewsCategory): N
 		const urlHash = link ? hashCode(link) : Math.random().toString(36).slice(2);
 		const uniqueId = `rss-${category}-${urlHash}-${index}`;
 
+		// Parse timestamp, use current time if invalid
+		let timestamp = Date.now();
+		if (pubDate) {
+			const parsedTime = new Date(pubDate).getTime();
+			timestamp = !isNaN(parsedTime) ? parsedTime : Date.now();
+		}
+
 		items.push({
 			id: uniqueId,
 			title,
@@ -93,7 +100,7 @@ function parseRssXml(xml: string, sourceName: string, category: NewsCategory): N
 			topics: detectTopics(title),
 			description: description || undefined,
 			pubDate,
-			timestamp: pubDate ? new Date(pubDate).getTime() : Date.now()
+			timestamp
 		});
 
 		index++;
@@ -138,13 +145,15 @@ function transformGdeltArticle(
 	const uniqueId = `gdelt-${category}-${urlHash}-${index}`;
 
 	const parsedDate = parseGdeltDate(article.seendate);
+	// Use current time if date parsing fails
+	const timestamp = isNaN(parsedDate.getTime()) ? Date.now() : parsedDate.getTime();
 
 	return {
 		id: uniqueId,
 		title,
 		link: article.url,
 		pubDate: article.seendate,
-		timestamp: parsedDate.getTime(),
+		timestamp,
 		source: source || article.domain || 'Unknown',
 		category,
 		isAlert: !!alert,
@@ -171,11 +180,11 @@ export async function fetchCategoryNews(category: NewsCategory): Promise<NewsIte
 	let gdeltArticles: NewsItem[] = [];
 
 	try {
-		// Add English language filter and timespan for fresh results
+		// Add English language filter and strict timespan for fresh results only
 		const baseQuery = categoryQueries[category];
 		const fullQuery = `${baseQuery} sourcelang:english`;
-		// Build the raw GDELT URL with timespan=7d to get recent articles
-		const gdeltUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fullQuery}&timespan=7d&mode=artlist&maxrecords=20&format=json&sort=date`;
+		// Request only the last 3 days to ensure freshness, get more records to filter
+		const gdeltUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fullQuery}&timespan=3d&mode=artlist&maxrecords=50&format=json&sort=date`;
 
 		logger.log('News API', `Fetching ${category} from GDELT`);
 
@@ -224,8 +233,16 @@ export async function fetchCategoryNews(category: NewsCategory): Promise<NewsIte
 		logger.warn('News API', `Error fetching RSS feeds for ${category}:`, error);
 	}
 
-	// Combine GDELT and RSS results, sorted by timestamp
-	return [...gdeltArticles, ...rssArticles].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+	// Combine GDELT and RSS results, filter out articles older than 30 days
+	const allArticles = [...gdeltArticles, ...rssArticles];
+	const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+	const freshArticles = allArticles.filter(article => {
+		const timestamp = article.timestamp || 0;
+		return timestamp >= thirtyDaysAgo;
+	});
+
+	return freshArticles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 }
 
 /** All news categories in fetch order */
