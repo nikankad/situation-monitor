@@ -6,7 +6,6 @@
 	import {
 		NewsPanel,
 		MarketsPanel,
-		HeatmapPanel,
 		CorrelationPanel,
 		NarrativePanel,
 		MapPanel,
@@ -269,8 +268,6 @@
 						<NewsPanel category="gov" panelId="gov" title="Government" />
 					{:else if panelId === 'markets'}
 						<MarketsPanel />
-					{:else if panelId === 'heatmap'}
-						<HeatmapPanel />
 					{:else if panelId === 'correlation'}
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}

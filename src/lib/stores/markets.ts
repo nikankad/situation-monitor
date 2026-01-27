@@ -235,8 +235,8 @@ function createMarketsStore() {
 		 */
 		getSummary(): {
 			marketTrend: 'up' | 'down' | 'mixed';
-			topGainer: MarketItem | null;
-			topLoser: MarketItem | null;
+			topGainer: (MarketItem | SectorPerformance) | null;
+			topLoser: (MarketItem | SectorPerformance) | null;
 		} {
 			const state = get({ subscribe });
 			const allItems = [...state.indices.items, ...state.sectors.items, ...state.commodities.items];

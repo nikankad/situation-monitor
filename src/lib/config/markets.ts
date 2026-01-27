@@ -16,7 +16,14 @@ export interface CommodityConfig {
 export const SECTORS: SectorConfig[] = [
 	{ symbol: 'XLK', name: 'Tech' },
 	{ symbol: 'XLF', name: 'Finance' },
-	{ symbol: 'XLE', name: 'Energy' }
+	{ symbol: 'XLV', name: 'Healthcare' },
+	{ symbol: 'XLY', name: 'Consumer Disc' },
+	{ symbol: 'XLI', name: 'Industrials' },
+	{ symbol: 'XLP', name: 'Consumer Staples' },
+	{ symbol: 'XLE', name: 'Energy' },
+	{ symbol: 'XLRE', name: 'Real Estate' },
+	{ symbol: 'XLU', name: 'Utilities' },
+	{ symbol: 'XLB', name: 'Materials' }
 ];
 
 export const COMMODITIES: CommodityConfig[] = [

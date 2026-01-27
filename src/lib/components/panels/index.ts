@@ -1,7 +1,6 @@
 // Panel components barrel export
 export { default as NewsPanel } from './NewsPanel.svelte';
 export { default as MarketsPanel } from './MarketsPanel.svelte';
-export { default as HeatmapPanel } from './HeatmapPanel.svelte';
 export { default as PolymarketPanel } from './PolymarketPanel.svelte';
 export { default as WhalePanel } from './WhalePanel.svelte';
 export { default as ContractsPanel } from './ContractsPanel.svelte';

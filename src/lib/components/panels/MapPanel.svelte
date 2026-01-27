@@ -45,6 +45,107 @@
 
 	let { monitors = [], news = [], error = null }: Props = $props();
 
+	// Distance-based clustering helper functions
+	function toRadians(degrees: number): number {
+		return degrees * (Math.PI / 180);
+	}
+
+	function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+		const R = 6371; // Earth radius in kilometers
+		const dLat = toRadians(lat2 - lat1);
+		const dLon = toRadians(lon2 - lon1);
+		const a =
+			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+			Math.cos(toRadians(lat1)) *
+				Math.cos(toRadians(lat2)) *
+				Math.sin(dLon / 2) *
+				Math.sin(dLon / 2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		return R * c;
+	}
+
+	function getDistanceThreshold(zoomScale: number): number {
+		// Exponential decay - more zoom = smaller threshold
+		// Zoom 1.0 → 800km: continent-level clustering
+		// Zoom 1.5 → 400km: country-level clustering
+		// Zoom 2.0 → 200km: regional clustering
+		// Zoom 2.5 → 100km: city-level clustering
+		// Zoom 3.0+ → 50km: neighborhood-level clustering
+		const baseDistance = 800; // km at zoom 1.0
+		const decayFactor = 0.6; // Controls how quickly threshold decreases
+		return baseDistance * Math.pow(decayFactor, zoomScale - 1);
+	}
+
+	function snapZoomScale(scale: number): number {
+		// Round to nearest 0.1 to reduce recalculations
+		return Math.round(scale * 10) / 10;
+	}
+
+	function mergeClusters(c1: NewsCluster, c2: NewsCluster): NewsCluster {
+		// Calculate weighted center point
+		const totalCount = c1.count + c2.count;
+		const lat = (c1.lat * c1.count + c2.lat * c2.count) / totalCount;
+		const lon = (c1.lon * c1.count + c2.lon * c2.count) / totalCount;
+
+		// Combine region names (show both if different)
+		const region =
+			c1.region === c2.region ? c1.region : `${c1.region}/${c2.region}`;
+
+		return {
+			region,
+			lat,
+			lon,
+			count: c1.count + c2.count,
+			alertCount: c1.alertCount + c2.alertCount,
+			items: [...c1.items, ...c2.items]
+		};
+	}
+
+	function clusterNewsByDistance(items: GeoNews[], zoomScale: number): NewsCluster[] {
+		if (items.length === 0) return [];
+
+		const threshold = getDistanceThreshold(zoomScale);
+
+		// Initialize: each item is its own cluster
+		let clusters: NewsCluster[] = items.map((item) => ({
+			region: item.region,
+			lat: item.lat,
+			lon: item.lon,
+			count: 1,
+			alertCount: item.isAlert ? 1 : 0,
+			items: [item]
+		}));
+
+		// Merge clusters within threshold distance
+		let merged = true;
+		while (merged) {
+			merged = false;
+
+			for (let i = 0; i < clusters.length; i++) {
+				for (let j = i + 1; j < clusters.length; j++) {
+					const dist = haversineDistance(
+						clusters[i].lat,
+						clusters[i].lon,
+						clusters[j].lat,
+						clusters[j].lon
+					);
+
+					if (dist <= threshold) {
+						// Merge cluster j into cluster i
+						const mergedCluster = mergeClusters(clusters[i], clusters[j]);
+						clusters[i] = mergedCluster;
+						clusters.splice(j, 1);
+						merged = true;
+						break;
+					}
+				}
+				if (merged) break;
+			}
+		}
+
+		return clusters;
+	}
+
 	// Geo-located news with coordinates
 	interface GeoNews extends NewsItem {
 		lat: number;
@@ -75,29 +176,15 @@
 			.filter((item): item is GeoNews => item !== null)
 	);
 
-	// Group news by region into clusters
+	// Use distance-based clustering that adapts to zoom level
+	const snappedZoomScale = $derived(snapZoomScale(currentZoomScale));
+
 	const newsClusters = $derived<NewsCluster[]>(() => {
-		const clusterMap = new Map<string, NewsCluster>();
+		// Use distance-based clustering instead of region-based
+		const clusters = clusterNewsByDistance(geoNews, snappedZoomScale);
 
-		for (const item of geoNews) {
-			const existing = clusterMap.get(item.region);
-			if (existing) {
-				existing.count++;
-				if (item.isAlert) existing.alertCount++;
-				existing.items.push(item);
-			} else {
-				clusterMap.set(item.region, {
-					region: item.region,
-					lat: item.lat,
-					lon: item.lon,
-					count: 1,
-					alertCount: item.isAlert ? 1 : 0,
-					items: [item]
-				});
-			}
-		}
-
-		return Array.from(clusterMap.values())
+		// Sort and limit items in each cluster (keep existing logic)
+		return clusters
 			.map((cluster) => {
 				// Sort: alerts first, then by recency
 				const sorted = cluster.items.sort((a, b) => {
