@@ -27,7 +27,11 @@
 
 	// Calculate squarified treemap layout (creates more square boxes)
 	async function generateTreemap() {
-		if (items.length === 0 || containerWidth === 0 || containerHeight === 0) {
+		// Filter out items with invalid data (NaN prices from failed API calls)
+		const validItems = items.filter((item) => !isNaN(item.changePercent));
+
+		if (validItems.length === 0 || containerWidth === 0 || containerHeight === 0) {
+			treemapData = [];
 			return;
 		}
 
@@ -35,7 +39,7 @@
 			const d3 = await import('d3');
 
 			// Create hierarchy with market cap values
-			const root = d3.hierarchy({ children: items })
+			const root = d3.hierarchy({ children: validItems })
 				.sum((d: any) => d.marketCap || 1000)
 				.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
