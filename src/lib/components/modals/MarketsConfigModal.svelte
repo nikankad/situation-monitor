@@ -178,7 +178,12 @@
 			</div>
 
 			<div class="add-market">
-				<div class="add-title">Add Custom Market</div>
+				<div class="add-header">
+					<div class="add-title">Add Custom Market</div>
+					<a href="https://finance.yahoo.com/lookup" target="_blank" rel="noopener noreferrer" class="help-link" title="Find ticker symbols">
+						?
+					</a>
+				</div>
 				<div class="add-form">
 					<input
 						type="text"
@@ -328,26 +333,61 @@
 		border-radius: 6px;
 	}
 
+	.add-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
+	}
+
 	.add-title {
 		font-size: 0.7rem;
 		font-weight: 500;
 		color: var(--text);
-		margin-bottom: 0.5rem;
+	}
+
+	.help-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 18px;
+		height: 18px;
+		border: 1.5px solid var(--accent);
+		border-radius: 50%;
+		background: transparent;
+		color: var(--accent);
+		font-size: 0.7rem;
+		font-weight: bold;
+		text-decoration: none;
+		cursor: pointer;
+		transition: all 0.2s;
+		flex-shrink: 0;
+	}
+
+	.help-link:hover {
+		background: var(--accent);
+		color: white;
+		border-color: var(--accent);
 	}
 
 	.add-form {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.5rem;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.add-input {
 		flex: 1;
+		min-width: 0;
 		padding: 0.4rem 0.6rem;
 		background: var(--background);
 		border: 1px solid var(--border);
 		border-radius: 4px;
 		color: var(--text);
 		font-size: 0.7rem;
+		box-sizing: border-box;
 	}
 
 	.add-input::placeholder {
@@ -365,6 +405,7 @@
 		border: none;
 		border-radius: 4px;
 		color: white;
+		background-color: #20c997;
 		font-size: 0.7rem;
 		font-weight: 500;
 		cursor: pointer;

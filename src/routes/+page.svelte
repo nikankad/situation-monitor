@@ -159,6 +159,30 @@
 	// Get ordered panel IDs (excluding map which is always first)
 	const orderedPanels = $derived($settings.order.filter(id => id !== 'map' && isPanelVisible(id)));
 
+	// Check if all visible panels are loaded
+	function arePanelsReady(): boolean {
+		// Check news categories
+		const newsCategories = ['politics', 'tech', 'finance', 'gov'];
+		const newsState = get(news);
+		const newsReady = newsCategories.every(cat => {
+			// Panel must have data OR have tried to load and has no items yet
+			const categoryState = newsState.categories[cat as any];
+			return categoryState && (categoryState.items.length > 0 || !categoryState.loading);
+		});
+
+		// Check markets
+		const marketsState = get(markets);
+		const marketsReady =
+			(marketsState.indices.items.length > 0 || !marketsState.indices.loading) &&
+			(marketsState.sectors.items.length > 0 || !marketsState.sectors.loading) &&
+			(marketsState.commodities.items.length > 0 || !marketsState.commodities.loading) &&
+			(marketsState.crypto.items.length > 0 || !marketsState.crypto.loading);
+
+		// Map panel always has data (it's derived from news)
+		const mapReady = true;
+
+		return newsReady && marketsReady && mapReady;
+	}
 
 	// Initial load with multi-stage approach and session caching
 	onMount(() => {
@@ -186,15 +210,15 @@
 					markets.setCustom(cachedMarkets.data.custom);
 				}
 
-				// Show UI immediately with cached (or empty) data
-				initialLoading = false;
-
-				// Critical stage: news + markets (fetch fresh data in background)
+				// Critical stage: news + markets (fetch fresh data)
 				try {
 					await Promise.all([loadNews(), loadMarkets()]);
 				} catch (error) {
 					errors.push(`Critical stage error: ${String(error)}`);
 				}
+
+				// Only show UI once critical data is loaded
+				initialLoading = false;
 
 				// Secondary stage: defer misc data to after UI is visible
 				// Use a small delay to let rendering complete first
@@ -211,8 +235,10 @@
 			} catch (error) {
 				errors.push(String(error));
 				refresh.endRefresh(errors);
-				// Still show the app even if there was an error
-				initialLoading = false;
+				// Still show the app even if there was an error (after 5 seconds max)
+				setTimeout(() => {
+					initialLoading = false;
+				}, 5000);
 			}
 		}
 
