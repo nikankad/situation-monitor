@@ -405,6 +405,7 @@
 		border: none;
 		border-radius: 4px;
 		color: white;
+		background-color: #20c997;
 		font-size: 0.7rem;
 		font-weight: 500;
 		cursor: pointer;
