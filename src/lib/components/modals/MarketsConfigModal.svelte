@@ -178,7 +178,16 @@
 			</div>
 
 			<div class="add-market">
-				<div class="add-title">Add Custom Market</div>
+				<div class="add-header">
+					<div class="add-title">Add Custom Market</div>
+					<a href="https://finance.yahoo.com/lookup" target="_blank" rel="noopener noreferrer" class="help-link" title="Find ticker symbols">
+						?
+					</a>
+				</div>
+				<div class="add-help">
+					<span class="help-icon">📖</span>
+					<span>Search for ticker symbols at <a href="https://finance.yahoo.com/lookup" target="_blank" rel="noopener noreferrer" class="inline-link">Yahoo Finance</a></span>
+				</div>
 				<div class="add-form">
 					<input
 						type="text"
@@ -328,11 +337,71 @@
 		border-radius: 6px;
 	}
 
+	.add-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
+	}
+
 	.add-title {
 		font-size: 0.7rem;
 		font-weight: 500;
 		color: var(--text);
+	}
+
+	.help-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 18px;
+		height: 18px;
+		border: 1px solid var(--border);
+		border-radius: 50%;
+		background: var(--background);
+		color: var(--text-muted);
+		font-size: 0.65rem;
+		font-weight: bold;
+		text-decoration: none;
+		cursor: pointer;
+		transition: all 0.2s;
+		flex-shrink: 0;
+	}
+
+	.help-link:hover {
+		background: var(--accent);
+		color: white;
+		border-color: var(--accent);
+	}
+
+	.add-help {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4rem 0.5rem;
+		background: var(--background);
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		font-size: 0.65rem;
+		color: var(--text-muted);
 		margin-bottom: 0.5rem;
+	}
+
+	.help-icon {
+		font-size: 0.75rem;
+		flex-shrink: 0;
+	}
+
+	.inline-link {
+		color: var(--accent);
+		text-decoration: none;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.inline-link:hover {
+		text-decoration: underline;
+		filter: brightness(1.1);
 	}
 
 	.add-form {
