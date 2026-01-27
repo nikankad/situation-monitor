@@ -7,7 +7,6 @@ export {
 	Panel,
 	NewsItem,
 	MarketItem,
-	HeatmapCell,
 	LoadingSpinner,
 	ErrorMessage,
 	Badge

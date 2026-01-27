@@ -13,7 +13,6 @@ export type PanelId =
 	| 'tech'
 	| 'finance'
 	| 'gov'
-	| 'heatmap'
 	| 'markets'
 	| 'polymarket'
 	| 'contracts'
@@ -26,7 +25,6 @@ export const PANELS: Record<PanelId, PanelConfig> = {
 	tech: { name: 'Tech', priority: 1 },
 	finance: { name: 'Finance', priority: 1 },
 	gov: { name: 'Government', priority: 2 },
-	heatmap: { name: 'Sector Heatmap', priority: 1 },
 	markets: { name: 'Markets', priority: 1 },
 	polymarket: { name: 'Polymarket', priority: 2 },
 	contracts: { name: 'Gov Contracts', priority: 3 },
