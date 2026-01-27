@@ -3,7 +3,6 @@
  */
 
 export { fetchCategoryNews, fetchAllNews } from './news';
-export { fetchCountryNews } from './countries';
 export {
 	fetchCryptoPrices,
 	fetchIndices,

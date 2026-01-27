@@ -75,6 +75,3 @@ export { CORS_PROXY_URL, API_DELAYS, CACHE_TTLS, DEBUG, logger, FINNHUB_API_KEY,
 
 // World leaders configuration
 export { WORLD_LEADERS } from './leaders';
-
-// Country info for detail modals
-export { getCountryInfo } from './country-info';

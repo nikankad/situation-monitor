@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { get } from 'svelte/store';
-	import { Panel } from '$lib/components/common';
+		import { Panel } from '$lib/components/common';
 	import {
 		HOTSPOTS,
 		CONFLICT_ZONES,
@@ -20,22 +19,9 @@
 	import { fetchConflictEventsFromGDELT, type GdeltConflictEvent } from '$lib/api/gdelt-conflicts';
 	import { CACHE_TTLS } from '$lib/config/api';
 	import type { CustomMonitor, NewsItem } from '$lib/types';
-	import { selectedCountry, type SelectedCountry } from '$lib/stores';
-	import { getCountryName, COUNTRY_ID_TO_NAME } from '$lib/config/countries';
+		import { getCountryName, COUNTRY_ID_TO_NAME } from '$lib/config/countries';
 	import { timeAgo } from '$lib/utils';
 
-	// Reactive state to track selected country store
-	let selectedCountryState = $state<SelectedCountry>({ name: null });
-
-	// Subscribe to store changes and apply highlighting
-	$effect(() => {
-		const unsubscribe = selectedCountry.subscribe((value) => {
-			selectedCountryState = value;
-			// Apply highlight when selection changes (e.g., from clear button or external selection)
-			applyCountryHighlight(value.name);
-		});
-		return unsubscribe;
-	});
 
 	interface Props {
 		monitors?: CustomMonitor[];
@@ -241,10 +227,6 @@
 	});
 
 	let mapContainer: HTMLDivElement;
-	// Search state
-	let searchQuery = $state('');
-	let searchResults = $state<string[]>([]);
-	let showSearchResults = $state(false);
 	// Simple layer visibility toggles
 	let showEvents = $state(true);
 	let showHotspots = $state(true);
@@ -477,54 +459,6 @@
 		selectedNewsCluster = null;
 	}
 
-	// Apply country highlight styling
-	function applyCountryHighlight(selectedName: string | null): void {
-		if (!mapGroup) return;
-		
-		// Remove any existing highlight overlay
-		mapGroup.selectAll('.country-highlight-overlay').remove();
-		
-		mapGroup
-			.selectAll('path.country')
-			.attr('fill', (feature: GeoJSON.Feature) => {
-				const name = getCountryName(+(feature.id || 0));
-				if (selectedName && name === selectedName) {
-					return '#22ff99'; // Very bright green for selected country
-				}
-				return SANCTIONED_COUNTRY_IDS.includes(+(feature.id || 0)) ? '#2a1a1a' : '#0f3028';
-			})
-			.attr('stroke', (feature: GeoJSON.Feature) => {
-				const name = getCountryName(+(feature.id || 0));
-				if (selectedName && name === selectedName) {
-					return '#ffffff'; // White stroke for maximum contrast
-				}
-				return SANCTIONED_COUNTRY_IDS.includes(+(feature.id || 0)) ? '#4a2020' : '#1a5040';
-			})
-			.attr('stroke-width', (feature: GeoJSON.Feature) => {
-				const name = getCountryName(+(feature.id || 0));
-				if (selectedName && name === selectedName) {
-					return 3; // Much thicker stroke for visibility
-				}
-				return 0.5;
-			})
-			.classed('country-selected', (feature: GeoJSON.Feature) => {
-				const name = getCountryName(+(feature.id || 0));
-				return selectedName !== null && name === selectedName;
-			})
-			.each(function (this: SVGPathElement, feature: GeoJSON.Feature) {
-				const name = getCountryName(+(feature.id || 0));
-				if (selectedName && name === selectedName && path) {
-					// Add striped pattern overlay on top of selected country
-					mapGroup
-						.append('path')
-						.attr('class', 'country-highlight-overlay')
-						.attr('d', path(feature))
-						.attr('fill', 'url(#selected-pattern)')
-						.attr('stroke', 'none')
-						.attr('pointer-events', 'none');
-				}
-			});
-	}
 
 	// Build enhanced tooltip with weather
 	async function showEnhancedTooltip(
@@ -565,21 +499,6 @@
 		svg = d3.select(svgEl);
 		svg.attr('viewBox', `0 0 ${WIDTH} ${HEIGHT}`);
 
-		// Add pattern definition for selected country highlight
-		const defs = svg.append('defs');
-		defs.append('pattern')
-			.attr('id', 'selected-pattern')
-			.attr('patternUnits', 'userSpaceOnUse')
-			.attr('width', 6)
-			.attr('height', 6)
-			.attr('patternTransform', 'rotate(45)')
-			.append('line')
-			.attr('x1', 0)
-			.attr('y1', 0)
-			.attr('x2', 0)
-			.attr('y2', 6)
-			.attr('stroke', 'rgba(255, 255, 255, 0.3)')
-			.attr('stroke-width', 2);
 
 		mapGroup = svg.append('g').attr('id', 'mapGroup');
 
@@ -649,55 +568,14 @@
 					SANCTIONED_COUNTRY_IDS.includes(+(d.id || 0)) ? '#4a2020' : '#1a5040'
 				)
 				.attr('stroke-width', 0.5)
-				.style('cursor', 'pointer')
-				.on('click', (_event: MouseEvent, d: GeoJSON.Feature) => {
-					const countryName = getCountryName(+(d.id || 0));
-					if (countryName) {
-						selectedCountry.select(countryName);
-						// Apply highlighting immediately (don't wait for reactive effect)
-						applyCountryHighlight(countryName);
-					}
-				})
-				.on('mouseenter', (event: MouseEvent, d: GeoJSON.Feature) => {
-					const countryName = getCountryName(+(d.id || 0));
-					if (countryName) {
-						const selectedName = get(selectedCountry).name;
-						mapGroup.selectAll('path.country')
-							.attr('fill', (feature: GeoJSON.Feature) => {
-								const name = getCountryName(+(feature.id || 0));
-								// Keep selected country highlighted
-								if (selectedName && name === selectedName) {
-									return '#00cc66';
-								}
-								// Hover highlight for current country
-								if (name === countryName) {
-									return '#2a7060';
-								}
-								return SANCTIONED_COUNTRY_IDS.includes(+(feature.id || 0)) ? '#2a1a1a' : '#0f3028';
-							})
-							.attr('stroke', (feature: GeoJSON.Feature) => {
-								const name = getCountryName(+(feature.id || 0));
-								if (selectedName && name === selectedName) {
-									return '#00ff88';
-								}
-								return SANCTIONED_COUNTRY_IDS.includes(+(feature.id || 0)) ? '#4a2020' : '#1a5040';
-							})
-							.attr('stroke-width', (feature: GeoJSON.Feature) => {
-								const name = getCountryName(+(feature.id || 0));
-								if (selectedName && name === selectedName) {
-									return 2;
-								}
-								return 0.5;
-							});
-						showTooltip(event, countryName, '#00aa88');
-					}
-				})
-				.on('mousemove', moveTooltip)
-				.on('mouseleave', () => {
-					// Restore colors when mouse leaves, keeping selected country highlighted
-					applyCountryHighlight(get(selectedCountry).name);
-					hideTooltip();
-				});
+			.on('mouseenter', (event: MouseEvent, d: GeoJSON.Feature) => {
+				const countryName = getCountryName(+(d.id || 0));
+				if (countryName) {
+					showTooltip(event, countryName, '#00aa88');
+				}
+			})
+			.on('mousemove', moveTooltip)
+			.on('mouseleave', hideTooltip);
 
 			// Draw graticule
 			const graticule = d3.geoGraticule().step([30, 30]);
@@ -942,28 +820,21 @@
 		});
 		} // End hotspots filter
 
-		// Draw live GDELT conflict events (filtered by type)
-		// At low zoom, only show critical/high severity conflicts
-		const showAllConflicts = currentZoomScale >= ZOOM_THRESHOLDS.showAllConflicts;
-		
+		// Draw live GDELT conflict events (only major conflicts)
 		// Show "No GDELT results" message if empty
 		if (gdeltConflicts.length === 0 && !conflictsLoading) {
 			// No conflicts to draw - this is normal if GDELT returns no results
 		}
-		
-		// Prepare filtered list of conflicts based on toggle
+
+		// Prepare filtered list of conflicts - only show critical severity conflicts
 		let conflictsToDisplay: GdeltConflictEvent[] = [];
 
 		if (showEvents) {
-			if (!showAllConflicts) {
-				// Zoomed out - show only top 5 critical conflicts by article count
-				conflictsToDisplay = [...gdeltConflicts]
-					.filter(c => c.severity === 'critical')
-					.sort((a, b) => b.numArticles - a.numArticles)
-					.slice(0, 5);
-			} else {
-				conflictsToDisplay = gdeltConflicts;
-			}
+			// Show only top 8 critical conflicts by article count
+			conflictsToDisplay = [...gdeltConflicts]
+				.filter(c => c.severity === 'critical')
+				.sort((a, b) => b.numArticles - a.numArticles)
+				.slice(0, 8);
 		}
 		
 		conflictsToDisplay.forEach((conflict) => {
@@ -1266,29 +1137,6 @@
 		svg.transition().duration(300).call(zoom.transform, d3Module.zoomIdentity);
 	}
 
-	function handleSearchInput(query: string): void {
-		searchQuery = query;
-		if (query.trim().length === 0) {
-			searchResults = [];
-			showSearchResults = false;
-			return;
-		}
-
-		// Get all country names from the config and filter by search query
-		const allCountries = Object.values(COUNTRY_ID_TO_NAME);
-		const filtered = allCountries.filter((name) =>
-			name.toLowerCase().includes(query.toLowerCase())
-		);
-		searchResults = filtered.slice(0, 10); // Limit to 10 results
-		showSearchResults = filtered.length > 0;
-	}
-
-	function selectCountryFromSearch(countryName: string): void {
-		selectedCountry.select(countryName);
-		searchQuery = '';
-		searchResults = [];
-		showSearchResults = false;
-	}
 
 	// Reactively update monitors when they change
 	$effect(() => {
@@ -1309,12 +1157,6 @@
 		}
 	});
 
-	// Reactively update country highlighting when selected country changes
-	$effect(() => {
-		// Access reactive state to trigger effect when it changes
-		const selectedName = selectedCountryState.name;
-		applyCountryHighlight(selectedName);
-	});
 
 	// Fetch GDELT conflict events
 	async function loadGdeltConflicts(): Promise<void> {
@@ -1369,35 +1211,10 @@
 				{/each}
 			</div>
 		{/if}
-		<div class="search-container">
-			<input
-				type="text"
-				class="country-search"
-				placeholder="Search countries..."
-				value={searchQuery}
-				oninput={(e) => handleSearchInput(e.currentTarget.value)}
-				onfocus={() => searchResults.length > 0 && (showSearchResults = true)}
-			/>
-			{#if showSearchResults && searchResults.length > 0}
-				<div class="search-results">
-					{#each searchResults as country}
-						<button
-							class="search-result-item"
-							onclick={() => selectCountryFromSearch(country)}
-						>
-							{country}
-						</button>
-					{/each}
-				</div>
-			{/if}
-		</div>
 		<div class="zoom-controls">
 			<button class="zoom-btn" onclick={zoomIn} title="Zoom in">+</button>
 			<button class="zoom-btn" onclick={zoomOut} title="Zoom out">−</button>
 			<button class="zoom-btn" onclick={resetZoom} title="Reset">⟲</button>
-			{#if selectedCountryState.name}
-				<button class="zoom-btn clear-btn" onclick={() => selectedCountry.clear()} title="Clear selection">×</button>
-			{/if}
 		</div>
 		<div class="map-legend">
 			<button
@@ -1727,60 +1544,6 @@
 		width: 140px;
 	}
 
-	.country-search {
-		padding: 0.35rem 0.5rem;
-		background: rgba(0, 0, 0, 0.75);
-		border: 1px solid #333;
-		border-radius: 4px;
-		color: #aaa;
-		font-size: 0.6rem;
-		outline: none;
-		width: 100%;
-		box-sizing: border-box;
-		backdrop-filter: blur(4px);
-	}
-
-	.country-search:focus {
-		border-color: #00cc66;
-		background: rgba(20, 20, 20, 0.98);
-	}
-
-	.search-results {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		background: rgba(10, 10, 10, 0.98);
-		border: 1px solid #333;
-		border-top: none;
-		border-radius: 0 0 4px 4px;
-		max-height: 200px;
-		overflow-y: auto;
-		z-index: 51;
-	}
-
-	.search-result-item {
-		display: block;
-		width: 100%;
-		padding: 0.5rem;
-		background: none;
-		border: none;
-		border-bottom: 1px solid #222;
-		color: #aaa;
-		font-size: 0.75rem;
-		text-align: left;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.search-result-item:last-child {
-		border-bottom: none;
-	}
-
-	.search-result-item:hover {
-		background: rgba(0, 204, 102, 0.2);
-		color: #00cc66;
-	}
 
 	.map-tooltip {
 		position: absolute;
@@ -1828,15 +1591,6 @@
 		color: #fff;
 	}
 
-	.clear-btn {
-		background: rgba(100, 30, 30, 0.9);
-		color: #ff8888;
-	}
-
-	.clear-btn:hover {
-		background: rgba(150, 40, 40, 0.9);
-		color: #ffbbbb;
-	}
 
 	.map-legend {
 		position: absolute;

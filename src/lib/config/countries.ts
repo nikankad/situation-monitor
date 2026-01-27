@@ -269,6 +269,39 @@ export function getCountryName(id: number | undefined): string | null {
 }
 
 /**
+ * Keywords for searching country news - includes variations, key figures, and related terms
+ * Helps find all relevant articles when user clicks on a country
+ */
+export const COUNTRY_NEWS_KEYWORDS: Record<string, string[]> = {
+	'Iran': ['Iran', 'Iranian', 'Khamenei', 'IRGC', 'Tehran', 'Persian'],
+	'Israel': ['Israel', 'Israeli', 'Netanyahu', 'IDF', 'Tel Aviv'],
+	'Ukraine': ['Ukraine', 'Ukrainian', 'Zelensky', 'Kyiv', 'Donbas'],
+	'Russia': ['Russia', 'Russian', 'Putin', 'Moscow', 'Kremlin'],
+	'China': ['China', 'Chinese', 'Xi Jinping', 'Beijing', 'CCP'],
+	'Taiwan': ['Taiwan', 'Taiwanese', 'Taipei', 'TSMC'],
+	'North Korea': ['North Korea', 'DPRK', 'Pyongyang', 'Kim Jong'],
+	'South Korea': ['South Korea', 'Korean', 'Seoul'],
+	'United States': ['United States', 'U.S.', 'US', 'American', 'Biden', 'Trump', 'Washington', 'Pentagon'],
+	'Syria': ['Syria', 'Syrian', 'Assad', 'Damascus'],
+	'Iraq': ['Iraq', 'Iraqi', 'Baghdad'],
+	'Saudi Arabia': ['Saudi', 'Saudi Arabia', 'Riyadh', 'MBS'],
+	'Yemen': ['Yemen', 'Yemeni', 'Houthi'],
+	'Turkey': ['Turkey', 'Turkish', 'Ankara', 'Erdogan'],
+	'France': ['France', 'French', 'Macron', 'Paris'],
+	'Germany': ['Germany', 'German', 'Scholz', 'Berlin'],
+	'United Kingdom': ['Britain', 'British', 'UK', 'London', 'England'],
+	'Japan': ['Japan', 'Japanese', 'Tokyo'],
+	'India': ['India', 'Indian', 'Modi', 'Delhi'],
+	'Pakistan': ['Pakistan', 'Pakistani', 'Islamabad'],
+	'Afghanistan': ['Afghanistan', 'Afghan', 'Taliban'],
+	'Egypt': ['Egypt', 'Egyptian', 'Cairo'],
+	'Brazil': ['Brazil', 'Brazilian'],
+	'Mexico': ['Mexico', 'Mexican'],
+	'Venezuela': ['Venezuela', 'Venezuelan', 'Maduro'],
+	'Canada': ['Canada', 'Canadian'],
+};
+
+/**
  * Get country center coordinates for major countries
  * Useful for displaying country news when clicking
  */

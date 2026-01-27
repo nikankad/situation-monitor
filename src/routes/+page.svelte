@@ -285,7 +285,7 @@
 			{#each orderedPanels as panelId, index (panelId)}
 				<div class="panel-slot panel-animate" style="--delay: {index + 1}">
 					{#if panelId === 'politics'}
-						<NewsPanel category="politics" panelId="politics" title="Politics" showCountryNews={true} />
+						<NewsPanel category="politics" panelId="politics" title="Politics" />
 					{:else if panelId === 'tech'}
 						<NewsPanel category="tech" panelId="tech" title="Tech" />
 					{:else if panelId === 'finance'}

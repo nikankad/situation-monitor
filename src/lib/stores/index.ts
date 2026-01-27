@@ -79,9 +79,3 @@ export {
 	type StageConfig,
 	type RefreshState
 } from './refresh';
-
-// Selected country store
-export {
-	selectedCountry,
-	type SelectedCountry
-} from './selected-country';

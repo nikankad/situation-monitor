@@ -371,30 +371,3 @@ export interface WorldLeader {
 	};
 }
 
-/**
- * Country information for detail modal
- */
-export interface CountryInfo {
-	name: string;
-	flag: string;
-	region?: string;
-	capital?: string;
-	population?: number;
-	gdp?: number;
-	government?: string;
-	isSanctioned?: boolean;
-	description?: string;
-	leader?: {
-		name: string;
-		title: string;
-	};
-	threats?: Array<{
-		description: string;
-		level: 'critical' | 'high' | 'elevated' | 'low';
-	}>;
-}
-
-/**
- * Country-specific news item
- */
-export interface CountryNews extends NewsItem {}
