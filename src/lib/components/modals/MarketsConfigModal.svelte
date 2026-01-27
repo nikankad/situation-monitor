@@ -184,10 +184,6 @@
 						?
 					</a>
 				</div>
-				<div class="add-help">
-					<span class="help-icon">📖</span>
-					<span>Search for ticker symbols at <a href="https://finance.yahoo.com/lookup" target="_blank" rel="noopener noreferrer" class="inline-link">Yahoo Finance</a></span>
-				</div>
 				<div class="add-form">
 					<input
 						type="text"
@@ -372,36 +368,6 @@
 		background: var(--accent);
 		color: white;
 		border-color: var(--accent);
-	}
-
-	.add-help {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.4rem 0.5rem;
-		background: var(--background);
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		font-size: 0.65rem;
-		color: var(--text-muted);
-		margin-bottom: 0.5rem;
-	}
-
-	.help-icon {
-		font-size: 0.75rem;
-		flex-shrink: 0;
-	}
-
-	.inline-link {
-		color: var(--accent);
-		text-decoration: none;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.inline-link:hover {
-		text-decoration: underline;
-		filter: brightness(1.1);
 	}
 
 	.add-form {
