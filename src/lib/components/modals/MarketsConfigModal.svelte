@@ -337,17 +337,22 @@
 
 	.add-form {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.5rem;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.add-input {
 		flex: 1;
+		min-width: 0;
 		padding: 0.4rem 0.6rem;
 		background: var(--background);
 		border: 1px solid var(--border);
 		border-radius: 4px;
 		color: var(--text);
 		font-size: 0.7rem;
+		box-sizing: border-box;
 	}
 
 	.add-input::placeholder {
