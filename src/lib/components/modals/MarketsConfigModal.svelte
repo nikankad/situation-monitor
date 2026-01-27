@@ -352,11 +352,11 @@
 		justify-content: center;
 		width: 18px;
 		height: 18px;
-		border: 1px solid var(--border);
+		border: 1.5px solid var(--accent);
 		border-radius: 50%;
-		background: var(--background);
-		color: var(--text-muted);
-		font-size: 0.65rem;
+		background: transparent;
+		color: var(--accent);
+		font-size: 0.7rem;
 		font-weight: bold;
 		text-decoration: none;
 		cursor: pointer;
