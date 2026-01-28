@@ -6,6 +6,8 @@ import { FEEDS } from '$lib/config/feeds';
 import type { NewsItem, NewsCategory } from '$lib/types';
 import { containsAlertKeyword, detectRegion, detectTopics } from '$lib/config/keywords';
 import { fetchWithProxy, logger } from '$lib/config/api';
+import { sanitizeHtml, sanitizeArticleTitle } from '$lib/services/security';
+import { browser } from '$app/environment';
 
 /**
  * Simple hash function to generate unique IDs from URLs
@@ -48,12 +50,48 @@ interface GdeltResponse {
 }
 
 /**
+ * Extract text from CDATA or HTML-encoded content
+ * Handles both <![CDATA[...]]> and HTML entities
+ */
+function extractXmlText(content: string): string {
+	if (!content) return '';
+
+	let text = content.trim();
+
+	// Remove CDATA wrappers if present
+	const cdataMatch = text.match(/^<!\[CDATA\[([\s\S]*)\]\]>$/);
+	if (cdataMatch) {
+		text = cdataMatch[1];
+	}
+
+	// Decode HTML entities
+	let decoded = text;
+	if (browser) {
+		const textarea = document.createElement('textarea');
+		textarea.innerHTML = text;
+		decoded = textarea.value;
+	} else {
+		// Server-side: Simple HTML entity decoding
+		decoded = text
+			.replace(/&amp;/g, '&')
+			.replace(/&lt;/g, '<')
+			.replace(/&gt;/g, '>')
+			.replace(/&quot;/g, '"')
+			.replace(/&#39;/g, "'");
+	}
+
+	return decoded.trim();
+}
+
+/**
  * Parse RSS XML and extract items
+ * Uses regex-based parsing for compatibility with RSS 2.0 feeds
+ * Properly handles CDATA sections and sanitizes HTML content
  */
 function parseRssXml(xml: string, sourceName: string, category: NewsCategory): NewsItem[] {
 	const items: NewsItem[] = [];
 
-	// Simple regex-based XML parsing for RSS items
+	// Regex-based XML parsing for RSS items
 	const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
 	const titleRegex = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i;
 	const linkRegex = /<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i;
@@ -70,10 +108,19 @@ function parseRssXml(xml: string, sourceName: string, category: NewsCategory): N
 		const descMatch = descRegex.exec(itemXml);
 		const pubDateMatch = pubDateRegex.exec(itemXml);
 
-		const title = titleMatch?.[1]?.trim() || '';
-		const link = linkMatch?.[1]?.trim() || '';
-		const description = descMatch?.[1]?.trim().replace(/<[^>]*>/g, '') || '';
-		const pubDate = pubDateMatch?.[1]?.trim() || '';
+		// Extract and sanitize title
+		const rawTitle = titleMatch?.[1] || '';
+		const title = sanitizeArticleTitle(extractXmlText(rawTitle));
+
+		// Extract and validate link
+		const link = extractXmlText(linkMatch?.[1] || '').trim();
+
+		// Extract and sanitize description (remove HTML, preserve text)
+		const rawDesc = descMatch?.[1] || '';
+		const extractedDesc = extractXmlText(rawDesc);
+		const description = sanitizeHtml(extractedDesc);
+
+		const pubDate = extractXmlText(pubDateMatch?.[1] || '');
 
 		if (!title || !link) continue;
 

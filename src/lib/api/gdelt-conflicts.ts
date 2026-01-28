@@ -9,6 +9,7 @@
  */
 
 import { fetchWithProxy, logger } from '$lib/config/api';
+import { sanitizeArticleTitle } from '$lib/services/security';
 
 // ============================================================================
 // GDELT Event Schema Types
@@ -289,7 +290,11 @@ function parseGdeltGeoJson(geojson: GeoJSON.FeatureCollection): GdeltConflictEve
 		while ((match = linkRegex.exec(htmlContent)) !== null) {
 			try {
 				const url = match[1];
-				const title = match[2];
+				const rawTitle = match[2];
+				// Sanitize title to prevent XSS from potentially malicious GDELT data
+				const title = sanitizeArticleTitle(rawTitle);
+				if (!title) continue; // Skip if title is empty after sanitization
+
 				const urlObj = new URL(url);
 				articles.push({
 					url,
@@ -297,7 +302,7 @@ function parseGdeltGeoJson(geojson: GeoJSON.FeatureCollection): GdeltConflictEve
 					source: urlObj.hostname.replace('www.', '')
 				});
 			} catch {
-				// Skip valid URLs
+				// Skip invalid URLs
 			}
 		}
 

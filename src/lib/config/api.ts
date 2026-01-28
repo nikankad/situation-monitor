@@ -3,6 +3,7 @@
  */
 
 import { browser } from '$app/environment';
+import { isAllowedProxyUrl } from '$lib/services/security';
 
 /**
  * Finnhub API key
@@ -33,48 +34,42 @@ export const FRED_BASE_URL = 'https://api.stlouisfed.org/fred';
 const isDev = browser ? (import.meta.env?.DEV ?? false) : false;
 
 /**
- * CORS proxy URLs for external API requests
- * Primary: Custom Cloudflare Worker (faster, dedicated)
- * Fallback: corsproxy.io (public, may rate limit)
+ * CORS proxy URL for external API requests
+ * Uses custom Cloudflare Worker for CORS handling
+ * Security: Only allows requests to whitelisted domains
  */
-export const CORS_PROXIES = {
-	primary: 'https://situation-monitor-proxy.seanthielen-e.workers.dev/?url=',
-	fallback: 'https://corsproxy.io/?url='
-} as const;
-
-// Default export for backward compatibility
-export const CORS_PROXY_URL = CORS_PROXIES.fallback;
+export const CORS_PROXY_URL = 'https://situation-monitor-proxy.seanthielen-e.workers.dev/?url=' as const;
 
 /**
- * Fetch with CORS proxy fallback
- * Tries primary proxy first, falls back to secondary on failure
+ * Fetch with CORS proxy - validates URLs against whitelist
+ * Security: Only allows requests to whitelisted domains to prevent SSRF attacks
+ * @param url - URL to fetch through proxy
+ * @returns Response from proxy or error response if URL is not allowed
  */
 export async function fetchWithProxy(url: string): Promise<Response> {
+	// Validate URL is allowed for proxying (prevents SSRF attacks)
+	if (!isAllowedProxyUrl(url)) {
+		logger.error('API', `Blocked proxy request to non-whitelisted domain: ${url}`);
+		return new Response(JSON.stringify({ error: 'URL not in allowed domain list' }), {
+			status: 403,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
+
 	const encodedUrl = encodeURIComponent(url);
 
-	// Try primary proxy first
 	try {
-		const response = await fetch(CORS_PROXIES.primary + encodedUrl);
+		const response = await fetch(CORS_PROXY_URL + encodedUrl);
 		if (response.ok) {
 			return response;
 		}
-		// If we get a 403 or 404, try fallback
-		if (response.status === 403 || response.status === 404) {
-			logger.warn('API', `Primary proxy returned ${response.status}, trying fallback for ${url}`);
-		} else if (!response.ok) {
-			logger.warn('API', `Primary proxy failed (${response.status}), trying fallback`);
-		}
-	} catch (error) {
-		logger.warn('API', 'Primary proxy error, trying fallback:', error);
-	}
 
-	// Fallback to secondary proxy
-	try {
-		return await fetch(CORS_PROXIES.fallback + encodedUrl);
+		logger.warn('API', `Proxy request failed (${response.status}): ${url}`);
+		return response;
 	} catch (error) {
-		logger.error('API', 'Fallback proxy also failed:', error);
+		logger.error('API', `Proxy request error for ${url}:`, error);
 		// Return a failed response rather than throwing
-		return new Response(JSON.stringify({ error: 'Failed to fetch with both proxies' }), {
+		return new Response(JSON.stringify({ error: 'Proxy request failed', details: String(error) }), {
 			status: 502,
 			headers: { 'Content-Type': 'application/json' }
 		});
