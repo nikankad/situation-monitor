@@ -10,7 +10,6 @@ export interface Prediction {
 	id: string;
 	question: string;
 	volume: number;
-	url?: string;
 }
 
 export interface WhaleTransaction {
@@ -56,9 +55,7 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 			.map((m: Record<string, unknown>) => ({
 				id: String(m.id),
 				question: String(m.question),
-				volume: Number(m.volume24hr) || 0,
-				// Use market ID format which works reliably for all markets
-				url: `https://polymarket.com/market/${m.id}`
+				volume: Number(m.volume24hr) || 0
 			}));
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);
