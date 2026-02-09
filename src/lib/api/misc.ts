@@ -63,12 +63,16 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 					// default to 50 if parsing fails
 				}
 
+				// Construct Polymarket URL
+				// Link to markets page where users can find and trade this market
+				const url = `https://polymarket.com/markets?q=${encodeURIComponent(String(m.question).substring(0, 30))}`;
+
 				return {
 					id: String(m.id),
 					question: String(m.question),
 					yes,
 					volume: Number(m.volume24hr) || 0,
-					url: m.slug ? `https://polymarket.com/event/${m.slug}` : undefined
+					url
 				};
 			});
 	} catch (error) {
