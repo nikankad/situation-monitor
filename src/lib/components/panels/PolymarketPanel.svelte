@@ -4,9 +4,7 @@
 	interface Prediction {
 		id: string;
 		question: string;
-		yes: number;
-		volume: number | string;
-		url?: string;
+		volume: number;
 	}
 
 	interface Props {
@@ -16,8 +14,7 @@
 
 	let { predictions = [], error = null }: Props = $props();
 
-	function formatVolume(v: number | string): string {
-		if (typeof v === 'string') return '$' + v;
+	function formatVolume(v: number): string {
 		if (!v) return '$0';
 		if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
 		if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
@@ -33,11 +30,7 @@
 			{#each predictions as pred (pred.id)}
 				<div class="prediction-item">
 					<div class="market-info">
-						{#if pred.url}
-							<a href={pred.url} target="_blank" rel="noopener noreferrer" class="market-link">{pred.question}</a>
-						{:else}
-							<div class="market-text">{pred.question}</div>
-						{/if}
+						<div class="market-question">{pred.question}</div>
 						<div class="market-volume">{formatVolume(pred.volume)}</div>
 					</div>
 				</div>
@@ -69,25 +62,11 @@
 		gap: 1rem;
 	}
 
-	.market-link {
-		font-size: 0.7rem;
-		color: var(--accent, #4a90e2);
-		text-decoration: none;
-		cursor: pointer;
-		transition: all 0.2s ease;
-		display: block;
-		line-height: 1.4;
-	}
-
-	.market-link:hover {
-		text-decoration: underline;
-		opacity: 0.8;
-	}
-
-	.market-text {
+	.market-question {
 		font-size: 0.7rem;
 		color: var(--text-primary);
 		line-height: 1.4;
+		flex: 1;
 	}
 
 	.market-volume {

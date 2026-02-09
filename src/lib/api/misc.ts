@@ -9,9 +9,7 @@ import { logger } from '$lib/config/api';
 export interface Prediction {
 	id: string;
 	question: string;
-	yes: number;
 	volume: number;
-	url?: string;
 }
 
 export interface WhaleTransaction {
@@ -53,28 +51,12 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 		logger.log('Polymarket', `Fetched ${markets.length} markets`);
 
 		return markets
-			.filter((m: Record<string, unknown>) => m.question && m.outcomePrices)
-			.map((m: Record<string, unknown>) => {
-				let yes = 50;
-				try {
-					const prices = JSON.parse(m.outcomePrices as string);
-					yes = Math.round(Number(prices[0]) * 100);
-				} catch {
-					// default to 50 if parsing fails
-				}
-
-				// Construct Polymarket event URL
-				// Format: https://polymarket.com/event/{slug}
-				const url = `https://polymarket.com/event/${m.slug}`;
-
-				return {
-					id: String(m.id),
-					question: String(m.question),
-					yes,
-					volume: Number(m.volume24hr) || 0,
-					url
-				};
-			});
+			.filter((m: Record<string, unknown>) => m.question)
+			.map((m: Record<string, unknown>) => ({
+				id: String(m.id),
+				question: String(m.question),
+				volume: Number(m.volume24hr) || 0
+			}));
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);
 		return [];
