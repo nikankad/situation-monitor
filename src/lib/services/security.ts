@@ -37,7 +37,8 @@ const ALLOWED_PROXY_DOMAINS = [
 	'gdeltproject.org',
 	'coingecko.com',
 	'stlouisfed.org',
-	'finnhub.io'
+	'finnhub.io',
+	'polymarket.com'
 ] as const;
 
 /**

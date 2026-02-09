@@ -4,9 +4,8 @@
 	interface Prediction {
 		id: string;
 		question: string;
-		yes: number;
-		volume: number | string;
-		url?: string;
+		volume: number;
+		url: string;
 	}
 
 	interface Props {
@@ -16,10 +15,7 @@
 
 	let { predictions = [], error = null }: Props = $props();
 
-	const count = $derived(predictions.length);
-
-	function formatVolume(v: number | string): string {
-		if (typeof v === 'string') return '$' + v;
+	function formatVolume(v: number): string {
 		if (!v) return '$0';
 		if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
 		if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
@@ -29,19 +25,16 @@
 
 <Panel id="polymarket" title="Polymarket" {error}>
 	{#if predictions.length === 0 && !error}
-		<div class="empty-state">No predictions available</div>
+		<div class="empty-state">No markets available</div>
 	{:else}
 		<div class="predictions-list">
 			{#each predictions as pred (pred.id)}
-				<div class="prediction-item">
-					<div class="prediction-info">
-						<div class="prediction-question">{pred.question}</div>
-						<div class="prediction-volume">Vol: {formatVolume(pred.volume)}</div>
+				<a href={pred.url} target="_blank" rel="noopener noreferrer" class="prediction-item">
+					<div class="market-info">
+						<div class="market-question">{pred.question}</div>
+						<div class="market-volume">{formatVolume(pred.volume)}</div>
 					</div>
-					<div class="prediction-odds">
-						<span class="prediction-yes">{pred.yes}%</span>
-					</div>
-				</div>
+				</a>
 			{/each}
 		</div>
 	{/if}
@@ -51,46 +44,45 @@
 	.predictions-list {
 		display: flex;
 		flex-direction: column;
+		gap: 0.5rem;
 	}
 
 	.prediction-item {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
+		display: block;
 		padding: 0.5rem 0;
 		border-bottom: 1px solid var(--border);
+		text-decoration: none;
+		color: inherit;
+		cursor: pointer;
 	}
 
 	.prediction-item:last-child {
 		border-bottom: none;
 	}
 
-	.prediction-info {
-		flex: 1;
-		min-width: 0;
+	.prediction-item:hover .market-question {
+		color: var(--accent, #4a90e2);
 	}
 
-	.prediction-question {
-		font-size: 0.65rem;
+	.market-info {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+
+	.market-question {
+		font-size: 0.7rem;
 		color: var(--text-primary);
-		line-height: 1.3;
-		margin-bottom: 0.2rem;
+		line-height: 1.4;
+		flex: 1;
 	}
 
-	.prediction-volume {
-		font-size: 0.55rem;
+	.market-volume {
+		font-size: 0.65rem;
 		color: var(--text-muted);
-	}
-
-	.prediction-odds {
-		margin-left: 0.5rem;
-	}
-
-	.prediction-yes {
-		font-size: 0.8rem;
-		font-weight: 700;
-		color: var(--success);
-		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+		flex-shrink: 0;
 	}
 
 	.empty-state {
