@@ -3,11 +3,14 @@
  * Note: Some of these use mock data as the original APIs require authentication
  */
 
+import { logger } from '$lib/config/api';
+
 export interface Prediction {
 	id: string;
 	question: string;
 	yes: number;
-	volume: string;
+	volume: number;
+	url?: string;
 }
 
 export interface WhaleTransaction {
@@ -25,11 +28,52 @@ export interface Contract {
 }
 
 /**
- * Fetch Polymarket predictions
- * Note: Polymarket API requires authentication - currently returns empty data
+ * Fetch Polymarket predictions from the Gamma API via server-side proxy
+ * Returns the highest-volume active markets
+ *
+ * Note: Uses a server-side route to bypass CORS restrictions on the Gamma API
  */
 export async function fetchPolymarket(): Promise<Prediction[]> {
-	return [];
+	try {
+		const res = await fetch('/api/polymarket', {
+			method: 'GET',
+			headers: {
+				'Accept': 'application/json'
+			}
+		});
+
+		if (!res.ok) {
+			logger.warn('Polymarket', `API returned ${res.status}`);
+			return [];
+		}
+
+		const markets = await res.json();
+
+		logger.log('Polymarket', `Fetched ${markets.length} markets`);
+
+		return markets
+			.filter((m: Record<string, unknown>) => m.question && m.outcomePrices)
+			.map((m: Record<string, unknown>) => {
+				let yes = 50;
+				try {
+					const prices = JSON.parse(m.outcomePrices as string);
+					yes = Math.round(Number(prices[0]) * 100);
+				} catch {
+					// default to 50 if parsing fails
+				}
+
+				return {
+					id: String(m.id),
+					question: String(m.question),
+					yes,
+					volume: Number(m.volume24hr) || 0,
+					url: m.slug ? `https://polymarket.com/event/${m.slug}` : undefined
+				};
+			});
+	} catch (error) {
+		logger.error('Polymarket', 'Failed to fetch predictions:', error);
+		return [];
+	}
 }
 
 /**

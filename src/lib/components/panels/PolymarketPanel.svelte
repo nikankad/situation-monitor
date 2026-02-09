@@ -35,7 +35,11 @@
 			{#each predictions as pred (pred.id)}
 				<div class="prediction-item">
 					<div class="prediction-info">
-						<div class="prediction-question">{pred.question}</div>
+							{#if pred.url}
+							<a href={pred.url} target="_blank" rel="noopener noreferrer" class="prediction-question">{pred.question}</a>
+						{:else}
+							<div class="prediction-question">{pred.question}</div>
+						{/if}
 						<div class="prediction-volume">Vol: {formatVolume(pred.volume)}</div>
 					</div>
 					<div class="prediction-odds">
@@ -75,6 +79,13 @@
 		color: var(--text-primary);
 		line-height: 1.3;
 		margin-bottom: 0.2rem;
+		text-decoration: none;
+		display: block;
+	}
+
+	a.prediction-question:hover {
+		text-decoration: underline;
+		color: var(--accent, var(--text-primary));
 	}
 
 	.prediction-volume {
