@@ -81,11 +81,26 @@
 		margin-bottom: 0.2rem;
 		text-decoration: none;
 		display: block;
+		transition: all 0.2s ease;
+	}
+
+	a.prediction-question {
+		cursor: pointer;
+		color: var(--accent, #4a90e2);
 	}
 
 	a.prediction-question:hover {
 		text-decoration: underline;
-		color: var(--accent, var(--text-primary));
+		color: var(--accent, #357abd);
+		opacity: 0.8;
+	}
+
+	a.prediction-question:active {
+		transform: scale(0.98);
+	}
+
+	div.prediction-question {
+		cursor: default;
 	}
 
 	.prediction-volume {
