@@ -10,6 +10,7 @@ export interface Prediction {
 	id: string;
 	question: string;
 	volume: number;
+	url?: string;
 }
 
 export interface WhaleTransaction {
@@ -52,11 +53,23 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 
 		return markets
 			.filter((m: Record<string, unknown>) => m.question)
-			.map((m: Record<string, unknown>) => ({
-				id: String(m.id),
-				question: String(m.question),
-				volume: Number(m.volume24hr) || 0
-			}));
+			.map((m: Record<string, unknown>) => {
+				// Generate slug from question text for working Polymarket URLs
+				const question = String(m.question);
+				const slug = question
+					.toLowerCase()
+					.replace(/[?!.,;:()&]/g, '') // Remove punctuation
+					.replace(/\s+/g, '-') // Replace spaces with hyphens
+					.replace(/-+/g, '-') // Collapse multiple hyphens
+					.replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+
+				return {
+					id: String(m.id),
+					question,
+					volume: Number(m.volume24hr) || 0,
+					url: `https://polymarket.com/event/${slug}`
+				};
+			});
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);
 		return [];

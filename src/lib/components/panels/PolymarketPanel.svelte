@@ -5,6 +5,7 @@
 		id: string;
 		question: string;
 		volume: number;
+		url?: string;
 	}
 
 	interface Props {
@@ -30,7 +31,11 @@
 			{#each predictions as pred (pred.id)}
 				<div class="prediction-item">
 					<div class="market-info">
-						<div class="market-question">{pred.question}</div>
+						{#if pred.url}
+							<a href={pred.url} target="_blank" rel="noopener noreferrer" class="market-link">{pred.question}</a>
+						{:else}
+							<div class="market-question">{pred.question}</div>
+						{/if}
 						<div class="market-volume">{formatVolume(pred.volume)}</div>
 					</div>
 				</div>
@@ -67,6 +72,21 @@
 		color: var(--text-primary);
 		line-height: 1.4;
 		flex: 1;
+	}
+
+	.market-link {
+		font-size: 0.7rem;
+		color: var(--accent, #4a90e2);
+		text-decoration: none;
+		cursor: pointer;
+		line-height: 1.4;
+		flex: 1;
+		transition: all 0.2s ease;
+	}
+
+	.market-link:hover {
+		text-decoration: underline;
+		opacity: 0.8;
 	}
 
 	.market-volume {
