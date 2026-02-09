@@ -63,8 +63,10 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 					// default to 50 if parsing fails
 				}
 
-				// Construct Polymarket URL using market ID for direct access to exact event
-				const url = `https://polymarket.com/market/${m.id}`;
+				// Construct Polymarket URL using slug from API
+				// Polymarket web URLs use the format: /event/{slug}
+				const slug = m.slug as string | undefined;
+				const url = slug ? `https://polymarket.com/event/${slug}` : `https://polymarket.com/market/${m.id}`;
 
 				return {
 					id: String(m.id),
