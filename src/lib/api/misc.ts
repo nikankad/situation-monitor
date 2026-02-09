@@ -63,9 +63,8 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 					// default to 50 if parsing fails
 				}
 
-				// Construct Polymarket URL
-				// Link to markets page where users can find and trade this market
-				const url = `https://polymarket.com/markets?q=${encodeURIComponent(String(m.question).substring(0, 30))}`;
+				// Construct Polymarket URL using market ID for direct access to exact event
+				const url = `https://polymarket.com/market/${m.id}`;
 
 				return {
 					id: String(m.id),
