@@ -5,6 +5,7 @@
 		id: string;
 		question: string;
 		volume: number;
+		url: string;
 	}
 
 	interface Props {
@@ -28,7 +29,7 @@
 	{:else}
 		<div class="predictions-list">
 			{#each predictions as pred (pred.id)}
-				<a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" class="prediction-item">
+				<a href={pred.url} target="_blank" rel="noopener noreferrer" class="prediction-item">
 					<div class="market-info">
 						<div class="market-question">{pred.question}</div>
 						<div class="market-volume">{formatVolume(pred.volume)}</div>

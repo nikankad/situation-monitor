@@ -10,6 +10,7 @@ export interface Prediction {
 	id: string;
 	question: string;
 	volume: number;
+	url: string;
 }
 
 export interface WhaleTransaction {
@@ -52,11 +53,21 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 
 		return markets
 			.filter((m: Record<string, unknown>) => m.question)
-			.map((m: Record<string, unknown>) => ({
-				id: String(m.id),
-				question: String(m.question),
-				volume: Number(m.volume24hr) || 0
-			}));
+			.map((m: Record<string, unknown>) => {
+				// Get event slug from nested events array for working URLs
+				const events = m.events as Array<Record<string, unknown>> | undefined;
+				const eventSlug = events?.[0]?.slug as string | undefined;
+				const url = eventSlug
+					? `https://polymarket.com/event/${eventSlug}`
+					: 'https://polymarket.com';
+
+				return {
+					id: String(m.id),
+					question: String(m.question),
+					volume: Number(m.volume24hr) || 0,
+					url
+				};
+			});
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);
 		return [];
