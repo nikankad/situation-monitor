@@ -28,12 +28,12 @@
 	{:else}
 		<div class="predictions-list">
 			{#each predictions as pred (pred.id)}
-				<div class="prediction-item">
+				<a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" class="prediction-item">
 					<div class="market-info">
 						<div class="market-question">{pred.question}</div>
 						<div class="market-volume">{formatVolume(pred.volume)}</div>
 					</div>
-				</div>
+				</a>
 			{/each}
 		</div>
 	{/if}
@@ -47,12 +47,20 @@
 	}
 
 	.prediction-item {
+		display: block;
 		padding: 0.5rem 0;
 		border-bottom: 1px solid var(--border);
+		text-decoration: none;
+		color: inherit;
+		cursor: pointer;
 	}
 
 	.prediction-item:last-child {
 		border-bottom: none;
+	}
+
+	.prediction-item:hover .market-question {
+		color: var(--accent, #4a90e2);
 	}
 
 	.market-info {
