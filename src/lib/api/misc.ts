@@ -3,6 +3,7 @@
  * Note: Some of these use mock data as the original APIs require authentication
  */
 
+import { base } from '$app/paths';
 import { logger } from '$lib/config/api';
 
 export interface Prediction {
@@ -35,7 +36,7 @@ export interface Contract {
  */
 export async function fetchPolymarket(): Promise<Prediction[]> {
 	try {
-		const res = await fetch('/api/polymarket', {
+		const res = await fetch(`${base}/api/polymarket`, {
 			method: 'GET',
 			headers: {
 				'Accept': 'application/json'
