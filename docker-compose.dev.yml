@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  situation-monitor-dev:
+    build:
+      context: .
+      dockerfile: .dockerdev
+    container_name: situation-monitor-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped

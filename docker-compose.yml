@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  situation-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: situation-monitor
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    # Uncomment below to add custom nginx configuration
+    # volumes:
+    #   - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
