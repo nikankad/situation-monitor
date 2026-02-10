@@ -63,7 +63,7 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 
 				return {
 					id: String(m.id),
-					question: String(m.question),
+					question: (events?.[0]?.title as string | undefined) || String(m.question),
 					volume: Number(m.volume24hr) || 0,
 					url
 				};
