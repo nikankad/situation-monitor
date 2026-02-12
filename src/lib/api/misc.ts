@@ -35,7 +35,14 @@ const POLYMARKET_API =
  */
 export async function fetchPolymarket(): Promise<Prediction[]> {
 	try {
-		const res = await fetchWithProxy(POLYMARKET_API);
+		// Try direct fetch first (Polymarket Gamma API supports CORS)
+		let res: Response;
+		try {
+			res = await fetch(POLYMARKET_API, { headers: { Accept: 'application/json' } });
+		} catch {
+			// Fall back to proxy if direct fetch fails
+			res = await fetchWithProxy(POLYMARKET_API);
+		}
 
 		if (!res.ok) {
 			logger.warn('Polymarket', `API returned ${res.status}`);
