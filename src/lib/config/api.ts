@@ -38,7 +38,7 @@ const isDev = browser ? (import.meta.env?.DEV ?? false) : false;
  * Uses custom Cloudflare Worker for CORS handling
  * Security: Only allows requests to whitelisted domains
  */
-export const CORS_PROXY_URL = 'https://situation-monitor-proxy.seanthielen-e.workers.dev/?url=' as const;
+export const CORS_PROXY_URL = 'https://situation-monitor.nikankad.workers.dev/?url=' as const;
 
 /**
  * Fetch with CORS proxy - validates URLs against whitelist
