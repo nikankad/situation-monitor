@@ -12,7 +12,8 @@
 		WhalePanel,
 		PolymarketPanel,
 		ContractsPanel,
-		SituationPanel
+		SituationPanel,
+		LiveTVPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -358,6 +359,8 @@
 						<PolymarketPanel {predictions} />
 					{:else if panelId === 'contracts'}
 						<ContractsPanel {contracts} />
+					{:else if panelId === 'livetv'}
+						<LiveTVPanel />
 					{/if}
 				</div>
 			{/each}
