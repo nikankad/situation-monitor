@@ -17,7 +17,8 @@ export type PanelId =
 	| 'polymarket'
 	| 'contracts'
 	| 'correlation'
-	| 'narrative';
+	| 'narrative'
+	| 'livetv';
 
 export const PANELS: Record<PanelId, PanelConfig> = {
 	map: { name: 'Global Situation', priority: 1 },
@@ -29,7 +30,8 @@ export const PANELS: Record<PanelId, PanelConfig> = {
 	polymarket: { name: 'Polymarket', priority: 2 },
 	contracts: { name: 'Gov Contracts', priority: 3 },
 	correlation: { name: 'Pattern Analysis', priority: 1 },
-	narrative: { name: 'Global Sentiment', priority: 1 }
+	narrative: { name: 'Global Sentiment', priority: 1 },
+	livetv: { name: 'Live TV', priority: 2 }
 };
 
 export const NON_DRAGGABLE_PANELS: PanelId[] = ['map'];
