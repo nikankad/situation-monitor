@@ -102,7 +102,6 @@
 
 	.whale-hash {
 		color: var(--text-secondary);
-		font-family: monospace;
 		font-size: 0.55rem;
 	}
 

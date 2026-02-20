@@ -1663,7 +1663,6 @@
 		height: 20px;
 		font-size: 0.55rem;
 		font-weight: 700;
-		font-family: monospace;
 		text-align: center;
 		padding: 0 3px;
 		border-left: 1px solid rgba(255, 255, 255, 0.15);

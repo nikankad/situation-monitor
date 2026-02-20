@@ -30,8 +30,39 @@ const ALLOWED_PROXY_DOMAINS = [
 	'defense.gov',
 	'nato.int',
 	'un.org',
+	'cisa.gov',
+
+	// Think Tanks
 	'csis.org',
 	'brookings.edu',
+	'cfr.org',
+	'rand.org',
+	'carnegieendowment.org',
+	'atlanticcouncil.org',
+	'chathamhouse.org',
+	'iiss.org',
+
+	// Defense & Military
+	'warontherocks.com',
+	'defenseone.com',
+	'breakingdefense.com',
+	'thedrive.com',
+	'janes.com',
+
+	// Regional / International
+	'thediplomat.com',
+	'al-monitor.com',
+	'aljazeera.com',
+	'eurasiareview.com',
+
+	// OSINT
+	'bellingcat.com',
+	'oryxspioenkop.com',
+	'understandingwar.org',
+
+	// Cyber
+	'krebsonsecurity.com',
+	'recordedfuture.com',
 
 	// Data APIs
 	'gdeltproject.org',

@@ -3,8 +3,7 @@
  * Note: Some of these use mock data as the original APIs require authentication
  */
 
-import { base } from '$app/paths';
-import { logger } from '$lib/config/api';
+import { fetchWithProxy, logger } from '$lib/config/api';
 
 export interface Prediction {
 	id: string;
@@ -27,20 +26,16 @@ export interface Contract {
 	amount: number;
 }
 
+const POLYMARKET_API =
+	'https://gamma-api.polymarket.com/markets?active=true&closed=false&order=volume24hr&ascending=false&limit=100&marketType=normal';
+
 /**
- * Fetch Polymarket predictions from the Gamma API via server-side proxy
+ * Fetch Polymarket predictions via the CORS proxy
  * Returns the highest-volume active markets
- *
- * Note: Uses a server-side route to bypass CORS restrictions on the Gamma API
  */
 export async function fetchPolymarket(): Promise<Prediction[]> {
 	try {
-		const res = await fetch(`${base}/api/polymarket`, {
-			method: 'GET',
-			headers: {
-				'Accept': 'application/json'
-			}
-		});
+		const res = await fetchWithProxy(POLYMARKET_API);
 
 		if (!res.ok) {
 			logger.warn('Polymarket', `API returned ${res.status}`);
@@ -63,7 +58,7 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 
 				return {
 					id: String(m.id),
-					question: String(m.question),
+					question: (events?.[0]?.title as string | undefined) || String(m.question),
 					volume: Number(m.volume24hr) || 0,
 					url
 				};

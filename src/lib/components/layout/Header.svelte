@@ -138,7 +138,7 @@
 		font-size: 0.85rem;
 		font-weight: 400;
 		color: var(--green);
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 		letter-spacing: 0.05em;
 		opacity: 0.9;
 	}
@@ -211,7 +211,7 @@
 		font-size: 0.55rem;
 		font-weight: 500;
 		color: var(--text-muted);
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 		letter-spacing: 0.05em;
 	}
 
@@ -219,7 +219,7 @@
 		font-size: 0.55rem;
 		font-weight: 500;
 		color: var(--text-primary);
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 		letter-spacing: 0.05em;
 	}
 
@@ -237,7 +237,7 @@
 		align-items: baseline;
 		gap: 0.3rem;
 		font-size: 0.55rem;
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 	}
 
 	.refresh-status-subtle {
@@ -264,7 +264,7 @@
 		font-size: 0.55rem;
 		color: var(--text);
 		opacity: 1;
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 		font-weight: 500;
 		letter-spacing: 0.05em;
 	}
@@ -274,13 +274,13 @@
 		color: var(--text-muted);
 		font-weight: 500;
 		letter-spacing: 0.05em;
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 	}
 
 	.tz-time {
 		font-size: 0.55rem;
 		color: var(--text-secondary);
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
 		font-weight: 500;
 		letter-spacing: 0.05em;
 	}

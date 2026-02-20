@@ -19,7 +19,7 @@ export default {
 				info: '#4488ff'
 			},
 			fontFamily: {
-				mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'monospace']
+				mono: ['SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Inconsolata', 'Fira Code', 'Consolas', 'monospace']
 			},
 			fontSize: {
 				'2xs': '0.65rem'
