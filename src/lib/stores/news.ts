@@ -5,6 +5,7 @@
 import { writable, derived, get } from 'svelte/store';
 import type { NewsItem, NewsCategory } from '$lib/types';
 import { containsAlertKeyword, detectRegion, detectTopics } from '$lib/config';
+import { keywordsStore } from './keywords';
 
 export interface CategoryState {
 	items: NewsItem[];
@@ -43,7 +44,8 @@ function createInitialState(): NewsState {
 // Enrich news item with analysis
 function enrichNewsItem(item: NewsItem): NewsItem {
 	const text = `${item.title} ${item.description || ''}`;
-	const alertResult = containsAlertKeyword(text);
+	const activeKeywords = keywordsStore.getActiveKeywords();
+	const alertResult = containsAlertKeyword(text, activeKeywords);
 
 	return {
 		...item,

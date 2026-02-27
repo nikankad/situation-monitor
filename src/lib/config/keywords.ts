@@ -79,10 +79,17 @@ export const TOPIC_KEYWORDS: Record<string, string[]> = {
 
 /**
  * Check if a headline contains alert keywords
+ * @param text - Text to check
+ * @param customKeywords - Optional custom keywords to use instead of defaults
  */
-export function containsAlertKeyword(text: string): { isAlert: boolean; keyword?: string } {
+export function containsAlertKeyword(
+	text: string,
+	customKeywords?: string[]
+): { isAlert: boolean; keyword?: string } {
 	const lowerText = text.toLowerCase();
-	for (const keyword of ALERT_KEYWORDS) {
+	const keywordsToCheck = customKeywords || ALERT_KEYWORDS;
+	
+	for (const keyword of keywordsToCheck) {
 		if (lowerText.includes(keyword)) {
 			return { isAlert: true, keyword };
 		}

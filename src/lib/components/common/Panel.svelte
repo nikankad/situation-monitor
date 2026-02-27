@@ -13,6 +13,7 @@
 		collapsible?: boolean;
 		collapsed?: boolean;
 		onCollapse?: () => void;
+		onSettings?: () => void;
 		header?: Snippet;
 		actions?: Snippet;
 		children: Snippet;
@@ -29,6 +30,7 @@
 		collapsible = false,
 		collapsed = false,
 		onCollapse,
+		onSettings,
 		header,
 		actions,
 		children
@@ -44,7 +46,14 @@
 <div class="panel" class:draggable class:collapsed data-panel-id={id}>
 	<div class="panel-header">
 		<div class="panel-title-row">
-			<h3 class="panel-title">{title}</h3>
+			<div class="panel-title-group">
+				<h3 class="panel-title">{title}</h3>
+				{#if onSettings}
+					<button class="panel-settings-btn" onclick={onSettings} aria-label="Panel settings" title="Customize keywords">
+						⚙️
+					</button>
+				{/if}
+			</div>
 			{#if count !== null}
 				<span class="panel-count">{count}</span>
 			{/if}
@@ -116,6 +125,12 @@
 		gap: 0.5rem;
 	}
 
+	.panel-title-group {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
 	.panel-title {
 		font-size: 0.65rem;
 		font-weight: 600;
@@ -123,6 +138,23 @@
 		letter-spacing: 0.05em;
 		color: var(--text-secondary);
 		margin: 0;
+	}
+
+	.panel-settings-btn {
+		background: none;
+		border: none;
+		color: var(--text-secondary);
+		cursor: pointer;
+		padding: 0.2rem;
+		font-size: 0.7rem;
+		line-height: 1;
+		opacity: 0.6;
+		transition: opacity 0.2s, color 0.2s;
+	}
+
+	.panel-settings-btn:hover {
+		opacity: 1;
+		color: var(--accent);
 	}
 
 	.panel-count {

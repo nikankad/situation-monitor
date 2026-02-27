@@ -649,8 +649,19 @@
 		CHOKEPOINTS.forEach((cp) => {
 			const [x, y] = projection([cp.lon, cp.lat]) || [0, 0];
 			if (x && y) {
-				const size = 3 * inverseScale;
-				// Draw diamond (rotated square) using path instead of rect
+				const size = 3.5 * inverseScale;
+				// Outer ring for emphasis
+				mapGroup
+					.append('circle')
+					.attr('class', 'map-icon')
+					.attr('cx', x)
+					.attr('cy', y)
+					.attr('r', size + 2)
+					.attr('fill', 'none')
+					.attr('stroke', '#00aaff')
+					.attr('stroke-width', 1 * inverseScale)
+					.attr('opacity', 0.4);
+				// Main diamond icon
 				mapGroup
 					.append('circle')
 					.attr('class', 'map-icon')
@@ -658,26 +669,40 @@
 					.attr('cy', y)
 					.attr('r', size)
 					.attr('fill', '#00aaff')
-					.attr('opacity', 0.8);
+					.attr('opacity', 0.9);
 				if (showLabels) {
+				// Label with strategic designation
 				mapGroup
 					.append('text')
-					.attr('class', 'map-icon')
+					.attr('class', 'map-icon chokepoint-label')
 					.attr('x', x + 8 * inverseScale)
-					.attr('y', y + 3 * inverseScale)
-					.attr('fill', '#00aaff')
-					.attr('font-size', `${7 * inverseScale}px`)
+					.attr('y', y + 2 * inverseScale)
+					.attr('fill', '#00ddff')
+					.attr('font-size', `${7.5 * inverseScale}px`)
 					.attr('font-family', 'monospace')
+					.attr('font-weight', '600')
 					.text(cp.name);
+				// Subtitle indicator
+				mapGroup
+					.append('text')
+					.attr('class', 'map-icon chokepoint-subtitle')
+					.attr('x', x + 8 * inverseScale)
+					.attr('y', y + 9 * inverseScale)
+					.attr('fill', '#00aaff')
+					.attr('font-size', `${5 * inverseScale}px`)
+					.attr('font-family', 'monospace')
+					.attr('opacity', 0.7)
+					.text('⬥ Maritime Chokepoint');
 				}
+				// Interactive hit area
 				mapGroup
 					.append('circle')
 					.attr('class', 'map-icon hotspot-hit')
 					.attr('cx', x)
 					.attr('cy', y)
-					.attr('r', 10 * inverseScale)
+					.attr('r', 12 * inverseScale)
 					.attr('fill', 'transparent')
-					.on('mouseenter', (event: MouseEvent) => showTooltip(event, `⬥ ${cp.desc}`, '#00aaff'))
+					.on('mouseenter', (event: MouseEvent) => showTooltip(event, cp.desc || cp.name, '#00ddff'))
 					.on('mousemove', moveTooltip)
 					.on('mouseleave', hideTooltip);
 			}
@@ -1021,20 +1046,6 @@
 			const strokeWidth = 1 * inverseScale;
 			const fontSize = (baseRadius > 6 ? 5 : 4) * inverseScale;
 
-			// Outer pulsing circle for high-alert clusters
-			if (cluster.alertCount >= 3) {
-				mapGroup
-					.append('circle')
-					.attr('class', 'news-cluster pulse-ring')
-					.attr('cx', x)
-					.attr('cy', y)
-					.attr('r', (baseRadius + 4) * inverseScale)
-					.attr('fill', 'none')
-					.attr('stroke', color)
-					.attr('stroke-width', 1 * inverseScale)
-					.attr('stroke-opacity', 0.2);
-			}
-
 			// Main cluster circle
 			mapGroup
 				.append('circle')
@@ -1368,14 +1379,6 @@
 						</div>
 					{/if}
 
-					<div class="info-section">
-						<h4>Event Summary</h4>
-						<p class="summary-text">{selectedGdeltConflict.description}</p>
-						<div class="event-code-info">
-							<strong>Type:</strong> {selectedGdeltConflict.eventCodeDescription}
-						</div>
-					</div>
-					
 					<div class="info-grid">
 						<div class="info-item">
 							<div class="info-label">Location</div>
@@ -1738,24 +1741,19 @@
 		cursor: pointer;
 	}
 
-	/* Pulse ring for high-alert clusters */
-	:global(.pulse-ring) {
-		animation: pulse-ring 1.5s ease-out infinite;
-	}
-
-	@keyframes pulse-ring {
-		0% {
-			stroke-opacity: 0.3;
-			r: 14;
-		}
-		100% {
-			stroke-opacity: 0;
-			r: 22;
-		}
-	}
-
 	:global(.hotspot-hit) {
 		cursor: pointer;
+	}
+
+	/* Chokepoint label styling */
+	:global(.chokepoint-label) {
+		pointer-events: none;
+		text-shadow: 0 0 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 170, 255, 0.5);
+	}
+
+	:global(.chokepoint-subtitle) {
+		pointer-events: none;
+		text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
 	}
 
 	/* Selected country highlight with glow effect */

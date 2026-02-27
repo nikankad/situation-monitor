@@ -121,6 +121,10 @@
 				fetchWhaleTransactions(),
 				fetchGovContracts()
 			]);
+			console.log('[+page] Polymarket predictions loaded:', predictionsData.length);
+			if (predictionsData.length > 0) {
+				console.log('[+page] First prediction:', predictionsData[0]);
+			}
 			predictions = predictionsData;
 			whales = whalesData;
 			contracts = contractsData;
@@ -156,8 +160,15 @@
 		prevCustomMarketsSize = currentSize;
 	});
 
-	// Get ordered panel IDs (excluding map which is always first)
-	const orderedPanels = $derived($settings.order.filter(id => id !== 'map' && isPanelVisible(id)));
+	// Get ordered panel IDs (excluding map which is always first), with deduplication to prevent duplicate renders
+	const orderedPanels = $derived((() => {
+		const seenIds = new Set<PanelId>();
+		return $settings.order.filter(id => {
+			if (id === 'map' || !isPanelVisible(id) || seenIds.has(id)) return false;
+			seenIds.add(id);
+			return true;
+		});
+	})());
 
 	// Check if all visible panels are loaded
 	function arePanelsReady(): boolean {

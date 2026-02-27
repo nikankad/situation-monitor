@@ -444,34 +444,40 @@ export const ACTIVE_CONFLICTS: ActiveConflict[] = [
 
 export const CHOKEPOINTS: Chokepoint[] = [
 	{
-		name: 'Suez',
+		name: 'Suez Canal',
 		lat: 30.0,
 		lon: 32.5,
+		desc: 'Suez Canal - Critical maritime route connecting Mediterranean & Red Sea. ~12% of global trade, 30% of container traffic. Length: 193km. Transit time: 12-16 hours.'
 	},
 	{
-		name: 'Panama',
+		name: 'Panama Canal',
 		lat: 9.1,
 		lon: -79.7,
+		desc: 'Panama Canal - Vital Pacific-Atlantic link. ~6% of global maritime trade. 14,000+ ships/year. Saves 8,000 nautical miles vs. Cape Horn route.'
 	},
 	{
-		name: 'Hormuz',
+		name: 'Strait of Hormuz',
 		lat: 26.5,
 		lon: 56.5,
+		desc: 'Strait of Hormuz - World\'s most important oil transit chokepoint. 21 million barrels/day (~21% of global petroleum). Only 2 miles wide at narrowest point. Iran strategic leverage.'
 	},
 	{
-		name: 'Malacca',
+		name: 'Strait of Malacca',
 		lat: 2.5,
 		lon: 101.0,
+		desc: 'Strait of Malacca - Busiest shipping lane globally. 25% of traded goods, 80,000+ vessels/year. Links Indian Ocean to Pacific. Critical for China, Japan, S. Korea energy security.'
 	},
 	{
-		name: 'Bab el-M',
+		name: 'Bab el-Mandeb',
 		lat: 12.5,
 		lon: 43.3,
+		desc: 'Bab el-Mandeb Strait - "Gate of Tears" between Red Sea & Gulf of Aden. 6.7M barrels oil/day. 18 miles wide. Vulnerable to Houthi attacks from Yemen. Critical for Suez access.'
 	},
 	{
-		name: 'Bosporus',
+		name: 'Bosporus Strait',
 		lat: 41.1,
 		lon: 29.0,
+		desc: 'Bosporus Strait - Only passage from Black Sea to Mediterranean. ~48,000 vessels/year, 3M barrels oil/day. Turkey controls access per Montreux Convention. 700m wide at narrowest.'
 	}
 ];
 

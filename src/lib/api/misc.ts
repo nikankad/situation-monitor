@@ -5,11 +5,17 @@
 
 import { fetchWithProxy, logger } from '$lib/config/api';
 
+export interface Outcome {
+	title: string;
+	price: number;
+}
+
 export interface Prediction {
 	id: string;
 	question: string;
 	volume: number;
 	url: string;
+	outcomes: Outcome[];
 }
 
 export interface WhaleTransaction {
@@ -46,9 +52,12 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 
 		logger.log('Polymarket', `Fetched ${markets.length} markets`);
 
-		return markets
+		// Deduplicate markets by question title, keeping the one with highest volume
+		const dedupeMap = new Map<string, Prediction>();
+
+		markets
 			.filter((m: Record<string, unknown>) => m.question)
-			.map((m: Record<string, unknown>) => {
+			.forEach((m: Record<string, unknown>) => {
 				// Get event slug from nested events array for working URLs
 				const events = m.events as Array<Record<string, unknown>> | undefined;
 				const eventSlug = events?.[0]?.slug as string | undefined;
@@ -56,13 +65,45 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 					? `https://polymarket.com/event/${eventSlug}`
 					: 'https://polymarket.com';
 
-				return {
+				// Get outcomes and prices, then sort by price (descending) and take top 3
+				const outcomeNames = m.outcomes as string[] | undefined;
+				const outcomePricesRaw = m.outcomePrices as string[] | undefined;
+				
+				let topOutcomes: Outcome[] = [];
+				if (outcomeNames && outcomePricesRaw && outcomeNames.length === outcomePricesRaw.length) {
+					const withPrices = outcomeNames.map((name, i) => ({
+						title: name,
+						price: Number(outcomePricesRaw[i]) || 0
+					}));
+					// Sort by price descending and take top 3
+					topOutcomes = withPrices
+						.sort((a, b) => b.price - a.price)
+						.slice(0, 3);
+				}
+
+				const prediction: Prediction = {
 					id: String(m.id),
 					question: (events?.[0]?.title as string | undefined) || String(m.question),
 					volume: Number(m.volume24hr) || 0,
-					url
+					url,
+					outcomes: topOutcomes
 				};
+
+				const key = prediction.question.toLowerCase();
+				const existing = dedupeMap.get(key);
+
+				// Keep the market with highest volume
+				if (!existing || prediction.volume > existing.volume) {
+					dedupeMap.set(key, prediction);
+				}
 			});
+
+		const results = Array.from(dedupeMap.values());
+		logger.log('Polymarket', `Returning ${results.length} deduplicated markets`);
+		if (results.length > 0) {
+			logger.log('Polymarket', `First market: ${results[0].question}, outcomes: ${results[0].outcomes.length}`);
+		}
+		return results;
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);
 		return [];

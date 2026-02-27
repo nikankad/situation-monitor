@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Panel, NewsItem } from '$lib/components/common';
+	import { KeywordSettingsModal } from '$lib/components/modals';
 	import type { NewsCategory } from '$lib/types';
 	import type { PanelId } from '$lib/config';
 	import { politicsNews, techNews, financeNews, govNews, aiNews, intelNews } from '$lib/stores';
@@ -11,6 +12,8 @@
 	}
 
 	let { category, panelId, title }: Props = $props();
+
+	let keywordSettingsOpen = $state(false);
 
 	// Get the appropriate derived store based on category
 	const categoryStores = {
@@ -30,11 +33,10 @@
 	// Sort by timestamp (most recent first)
 	const items = $derived([...categoryItems].sort((a, b) => b.timestamp - a.timestamp));
 	const error = $derived(categoryError);
-	const count = $derived(items.length);
 
 </script>
 
-<Panel id={panelId} title={title} {error}>
+<Panel id={panelId} title={title} {error} onSettings={() => (keywordSettingsOpen = true)}>
 	{#if items.length === 0 && !error}
 		<div class="empty-state">No news available</div>
 	{:else}
@@ -45,6 +47,8 @@
 		</div>
 	{/if}
 </Panel>
+
+<KeywordSettingsModal open={keywordSettingsOpen} onClose={() => (keywordSettingsOpen = false)} />
 
 <style>
 	.news-list {

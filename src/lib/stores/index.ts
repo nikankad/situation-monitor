@@ -5,6 +5,9 @@
 // Theme store
 export { theme, type Theme } from './theme';
 
+// Keywords store  
+export { keywordsStore, type KeywordsState } from './keywords';
+
 // Settings store
 export {
 	settings,
