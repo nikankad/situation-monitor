@@ -36,6 +36,21 @@ const POLYMARKET_API =
 	'https://gamma-api.polymarket.com/markets?active=true&closed=false&order=volume24hr&ascending=false&limit=100&marketType=normal';
 
 /**
+ * The Gamma API returns list fields such as `outcomes` and `outcomePrices` as
+ * JSON-encoded strings (e.g. '["Yes", "No"]'); accept real arrays too.
+ */
+function parseStringArray(value: unknown): string[] {
+	if (Array.isArray(value)) return value.map(String);
+	if (typeof value !== 'string') return [];
+	try {
+		const parsed: unknown = JSON.parse(value);
+		return Array.isArray(parsed) ? parsed.map(String) : [];
+	} catch {
+		return [];
+	}
+}
+
+/**
  * Fetch Polymarket predictions via the CORS proxy
  * Returns the highest-volume active markets
  */
@@ -66,17 +81,13 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 					: 'https://polymarket.com';
 
 				// Get outcomes and prices, then sort by price (descending) and take top 3
-				const outcomeNames = m.outcomes as string[] | undefined;
-				const outcomePricesRaw = m.outcomePrices as string[] | undefined;
-				
+				const outcomeNames = parseStringArray(m.outcomes);
+				const outcomePrices = parseStringArray(m.outcomePrices);
+
 				let topOutcomes: Outcome[] = [];
-				if (outcomeNames && outcomePricesRaw && outcomeNames.length === outcomePricesRaw.length) {
-					const withPrices = outcomeNames.map((name, i) => ({
-						title: name,
-						price: Number(outcomePricesRaw[i]) || 0
-					}));
-					// Sort by price descending and take top 3
-					topOutcomes = withPrices
+				if (outcomeNames.length > 0 && outcomeNames.length === outcomePrices.length) {
+					topOutcomes = outcomeNames
+						.map((name, i) => ({ title: name, price: Number(outcomePrices[i]) || 0 }))
 						.sort((a, b) => b.price - a.price)
 						.slice(0, 3);
 				}
@@ -100,9 +111,6 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 
 		const results = Array.from(dedupeMap.values());
 		logger.log('Polymarket', `Returning ${results.length} deduplicated markets`);
-		if (results.length > 0) {
-			logger.log('Polymarket', `First market: ${results[0].question}, outcomes: ${results[0].outcomes.length}`);
-		}
 		return results;
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);

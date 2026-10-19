@@ -98,16 +98,16 @@ const INDEX_ETF_MAP: Record<string, string> = {
 // Sector market cap estimates (in billions, for treemap sizing)
 // These are approximate values for treemap visualization proportions
 const SECTOR_MARKET_CAPS: Record<string, number> = {
-	'XLK': 11000, // Technology/Communication: ~11T
-	'XLF': 5000, // Financials: ~5T
-	'XLV': 4500, // Healthcare: ~4.5T
-	'XLY': 3500, // Consumer Discretionary: ~3.5T
-	'XLI': 3000, // Industrials: ~3T
-	'XLP': 2500, // Consumer Staples: ~2.5T
-	'XLE': 2000, // Energy: ~2T
-	'XLRE': 1500, // Real Estate: ~1.5T
-	'XLU': 1500, // Utilities: ~1.5T
-	'XLB': 1000 // Materials: ~1T
+	XLK: 11000, // Technology/Communication: ~11T
+	XLF: 5000, // Financials: ~5T
+	XLV: 4500, // Healthcare: ~4.5T
+	XLY: 3500, // Consumer Discretionary: ~3.5T
+	XLI: 3000, // Industrials: ~3T
+	XLP: 2500, // Consumer Staples: ~2.5T
+	XLE: 2000, // Energy: ~2T
+	XLRE: 1500, // Real Estate: ~1.5T
+	XLU: 1500, // Utilities: ~1.5T
+	XLB: 1000 // Materials: ~1T
 };
 
 /**
@@ -223,8 +223,7 @@ export async function fetchIndices(): Promise<MarketItem[]> {
  * Fetch sector performance from Finnhub (using sector ETFs)
  */
 export async function fetchSectorPerformance(): Promise<SectorPerformance[]> {
-	const createEmptySectors = () =>
-		SECTORS.map((s) => createEmptySectorItem(s.symbol, s.name));
+	const createEmptySectors = () => SECTORS.map((s) => createEmptySectorItem(s.symbol, s.name));
 
 	if (!hasFinnhubApiKey()) {
 		logger.warn('Markets API', 'Finnhub API key not configured');

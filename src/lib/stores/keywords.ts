@@ -76,7 +76,7 @@ function createKeywordsStore() {
 			update((state) => {
 				const trimmed = keyword.trim().toLowerCase();
 				if (!trimmed || state.custom.includes(trimmed)) return state;
-				
+
 				const newState = { ...state, custom: [...state.custom, trimmed] };
 				saveToStorage(newState);
 				return newState;

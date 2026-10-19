@@ -9,10 +9,8 @@
 		CorrelationPanel,
 		NarrativePanel,
 		MapPanel,
-		WhalePanel,
 		PolymarketPanel,
-		ContractsPanel,
-		SituationPanel
+		ContractsPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -28,12 +26,16 @@
 		fetchAllMarkets,
 		fetchCustomMarkets,
 		fetchPolymarket,
-		fetchWhaleTransactions,
 		fetchGovContracts
 	} from '$lib/api';
-	import { loadCachedNews, loadCachedMarkets, saveCachedNews, saveCachedMarkets } from '$lib/services/sessionCache';
-	import type { Prediction, WhaleTransaction, Contract } from '$lib/api';
-	import type { CustomMonitor } from '$lib/types';
+	import {
+		loadCachedNews,
+		loadCachedMarkets,
+		saveCachedNews,
+		saveCachedMarkets
+	} from '$lib/services/sessionCache';
+	import type { Prediction, Contract } from '$lib/api';
+	import type { CustomMonitor, MarketItem, NewsCategory, NewsItem } from '$lib/types';
 	import type { PanelId } from '$lib/config';
 
 	// Modal state
@@ -46,7 +48,6 @@
 
 	// Misc panel data
 	let predictions = $state<Prediction[]>([]);
-	let whales = $state<WhaleTransaction[]>([]);
 	let contracts = $state<Contract[]>([]);
 
 	// Data fetching
@@ -55,13 +56,17 @@
 		const categories = ['politics', 'tech', 'finance', 'gov', 'ai', 'intel'] as const;
 		categories.forEach((cat) => news.setLoading(cat, true));
 
-		try {
-			const data = await fetchAllNews();
-			Object.entries(data).forEach(([category, items]) => {
-				news.setItems(category as keyof typeof data, items);
+		const applyNews = (data: Record<NewsCategory, NewsItem[]>) => {
+			(Object.keys(data) as NewsCategory[]).forEach((category) => {
+				news.setItems(category, data[category]);
 			});
 			// Save to cache for next visit
 			saveCachedNews(data);
+		};
+
+		try {
+			// RSS results come back first; slower, rate-limited GDELT results follow via the callback
+			applyNews(await fetchAllNews(applyNews));
 		} catch (error) {
 			categories.forEach((cat) => news.setError(cat, String(error)));
 		}
@@ -100,7 +105,7 @@
 				name
 			}));
 
-			let customData: typeof import('$lib/api').MarketItem[] = [];
+			let customData: MarketItem[] = [];
 			if (customSymbols.length > 0) {
 				customData = await fetchCustomMarkets(customSymbols);
 				markets.setCustom(customData);
@@ -116,17 +121,11 @@
 
 	async function loadMiscData() {
 		try {
-			const [predictionsData, whalesData, contractsData] = await Promise.all([
+			const [predictionsData, contractsData] = await Promise.all([
 				fetchPolymarket(),
-				fetchWhaleTransactions(),
 				fetchGovContracts()
 			]);
-			console.log('[+page] Polymarket predictions loaded:', predictionsData.length);
-			if (predictionsData.length > 0) {
-				console.log('[+page] First prediction:', predictionsData[0]);
-			}
 			predictions = predictionsData;
-			whales = whalesData;
 			contracts = contractsData;
 		} catch (error) {
 			console.error('Failed to load misc data:', error);
@@ -161,39 +160,16 @@
 	});
 
 	// Get ordered panel IDs (excluding map which is always first), with deduplication to prevent duplicate renders
-	const orderedPanels = $derived((() => {
-		const seenIds = new Set<PanelId>();
-		return $settings.order.filter(id => {
-			if (id === 'map' || !isPanelVisible(id) || seenIds.has(id)) return false;
-			seenIds.add(id);
-			return true;
-		});
-	})());
-
-	// Check if all visible panels are loaded
-	function arePanelsReady(): boolean {
-		// Check news categories
-		const newsCategories = ['politics', 'tech', 'finance', 'gov'];
-		const newsState = get(news);
-		const newsReady = newsCategories.every(cat => {
-			// Panel must have data OR have tried to load and has no items yet
-			const categoryState = newsState.categories[cat as any];
-			return categoryState && (categoryState.items.length > 0 || !categoryState.loading);
-		});
-
-		// Check markets
-		const marketsState = get(markets);
-		const marketsReady =
-			(marketsState.indices.items.length > 0 || !marketsState.indices.loading) &&
-			(marketsState.sectors.items.length > 0 || !marketsState.sectors.loading) &&
-			(marketsState.commodities.items.length > 0 || !marketsState.commodities.loading) &&
-			(marketsState.crypto.items.length > 0 || !marketsState.crypto.loading);
-
-		// Map panel always has data (it's derived from news)
-		const mapReady = true;
-
-		return newsReady && marketsReady && mapReady;
-	}
+	const orderedPanels = $derived(
+		(() => {
+			const seenIds = new Set<PanelId>();
+			return $settings.order.filter((id) => {
+				if (id === 'map' || !isPanelVisible(id) || seenIds.has(id)) return false;
+				seenIds.add(id);
+				return true;
+			});
+		})()
+	);
 
 	// Initial load with multi-stage approach and session caching
 	onMount(() => {
@@ -209,7 +185,7 @@
 
 				if (cachedNews) {
 					Object.entries(cachedNews.data).forEach(([category, items]) => {
-						news.setItems(category as any, items);
+						news.setItems(category as NewsCategory, items);
 					});
 				}
 
@@ -283,109 +259,50 @@
 	<div class="app fade-in">
 		<Header onSettingsClick={() => (settingsOpen = true)} />
 
-	<main class="main-content">
-		<Dashboard>
-			<!-- Map Panel - Full width (always first) -->
-			{#if isPanelVisible('map')}
-				<div class="panel-slot map-slot panel-animate" style="--delay: 0">
-					<MapPanel monitors={$monitors.monitors} news={$allNewsItems} />
-				</div>
-			{/if}
+		<main class="main-content">
+			<Dashboard>
+				<!-- Map Panel - Full width (always first) -->
+				{#if isPanelVisible('map')}
+					<div class="panel-slot map-slot panel-animate" style="--delay: 0">
+						<MapPanel monitors={$monitors.monitors} news={$allNewsItems} />
+					</div>
+				{/if}
 
-			<!-- Dynamic panels based on order -->
-			{#each orderedPanels as panelId, index (panelId)}
-				<div class="panel-slot panel-animate" style="--delay: {index + 1}">
-					{#if panelId === 'politics'}
-						<NewsPanel category="politics" panelId="politics" title="Politics" />
-					{:else if panelId === 'tech'}
-						<NewsPanel category="tech" panelId="tech" title="Tech" />
-					{:else if panelId === 'finance'}
-						<NewsPanel category="finance" panelId="finance" title="Finance" />
-					{:else if panelId === 'gov'}
-						<NewsPanel category="gov" panelId="gov" title="Government" />
-					{:else if panelId === 'markets'}
-						<MarketsPanel />
-					{:else if panelId === 'correlation'}
-						<CorrelationPanel news={$allNewsItems} />
-					{:else if panelId === 'narrative'}
-						<NarrativePanel news={$allNewsItems} />
-					{:else if panelId === 'venezuela'}
-						<SituationPanel
-							panelId="venezuela"
-							config={{
-								title: 'Venezuela Watch',
-								subtitle: 'Humanitarian crisis monitoring',
-								criticalKeywords: ['maduro', 'caracas', 'venezuela', 'guaido']
-							}}
-							news={$allNewsItems.filter(
-								(n) =>
-									n.title.toLowerCase().includes('venezuela') ||
-									n.title.toLowerCase().includes('maduro')
-							)}
-						/>
-					{:else if panelId === 'greenland'}
-						<SituationPanel
-							panelId="greenland"
-							config={{
-								title: 'Greenland Watch',
-								subtitle: 'Arctic geopolitics monitoring',
-								criticalKeywords: ['greenland', 'arctic', 'nuuk', 'denmark']
-							}}
-							news={$allNewsItems.filter(
-								(n) =>
-									n.title.toLowerCase().includes('greenland') ||
-									n.title.toLowerCase().includes('arctic')
-							)}
-						/>
-					{:else if panelId === 'iran'}
-						<SituationPanel
-							panelId="iran"
-							config={{
-								title: 'Iran Crisis',
-								subtitle: 'Revolution protests, regime instability & nuclear program',
-								criticalKeywords: [
-									'protest',
-									'uprising',
-									'revolution',
-									'crackdown',
-									'killed',
-									'nuclear',
-									'strike',
-									'attack',
-									'irgc',
-									'khamenei'
-								]
-							}}
-							news={$allNewsItems.filter(
-								(n) =>
-									n.title.toLowerCase().includes('iran') ||
-									n.title.toLowerCase().includes('tehran') ||
-									n.title.toLowerCase().includes('irgc')
-							)}
-						/>
-					{:else if panelId === 'whales'}
-						<WhalePanel {whales} />
-					{:else if panelId === 'polymarket'}
-						<PolymarketPanel {predictions} />
-					{:else if panelId === 'contracts'}
-						<ContractsPanel {contracts} />
-					{/if}
-				</div>
-			{/each}
-		</Dashboard>
-	</main>
+				<!-- Dynamic panels based on order -->
+				{#each orderedPanels as panelId, index (panelId)}
+					<div class="panel-slot panel-animate" style="--delay: {index + 1}">
+						{#if panelId === 'politics'}
+							<NewsPanel category="politics" panelId="politics" title="Politics" />
+						{:else if panelId === 'tech'}
+							<NewsPanel category="tech" panelId="tech" title="Tech" />
+						{:else if panelId === 'finance'}
+							<NewsPanel category="finance" panelId="finance" title="Finance" />
+						{:else if panelId === 'gov'}
+							<NewsPanel category="gov" panelId="gov" title="Government" />
+						{:else if panelId === 'markets'}
+							<MarketsPanel />
+						{:else if panelId === 'correlation'}
+							<CorrelationPanel news={$allNewsItems} />
+						{:else if panelId === 'narrative'}
+							<NarrativePanel news={$allNewsItems} />
+						{:else if panelId === 'polymarket'}
+							<PolymarketPanel {predictions} />
+						{:else if panelId === 'contracts'}
+							<ContractsPanel {contracts} />
+						{/if}
+					</div>
+				{/each}
+			</Dashboard>
+		</main>
 
-	<!-- Modals -->
-	<SettingsModal
-		open={settingsOpen}
-		onClose={() => (settingsOpen = false)}
-	/>
-	<MonitorFormModal
-		open={monitorFormOpen}
-		onClose={() => (monitorFormOpen = false)}
-		editMonitor={editingMonitor}
-	/>
-</div>
+		<!-- Modals -->
+		<SettingsModal open={settingsOpen} onClose={() => (settingsOpen = false)} />
+		<MonitorFormModal
+			open={monitorFormOpen}
+			onClose={() => (monitorFormOpen = false)}
+			editMonitor={editingMonitor}
+		/>
+	</div>
 {/if}
 
 <style>
@@ -504,15 +421,14 @@
 	}
 
 	@keyframes titleGlow {
-		0%, 100% {
+		0%,
+		100% {
 			text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 		}
 		50% {
 			text-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
 		}
 	}
-
-	
 
 	.app {
 		min-height: 100vh;
@@ -569,7 +485,7 @@
 		.main-content {
 			padding: 0.25rem;
 		}
-		
+
 		.panel-animate {
 			animation-delay: calc(var(--delay) * 0.05s);
 		}

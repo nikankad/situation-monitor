@@ -15,11 +15,6 @@ export { fetchPolymarket, fetchWhaleTransactions, fetchGovContracts } from './mi
 export type { Prediction, WhaleTransaction, Contract } from './misc';
 export { fetchWorldLeaders } from './leaders';
 
-// GDELT Conflict Events API
-export {
-	fetchConflictEventsFromGDELT,
-	fetchRegionalConflicts,
-	fetchHighIntensityConflicts,
-	aggregateConflictsByCountry
-} from './gdelt-conflicts';
-export type { GdeltConflictEvent, GdeltQuadClass } from './gdelt-conflicts';
+// GDELT conflict hotspots (derived from the DOC API)
+export { fetchConflictEventsFromGDELT } from './gdelt-conflicts';
+export type { GdeltConflictEvent } from './gdelt-conflicts';

@@ -31,48 +31,169 @@ export interface SentimentSummary {
 // Geopolitically-focused sentiment keywords
 const SENTIMENT_KEYWORDS = {
 	alarming: [
-		'war', 'invasion', 'attack', 'bomb', 'missile', 'nuclear', 'strike', 'killed',
-		'casualties', 'emergency', 'crisis', 'collapse', 'catastrophe', 'disaster',
-		'threat', 'weapons', 'troops', 'military action', 'escalation', 'conflict',
-		'assassination', 'coup', 'martial law', 'genocide', 'massacre'
+		'war',
+		'invasion',
+		'attack',
+		'bomb',
+		'missile',
+		'nuclear',
+		'strike',
+		'killed',
+		'casualties',
+		'emergency',
+		'crisis',
+		'collapse',
+		'catastrophe',
+		'disaster',
+		'threat',
+		'weapons',
+		'troops',
+		'military action',
+		'escalation',
+		'conflict',
+		'assassination',
+		'coup',
+		'martial law',
+		'genocide',
+		'massacre'
 	],
 	critical: [
-		'sanctions', 'tensions', 'clash', 'dispute', 'warning', 'denounce', 'condemn',
-		'deadline', 'ultimatum', 'withdraw', 'suspension', 'expel', 'protest', 'riot',
-		'unrest', 'instability', 'confrontation', 'standoff', 'brink', 'deteriorating',
-		'breakdown', 'failed', 'rejected', 'veto', 'hostile'
+		'sanctions',
+		'tensions',
+		'clash',
+		'dispute',
+		'warning',
+		'denounce',
+		'condemn',
+		'deadline',
+		'ultimatum',
+		'withdraw',
+		'suspension',
+		'expel',
+		'protest',
+		'riot',
+		'unrest',
+		'instability',
+		'confrontation',
+		'standoff',
+		'brink',
+		'deteriorating',
+		'breakdown',
+		'failed',
+		'rejected',
+		'veto',
+		'hostile'
 	],
 	negative: [
-		'decline', 'fall', 'drop', 'loss', 'fail', 'cut', 'concern', 'worry', 'fear',
-		'delay', 'setback', 'struggle', 'challenge', 'problem', 'issue', 'downturn',
-		'recession', 'inflation', 'deficit', 'debt', 'layoff', 'shutdown'
+		'decline',
+		'fall',
+		'drop',
+		'loss',
+		'fail',
+		'cut',
+		'concern',
+		'worry',
+		'fear',
+		'delay',
+		'setback',
+		'struggle',
+		'challenge',
+		'problem',
+		'issue',
+		'downturn',
+		'recession',
+		'inflation',
+		'deficit',
+		'debt',
+		'layoff',
+		'shutdown'
 	],
 	positive: [
-		'peace', 'agreement', 'deal', 'treaty', 'cooperation', 'alliance', 'progress',
-		'success', 'growth', 'rise', 'gain', 'improve', 'breakthrough', 'resolution',
-		'ceasefire', 'summit', 'partnership', 'aid', 'support', 'stability', 'reform',
-		'recovery', 'boost', 'surge', 'record high'
+		'peace',
+		'agreement',
+		'deal',
+		'treaty',
+		'cooperation',
+		'alliance',
+		'progress',
+		'success',
+		'growth',
+		'rise',
+		'gain',
+		'improve',
+		'breakthrough',
+		'resolution',
+		'ceasefire',
+		'summit',
+		'partnership',
+		'aid',
+		'support',
+		'stability',
+		'reform',
+		'recovery',
+		'boost',
+		'surge',
+		'record high'
 	],
 	neutral: [
-		'announce', 'report', 'says', 'plan', 'consider', 'discuss', 'meet', 'visit',
-		'statement', 'review', 'analysis', 'update', 'schedule', 'propose'
+		'announce',
+		'report',
+		'says',
+		'plan',
+		'consider',
+		'discuss',
+		'meet',
+		'visit',
+		'statement',
+		'review',
+		'analysis',
+		'update',
+		'schedule',
+		'propose'
 	]
 };
 
 // Geopolitical theme detection
 const GEOPOLITICAL_THEMES = {
-	'US-China': ['china', 'beijing', 'xi jinping', 'taiwan', 'south china sea', 'us-china', 'trade war'],
-	'Russia-Ukraine': ['russia', 'ukraine', 'putin', 'zelensky', 'kremlin', 'kyiv', 'crimea', 'donbas'],
-	'Middle East': ['israel', 'gaza', 'iran', 'saudi', 'syria', 'yemen', 'hamas', 'hezbollah', 'netanyahu'],
+	'US-China': [
+		'china',
+		'beijing',
+		'xi jinping',
+		'taiwan',
+		'south china sea',
+		'us-china',
+		'trade war'
+	],
+	'Russia-Ukraine': [
+		'russia',
+		'ukraine',
+		'putin',
+		'zelensky',
+		'kremlin',
+		'kyiv',
+		'crimea',
+		'donbas'
+	],
+	'Middle East': [
+		'israel',
+		'gaza',
+		'iran',
+		'saudi',
+		'syria',
+		'yemen',
+		'hamas',
+		'hezbollah',
+		'netanyahu'
+	],
 	'NATO/Europe': ['nato', 'eu', 'european union', 'brussels', 'germany', 'france', 'uk'],
 	'North Korea': ['north korea', 'pyongyang', 'kim jong', 'dprk', 'korean peninsula'],
 	'Indo-Pacific': ['india', 'japan', 'australia', 'asean', 'quad', 'indo-pacific'],
-	'Africa': ['africa', 'sahel', 'ethiopia', 'sudan', 'libya', 'african union'],
+	Africa: ['africa', 'sahel', 'ethiopia', 'sudan', 'libya', 'african union'],
 	'Latin America': ['venezuela', 'brazil', 'mexico', 'cuba', 'argentina', 'latin america'],
-	'Energy': ['oil', 'gas', 'opec', 'energy', 'pipeline', 'lng', 'petroleum'],
-	'Nuclear': ['nuclear', 'uranium', 'iaea', 'nonproliferation', 'atomic'],
-	'Cyber': ['cyber', 'hack', 'ransomware', 'data breach', 'cyber attack'],
-	'Climate': ['climate', 'emissions', 'carbon', 'cop', 'environmental']
+	Energy: ['oil', 'gas', 'opec', 'energy', 'pipeline', 'lng', 'petroleum'],
+	Nuclear: ['nuclear', 'uranium', 'iaea', 'nonproliferation', 'atomic'],
+	Cyber: ['cyber', 'hack', 'ransomware', 'data breach', 'cyber attack'],
+	Climate: ['climate', 'emissions', 'carbon', 'cop', 'environmental']
 };
 
 /**
@@ -123,7 +244,7 @@ function analyzeHeadline(item: NewsItem): HeadlineSentiment {
 	// Detect category/theme
 	let category = 'General';
 	for (const [theme, keywords] of Object.entries(GEOPOLITICAL_THEMES)) {
-		if (keywords.some(kw => title.includes(kw))) {
+		if (keywords.some((kw) => title.includes(kw))) {
 			category = theme;
 			break;
 		}
@@ -214,11 +335,16 @@ export function analyzeSentiment(news: NewsItem[], limit: number = 20): Sentimen
  */
 export function getSentimentColor(sentiment: SentimentType): string {
 	switch (sentiment) {
-		case 'alarming': return '#ff4444';
-		case 'critical': return '#ff8800';
-		case 'negative': return '#ffaa44';
-		case 'positive': return '#44cc66';
-		case 'neutral': return '#888888';
+		case 'alarming':
+			return '#ff4444';
+		case 'critical':
+			return '#ff8800';
+		case 'negative':
+			return '#ffaa44';
+		case 'positive':
+			return '#44cc66';
+		case 'neutral':
+			return '#888888';
 	}
 }
 
@@ -227,10 +353,15 @@ export function getSentimentColor(sentiment: SentimentType): string {
  */
 export function getSentimentEmoji(sentiment: SentimentType): string {
 	switch (sentiment) {
-		case 'alarming': return '🔴';
-		case 'critical': return '🟠';
-		case 'negative': return '🟡';
-		case 'positive': return '🟢';
-		case 'neutral': return '⚪';
+		case 'alarming':
+			return '🔴';
+		case 'critical':
+			return '🟠';
+		case 'negative':
+			return '🟡';
+		case 'positive':
+			return '🟢';
+		case 'neutral':
+			return '⚪';
 	}
 }

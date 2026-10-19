@@ -37,7 +37,7 @@ npm run format       # Auto-format with Prettier
 ### Core Directories (`src/lib/`)
 
 - **`analysis/`** - Pattern correlation, narrative tracking, main character detection across news items
-- **`api/`** - Data fetching from GDELT, RSS feeds (30+ sources), market APIs, CoinGecko
+- **`api/`** - Data fetching from GDELT, RSS feeds, market APIs, CoinGecko
 - **`components/`** - Svelte components organized into layout/, panels/, modals/, common/
 - **`config/`** - Centralized configuration for feeds, keywords, analysis patterns, panels, map hotspots
 - **`services/`** - Resilience layer: CacheManager, CircuitBreaker, RequestDeduplicator, ServiceClient
@@ -77,7 +77,7 @@ Unique business logic for intelligence analysis:
 - All use configurable regex patterns from `src/lib/config/analysis.ts`
 
 ### Configuration-Driven Design (`src/lib/config/`)
-- `feeds.ts`: 30+ RSS sources across 6 categories (politics, tech, finance, gov, ai, intel)
+- `feeds.ts`: RSS sources across 6 categories (politics, tech, finance, gov, ai, intel)
 - `keywords.ts`: Alert keywords, region detection, topic detection
 - `analysis.ts`: Correlation topics and narrative patterns with severity levels
 - `panels.ts`: Panel registry with display order

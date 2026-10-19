@@ -1,6 +1,11 @@
 <script lang="ts">
-	import { Panel, Badge } from '$lib/components/common';
-	import { analyzeSentiment, getSentimentColor, getSentimentEmoji, type SentimentType } from '$lib/analysis/sentiment';
+	import { Panel } from '$lib/components/common';
+	import {
+		analyzeSentiment,
+		getSentimentColor,
+		getSentimentEmoji,
+		type SentimentType
+	} from '$lib/analysis/sentiment';
 	import type { NewsItem } from '$lib/types';
 
 	interface Props {
@@ -12,21 +17,6 @@
 
 	const sentimentAnalysis = $derived(analyzeSentiment(news, 30));
 
-	function getSentimentVariant(sentiment: SentimentType): 'default' | 'warning' | 'danger' | 'success' | 'info' {
-		switch (sentiment) {
-			case 'alarming':
-				return 'danger';
-			case 'critical':
-				return 'warning';
-			case 'negative':
-				return 'warning';
-			case 'positive':
-				return 'success';
-			default:
-				return 'default';
-		}
-	}
-
 	function formatScore(score: number): string {
 		if (score > 0) return `+${(score * 100).toFixed(0)}`;
 		return (score * 100).toFixed(0);
@@ -34,11 +24,16 @@
 
 	function getOverallLabel(sentiment: SentimentType): string {
 		switch (sentiment) {
-			case 'alarming': return 'HIGH TENSION';
-			case 'critical': return 'ELEVATED';
-			case 'negative': return 'CONCERNING';
-			case 'positive': return 'STABLE';
-			case 'neutral': return 'NEUTRAL';
+			case 'alarming':
+				return 'HIGH TENSION';
+			case 'critical':
+				return 'ELEVATED';
+			case 'negative':
+				return 'CONCERNING';
+			case 'positive':
+				return 'STABLE';
+			case 'neutral':
+				return 'NEUTRAL';
 		}
 	}
 </script>
@@ -50,7 +45,10 @@
 		<div class="sentiment-content">
 			<!-- Overall Sentiment Gauge -->
 			<div class="overall-sentiment">
-				<div class="sentiment-gauge" style="border-color: {getSentimentColor(sentimentAnalysis.overall)}">
+				<div
+					class="sentiment-gauge"
+					style="border-color: {getSentimentColor(sentimentAnalysis.overall)}"
+				>
 					<span class="gauge-emoji">{getSentimentEmoji(sentimentAnalysis.overall)}</span>
 					<span class="gauge-label">{getOverallLabel(sentimentAnalysis.overall)}</span>
 					<span class="gauge-score" style="color: {getSentimentColor(sentimentAnalysis.overall)}">
@@ -64,47 +62,62 @@
 				<div class="section-title">Sentiment Distribution</div>
 				<div class="distribution-bar">
 					{#if sentimentAnalysis.distribution.alarming > 0}
-						<div 
-							class="dist-segment alarming" 
+						<div
+							class="dist-segment alarming"
 							style="flex: {sentimentAnalysis.distribution.alarming}"
 							title="Alarming: {sentimentAnalysis.distribution.alarming}"
 						></div>
 					{/if}
 					{#if sentimentAnalysis.distribution.critical > 0}
-						<div 
-							class="dist-segment critical" 
+						<div
+							class="dist-segment critical"
 							style="flex: {sentimentAnalysis.distribution.critical}"
 							title="Critical: {sentimentAnalysis.distribution.critical}"
 						></div>
 					{/if}
 					{#if sentimentAnalysis.distribution.negative > 0}
-						<div 
-							class="dist-segment negative" 
+						<div
+							class="dist-segment negative"
 							style="flex: {sentimentAnalysis.distribution.negative}"
 							title="Negative: {sentimentAnalysis.distribution.negative}"
 						></div>
 					{/if}
 					{#if sentimentAnalysis.distribution.neutral > 0}
-						<div 
-							class="dist-segment neutral" 
+						<div
+							class="dist-segment neutral"
 							style="flex: {sentimentAnalysis.distribution.neutral}"
 							title="Neutral: {sentimentAnalysis.distribution.neutral}"
 						></div>
 					{/if}
 					{#if sentimentAnalysis.distribution.positive > 0}
-						<div 
-							class="dist-segment positive" 
+						<div
+							class="dist-segment positive"
 							style="flex: {sentimentAnalysis.distribution.positive}"
 							title="Positive: {sentimentAnalysis.distribution.positive}"
 						></div>
 					{/if}
 				</div>
 				<div class="distribution-legend">
-					<span class="legend-item"><span class="dot alarming"></span> Alarming ({sentimentAnalysis.distribution.alarming})</span>
-					<span class="legend-item"><span class="dot critical"></span> Critical ({sentimentAnalysis.distribution.critical})</span>
-					<span class="legend-item"><span class="dot negative"></span> Negative ({sentimentAnalysis.distribution.negative})</span>
-					<span class="legend-item"><span class="dot neutral"></span> Neutral ({sentimentAnalysis.distribution.neutral})</span>
-					<span class="legend-item"><span class="dot positive"></span> Positive ({sentimentAnalysis.distribution.positive})</span>
+					<span class="legend-item"
+						><span class="dot alarming"></span> Alarming ({sentimentAnalysis.distribution
+							.alarming})</span
+					>
+					<span class="legend-item"
+						><span class="dot critical"></span> Critical ({sentimentAnalysis.distribution
+							.critical})</span
+					>
+					<span class="legend-item"
+						><span class="dot negative"></span> Negative ({sentimentAnalysis.distribution
+							.negative})</span
+					>
+					<span class="legend-item"
+						><span class="dot neutral"></span> Neutral ({sentimentAnalysis.distribution
+							.neutral})</span
+					>
+					<span class="legend-item"
+						><span class="dot positive"></span> Positive ({sentimentAnalysis.distribution
+							.positive})</span
+					>
 				</div>
 			</div>
 
@@ -114,7 +127,10 @@
 					<div class="section-title">Active Geopolitical Themes</div>
 					<div class="themes-grid">
 						{#each sentimentAnalysis.themes as theme}
-							<div class="theme-tag" style="border-left: 3px solid {getSentimentColor(theme.sentiment)}">
+							<div
+								class="theme-tag"
+								style="border-left: 3px solid {getSentimentColor(theme.sentiment)}"
+							>
 								<span class="theme-emoji">{getSentimentEmoji(theme.sentiment)}</span>
 								<span class="theme-name">{theme.theme}</span>
 								<span class="theme-count">{theme.count}</span>
@@ -132,7 +148,10 @@
 						<div class="headline-item">
 							<span class="headline-sentiment">{getSentimentEmoji(item.sentiment)}</span>
 							<a href={item.headline.link} target="_blank" rel="noopener" class="headline-text">
-								{item.headline.title?.slice(0, 80)}{item.headline.title && item.headline.title.length > 80 ? '...' : ''}
+								{item.headline.title?.slice(0, 80)}{item.headline.title &&
+								item.headline.title.length > 80
+									? '...'
+									: ''}
 							</a>
 							{#if item.keywords.length > 0}
 								<div class="headline-keywords">
@@ -224,11 +243,21 @@
 		transition: flex 0.3s ease;
 	}
 
-	.dist-segment.alarming { background: #ff4444; }
-	.dist-segment.critical { background: #ff8800; }
-	.dist-segment.negative { background: #ffaa44; }
-	.dist-segment.neutral { background: #888888; }
-	.dist-segment.positive { background: #44cc66; }
+	.dist-segment.alarming {
+		background: #ff4444;
+	}
+	.dist-segment.critical {
+		background: #ff8800;
+	}
+	.dist-segment.negative {
+		background: #ffaa44;
+	}
+	.dist-segment.neutral {
+		background: #888888;
+	}
+	.dist-segment.positive {
+		background: #44cc66;
+	}
 
 	.distribution-legend {
 		display: flex;
@@ -250,11 +279,21 @@
 		border-radius: 50%;
 	}
 
-	.dot.alarming { background: #ff4444; }
-	.dot.critical { background: #ff8800; }
-	.dot.negative { background: #ffaa44; }
-	.dot.neutral { background: #888888; }
-	.dot.positive { background: #44cc66; }
+	.dot.alarming {
+		background: #ff4444;
+	}
+	.dot.critical {
+		background: #ff8800;
+	}
+	.dot.negative {
+		background: #ffaa44;
+	}
+	.dot.neutral {
+		background: #888888;
+	}
+	.dot.positive {
+		background: #44cc66;
+	}
 
 	.themes-grid {
 		display: flex;

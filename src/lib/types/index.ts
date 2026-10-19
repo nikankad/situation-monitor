@@ -50,7 +50,7 @@ export interface MarketItem {
 	price: number;
 	change: number;
 	changePercent: number;
-	type?: 'stock' | 'crypto' | 'commodity' | 'index';
+	type?: 'stock' | 'crypto' | 'commodity' | 'index' | 'sector';
 	high?: number;
 	low?: number;
 	open?: number;
@@ -370,4 +370,3 @@ export interface WorldLeader {
 		achievements?: string[];
 	};
 }
-

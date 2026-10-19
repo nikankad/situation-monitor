@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { Panel, MarketItemDetailed } from '$lib/components/common';
 	import { MarketsConfigModal } from '$lib/components/modals';
-	import { indices, sectors, commodities, crypto, custom, marketSettings, customMarkets } from '$lib/stores';
-	import { formatPercentChange, getChangeClass } from '$lib/utils';
-	import { INDICES, SECTORS, COMMODITIES, CRYPTO } from '$lib/config/markets';
+	import { indices, sectors, commodities, crypto, custom, marketSettings } from '$lib/stores';
+	import type { MarketItem } from '$lib/types';
 
 	let configModalOpen = $state(false);
 
@@ -12,17 +11,13 @@
 	const commoditiesItems = $derived($commodities.items);
 	const cryptoItems = $derived($crypto.items);
 	const customItems = $derived($custom.items);
-	const error = $derived($indices.error || $sectors.error || $commodities.error || $crypto.error || $custom.error);
-
-	// Create maps for quick lookup of names by symbol
-	const indicesMap = new Map(INDICES.map((i) => [i.symbol, i.name]));
-	const sectorsMap = new Map(SECTORS.map((s) => [s.symbol, s.name]));
-	const commoditiesMap = new Map(COMMODITIES.map((c) => [c.symbol, c.name]));
-	const cryptoMap = new Map(CRYPTO.map((c) => [c.symbol, c.name]));
+	const error = $derived(
+		$indices.error || $sectors.error || $commodities.error || $crypto.error || $custom.error
+	);
 
 	// Get all enabled and ordered markets across all categories
-	const allOrderedItems = $derived(() => {
-		const items: Array<{ item: any; type: string; typeName: string }> = [];
+	const allOrderedItems = $derived.by(() => {
+		const items: MarketItem[] = [];
 
 		// Add indices
 		const enabledIndices = $marketSettings.indices.order.filter((symbol) =>
@@ -31,7 +26,7 @@
 		const indicesItemMap = new Map(indicesItems.map((i) => [i.symbol, i]));
 		enabledIndices.forEach((symbol) => {
 			const item = indicesItemMap.get(symbol);
-			if (item) items.push({ item, type: 'indices', typeName: 'Index' });
+			if (item) items.push(item);
 		});
 
 		// Add sectors
@@ -41,7 +36,7 @@
 		const sectorsItemMap = new Map(sectorsItems.map((s) => [s.symbol, s]));
 		enabledSectors.forEach((symbol) => {
 			const item = sectorsItemMap.get(symbol);
-			if (item) items.push({ item, type: 'sectors', typeName: 'Sector' });
+			if (item) items.push(item);
 		});
 
 		// Add commodities
@@ -51,7 +46,7 @@
 		const commoditiesItemMap = new Map(commoditiesItems.map((c) => [c.symbol, c]));
 		enabledCommodities.forEach((symbol) => {
 			const item = commoditiesItemMap.get(symbol);
-			if (item) items.push({ item, type: 'commodities', typeName: 'Commodity' });
+			if (item) items.push(item);
 		});
 
 		// Add crypto - transform to match MarketItem interface
@@ -63,19 +58,19 @@
 			const cryptoItem = cryptoItemMap.get(symbol);
 			if (cryptoItem) {
 				// Transform CryptoItem to MarketItem format
-				const transformedItem: any = {
+				const transformedItem: MarketItem = {
 					symbol: cryptoItem.symbol,
 					name: cryptoItem.name,
 					price: cryptoItem.current_price || 0,
 					change: cryptoItem.price_change_24h || 0,
-					changePercent: (cryptoItem.price_change_24h || 0),
+					changePercent: cryptoItem.price_change_24h || 0,
 					type: 'crypto' as const,
 					high: NaN,
 					low: NaN,
 					open: NaN,
 					previousClose: NaN
 				};
-				items.push({ item: transformedItem, type: 'crypto', typeName: 'Crypto' });
+				items.push(transformedItem);
 			}
 		});
 
@@ -87,31 +82,25 @@
 		enabledCustom.forEach((symbol) => {
 			const item = customItemMap.get(symbol);
 			if (item) {
-				items.push({ item, type: 'custom', typeName: 'Custom' });
+				items.push(item);
 			}
 		});
 
 		return items;
 	});
-
-	const count = $derived(allOrderedItems().length);
 </script>
 
 <Panel id="markets" title="Markets" {error}>
 	{#snippet actions()}
-		<button
-			class="settings-btn"
-			onclick={() => (configModalOpen = true)}
-			title="Configure markets"
-		>
+		<button class="settings-btn" onclick={() => (configModalOpen = true)} title="Configure markets">
 			⚙
 		</button>
 	{/snippet}
-	{#if allOrderedItems().length === 0 && !error}
+	{#if allOrderedItems.length === 0 && !error}
 		<div class="empty-state">No market data available</div>
 	{:else}
 		<div class="markets-list">
-			{#each allOrderedItems() as { item, type, typeName } (item.symbol)}
+			{#each allOrderedItems as item (item.symbol)}
 				<MarketItemDetailed {item} />
 			{/each}
 		</div>

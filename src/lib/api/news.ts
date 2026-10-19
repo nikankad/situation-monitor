@@ -8,6 +8,7 @@ import { containsAlertKeyword, detectRegion, detectTopics } from '$lib/config/ke
 import { fetchWithProxy, logger } from '$lib/config/api';
 import { sanitizeHtml, sanitizeArticleTitle } from '$lib/services/security';
 import { browser } from '$app/environment';
+import { fetchGdeltArticles, type GdeltArticle } from './gdelt';
 
 /**
  * Simple hash function to generate unique IDs from URLs
@@ -35,18 +36,6 @@ function parseGdeltDate(dateStr: string): Date {
 	}
 	// Fallback to standard parsing
 	return new Date(dateStr);
-}
-
-interface GdeltArticle {
-	title: string;
-	url: string;
-	seendate: string;
-	domain: string;
-	socialimage?: string;
-}
-
-interface GdeltResponse {
-	articles?: GdeltArticle[];
 }
 
 /**
@@ -159,7 +148,11 @@ function parseRssXml(xml: string, sourceName: string, category: NewsCategory): N
 /**
  * Fetch a single RSS feed
  */
-async function fetchRssFeed(url: string, sourceName: string, category: NewsCategory): Promise<NewsItem[]> {
+async function fetchRssFeed(
+	url: string,
+	sourceName: string,
+	category: NewsCategory
+): Promise<NewsItem[]> {
 	try {
 		logger.log('RSS Feed', `Fetching ${sourceName} from ${url}`);
 		const response = await fetchWithProxy(url);
@@ -210,116 +203,108 @@ function transformGdeltArticle(
 	};
 }
 
+const GDELT_CATEGORY_QUERIES: Record<NewsCategory, string> = {
+	politics:
+		'(diplomacy OR "foreign policy" OR "international relations" OR summit OR treaty OR sanctions OR "bilateral talks")',
+	tech: '(technology OR cybersecurity OR "cyber attack" OR infrastructure OR "critical systems")',
+	finance:
+		'(sanctions OR "trade war" OR tariff OR "economic policy" OR "central bank" OR "currency crisis")',
+	gov: '(government OR "state department" OR pentagon OR "defense ministry" OR NATO OR "united nations")',
+	ai: '("artificial intelligence" OR "machine learning" OR AI OR "autonomous weapons")',
+	intel:
+		'(military OR "armed forces" OR conflict OR war OR "intelligence agency" OR espionage OR "security threat" OR geopolitics)'
+};
+
+/**
+ * Fetch recent articles for a category from GDELT (rate limited, see ./gdelt)
+ */
+async function fetchGdeltNews(category: NewsCategory): Promise<NewsItem[]> {
+	try {
+		logger.log('News API', `Fetching ${category} from GDELT`);
+		const articles = await fetchGdeltArticles({
+			query: GDELT_CATEGORY_QUERIES[category],
+			timespan: '3d',
+			maxRecords: 50
+		});
+		const defaultSource = FEEDS[category]?.[0]?.name || 'News';
+		return articles.map((article, index) =>
+			transformGdeltArticle(article, category, article.domain || defaultSource, index)
+		);
+	} catch (error) {
+		logger.warn('News API', `Error fetching ${category} from GDELT:`, error);
+		return [];
+	}
+}
+
+/**
+ * Fetch all RSS feeds configured for a category
+ */
+async function fetchRssNews(category: NewsCategory): Promise<NewsItem[]> {
+	const results = await Promise.all(
+		(FEEDS[category] || []).map((feed) => fetchRssFeed(feed.url, feed.name, category))
+	);
+	return results.flat();
+}
+
+/**
+ * Combine sources, drop articles older than 30 days and sort newest first
+ */
+function mergeNews(...sources: NewsItem[][]): NewsItem[] {
+	const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+	return sources
+		.flat()
+		.filter((article) => (article.timestamp || 0) >= thirtyDaysAgo)
+		.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+}
+
 /**
  * Fetch news for a specific category using GDELT and RSS feeds
  */
 export async function fetchCategoryNews(category: NewsCategory): Promise<NewsItem[]> {
-	// Build query from category keywords (GDELT requires OR queries in parentheses)
-	const categoryQueries: Record<NewsCategory, string> = {
-		politics: '(diplomacy OR "foreign policy" OR "international relations" OR summit OR treaty OR sanctions OR "bilateral talks")',
-		tech: '(technology OR cybersecurity OR "cyber attack" OR infrastructure OR "critical systems")',
-		finance: '(sanctions OR "trade war" OR tariff OR "economic policy" OR "central bank" OR "currency crisis")',
-		gov: '(government OR "state department" OR pentagon OR "defense ministry" OR NATO OR "united nations")',
-		ai: '("artificial intelligence" OR "machine learning" OR AI OR "autonomous weapons")',
-		intel: '(military OR "armed forces" OR conflict OR war OR "intelligence agency" OR espionage OR "security threat" OR geopolitics)'
-	};
-
-	let gdeltArticles: NewsItem[] = [];
-
-	try {
-		// Add English language filter and strict timespan for fresh results only
-		const baseQuery = categoryQueries[category];
-		const fullQuery = `${baseQuery} sourcelang:english`;
-		// Request only the last 3 days to ensure freshness, get more records to filter
-		const gdeltUrl = `https://api.gdeltproject.org/api/v2/doc/doc?query=${fullQuery}&timespan=3d&mode=artlist&maxrecords=50&format=json&sort=date`;
-
-		logger.log('News API', `Fetching ${category} from GDELT`);
-
-		const response = await fetchWithProxy(gdeltUrl);
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-		}
-
-		// Check content type before parsing as JSON
-		const contentType = response.headers.get('content-type');
-		if (!contentType?.includes('application/json')) {
-			logger.warn('News API', `Non-JSON response for ${category}:`, contentType);
-		} else {
-			const text = await response.text();
-			let data: GdeltResponse | undefined;
-			try {
-				data = JSON.parse(text);
-			} catch {
-				logger.warn('News API', `Invalid JSON for ${category}:`, text.slice(0, 100));
-			}
-
-			if (data?.articles) {
-				// Get source names for this category
-				const categoryFeeds = FEEDS[category] || [];
-				const defaultSource = categoryFeeds[0]?.name || 'News';
-
-				gdeltArticles = data.articles.map((article, index) =>
-					transformGdeltArticle(article, category, article.domain || defaultSource, index)
-				);
-			}
-		}
-	} catch (error) {
-		logger.error('News API', `Error fetching ${category} from GDELT:`, error);
-	}
-
-	// Fetch RSS feeds for this category
-	let rssArticles: NewsItem[] = [];
-	try {
-		const categoryFeeds = FEEDS[category] || [];
-		const rssFeedPromises = categoryFeeds.map((feed) =>
-			fetchRssFeed(feed.url, feed.name, category)
-		);
-		const rssResults = await Promise.all(rssFeedPromises);
-		rssArticles = rssResults.flat();
-	} catch (error) {
-		logger.warn('News API', `Error fetching RSS feeds for ${category}:`, error);
-	}
-
-	// Combine GDELT and RSS results, filter out articles older than 30 days
-	const allArticles = [...gdeltArticles, ...rssArticles];
-	const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-
-	const freshArticles = allArticles.filter(article => {
-		const timestamp = article.timestamp || 0;
-		return timestamp >= thirtyDaysAgo;
-	});
-
-	return freshArticles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+	const [gdeltArticles, rssArticles] = await Promise.all([
+		fetchGdeltNews(category),
+		fetchRssNews(category)
+	]);
+	return mergeNews(gdeltArticles, rssArticles);
 }
 
 /** All news categories in fetch order */
 const NEWS_CATEGORIES: NewsCategory[] = ['politics', 'tech', 'finance', 'gov', 'ai', 'intel'];
 
-/** Create an empty news result object */
-function createEmptyNewsResult(): Record<NewsCategory, NewsItem[]> {
-	return { politics: [], tech: [], finance: [], gov: [], ai: [], intel: [] };
-}
-
 /**
- * Fetch all news - parallel fetching for speed
+ * Fetch all news.
+ *
+ * RSS feeds for every category are fetched in parallel and returned as soon as they
+ * are in. GDELT is limited to one request every few seconds, so its articles are
+ * merged in afterwards, one category at a time, and reported through `onUpdate`
+ * with the full merged result. Without `onUpdate` the GDELT pass is awaited.
  */
-export async function fetchAllNews(): Promise<Record<NewsCategory, NewsItem[]>> {
-	const result = createEmptyNewsResult();
+export async function fetchAllNews(
+	onUpdate?: (data: Record<NewsCategory, NewsItem[]>) => void
+): Promise<Record<NewsCategory, NewsItem[]>> {
+	const rss = await Promise.all(NEWS_CATEGORIES.map((category) => fetchRssNews(category)));
 
-	// Fetch all categories in parallel for speed
-	const categoryPromises = NEWS_CATEGORIES.map((category) =>
-		fetchCategoryNews(category).then((items) => ({
-			category,
-			items
-		}))
-	);
+	const rssByCategory = {} as Record<NewsCategory, NewsItem[]>;
+	const result = {} as Record<NewsCategory, NewsItem[]>;
+	NEWS_CATEGORIES.forEach((category, i) => {
+		rssByCategory[category] = rss[i];
+		result[category] = mergeNews(rss[i]);
+	});
 
-	const results = await Promise.all(categoryPromises);
+	const addGdelt = async () => {
+		for (const category of NEWS_CATEGORIES) {
+			const gdeltArticles = await fetchGdeltNews(category);
+			if (gdeltArticles.length === 0) continue;
+			result[category] = mergeNews(gdeltArticles, rssByCategory[category]);
+			onUpdate?.({ ...result });
+		}
+	};
 
-	// Map results back to the result object
-	for (const { category, items } of results) {
-		result[category] = items;
+	if (onUpdate) {
+		void addGdelt();
+		return { ...result };
 	}
 
+	await addGdelt();
 	return result;
 }

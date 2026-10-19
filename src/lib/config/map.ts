@@ -111,25 +111,25 @@ export const HOTSPOTS: Hotspot[] = [
 		name: 'Moscow',
 		lat: 55.75,
 		lon: 37.6,
-		level: 'elevated',
+		level: 'elevated'
 	},
 	{
 		name: 'Beijing',
 		lat: 39.9,
 		lon: 116.4,
-		level: 'elevated',
+		level: 'elevated'
 	},
 	{
 		name: 'Kyiv',
 		lat: 50.45,
 		lon: 30.5,
-		level: 'high',
+		level: 'high'
 	},
 	{
 		name: 'Taipei',
 		lat: 25.03,
 		lon: 121.5,
-		level: 'elevated',
+		level: 'elevated'
 	},
 	{
 		name: 'Tehran',
@@ -141,61 +141,61 @@ export const HOTSPOTS: Hotspot[] = [
 		name: 'Tel Aviv',
 		lat: 32.07,
 		lon: 34.78,
-		level: 'high',
+		level: 'high'
 	},
 	{
 		name: 'London',
 		lat: 51.5,
 		lon: -0.12,
-		level: 'low',
+		level: 'low'
 	},
 	{
 		name: 'Brussels',
 		lat: 50.85,
 		lon: 4.35,
-		level: 'low',
+		level: 'low'
 	},
 	{
 		name: 'Pyongyang',
 		lat: 39.03,
 		lon: 125.75,
-		level: 'elevated',
+		level: 'elevated'
 	},
 	{
 		name: 'Riyadh',
 		lat: 24.7,
 		lon: 46.7,
-		level: 'elevated',
+		level: 'elevated'
 	},
 	{
 		name: 'Delhi',
 		lat: 28.6,
 		lon: 77.2,
-		level: 'low',
+		level: 'low'
 	},
 	{
 		name: 'Singapore',
 		lat: 1.35,
 		lon: 103.82,
-		level: 'low',
+		level: 'low'
 	},
 	{
 		name: 'Tokyo',
 		lat: 35.68,
 		lon: 139.76,
-		level: 'low',
+		level: 'low'
 	},
 	{
 		name: 'Caracas',
 		lat: 10.5,
 		lon: -66.9,
-		level: 'high',
+		level: 'high'
 	},
 	{
 		name: 'Nuuk',
 		lat: 64.18,
 		lon: -51.72,
-		level: 'elevated',
+		level: 'elevated'
 	}
 ];
 
@@ -272,7 +272,7 @@ export const CONFLICT_ZONES: ConflictZone[] = [
  * @deprecated Use fetchConflictEventsFromGDELT() from '$lib/api/gdelt-conflicts' instead.
  * This hardcoded array is kept for backward compatibility but should not be used.
  * All conflict data should come from live GDELT API calls.
- * 
+ *
  * The dashboard now uses real-time GDELT GEO 2.0 API data for conflict events,
  * filtered using QuadClass 3 (verbal conflict) and 4 (material conflict) as per
  * the GDELT Event schema and CAMEO codebook.
@@ -459,7 +459,7 @@ export const CHOKEPOINTS: Chokepoint[] = [
 		name: 'Strait of Hormuz',
 		lat: 26.5,
 		lon: 56.5,
-		desc: 'Strait of Hormuz - World\'s most important oil transit chokepoint. 21 million barrels/day (~21% of global petroleum). Only 2 miles wide at narrowest point. Iran strategic leverage.'
+		desc: "Strait of Hormuz - World's most important oil transit chokepoint. 21 million barrels/day (~21% of global petroleum). Only 2 miles wide at narrowest point. Iran strategic leverage."
 	},
 	{
 		name: 'Strait of Malacca',
@@ -481,42 +481,41 @@ export const CHOKEPOINTS: Chokepoint[] = [
 	}
 ];
 
-export const CABLE_LANDINGS: CableLanding[] = [
-];
+export const CABLE_LANDINGS: CableLanding[] = [];
 
 export const NUCLEAR_SITES: NuclearSite[] = [
 	{
 		name: 'Zaporizhzhia',
 		lat: 47.5,
-		lon: 34.6,
-	},
+		lon: 34.6
+	}
 ];
 
 export const MILITARY_BASES: MilitaryBase[] = [
 	{
 		name: 'Diego Garcia',
 		lat: -7.3,
-		lon: 72.4,
+		lon: 72.4
 	},
 	{
 		name: 'Okinawa',
 		lat: 26.5,
-		lon: 127.9,
+		lon: 127.9
 	},
 	{
 		name: 'Djibouti',
 		lat: 11.5,
-		lon: 43.1,
+		lon: 43.1
 	},
 	{
 		name: 'Kaliningrad',
 		lat: 54.7,
-		lon: 20.5,
+		lon: 20.5
 	},
 	{
 		name: 'Hainan',
 		lat: 18.2,
-		lon: 109.5,
+		lon: 109.5
 	}
 ];
 
@@ -558,14 +557,44 @@ export const WEATHER_CODES: Record<number, string> = {
 // Region centers for geo-locating news items
 export const REGION_CENTERS: RegionCenter[] = [
 	// Specific countries/cities (highest priority - check first)
-	{ name: 'ukraine', lat: 49.0, lon: 32.0, keywords: ['ukraine', 'kyiv', 'kiev', 'zelensky', 'crimea', 'donbas', 'kherson', 'bakhmut'] },
-	{ name: 'russia', lat: 55.75, lon: 37.6, keywords: ['russia', 'moscow', 'kremlin', 'putin', 'russian'] },
-	{ name: 'china', lat: 35.0, lon: 105.0, keywords: ['china', 'beijing', 'chinese', 'xi jinping', 'ccp'] },
+	{
+		name: 'ukraine',
+		lat: 49.0,
+		lon: 32.0,
+		keywords: ['ukraine', 'kyiv', 'kiev', 'zelensky', 'crimea', 'donbas', 'kherson', 'bakhmut']
+	},
+	{
+		name: 'russia',
+		lat: 55.75,
+		lon: 37.6,
+		keywords: ['russia', 'moscow', 'kremlin', 'putin', 'russian']
+	},
+	{
+		name: 'china',
+		lat: 35.0,
+		lon: 105.0,
+		keywords: ['china', 'beijing', 'chinese', 'xi jinping', 'ccp']
+	},
 	{ name: 'taiwan', lat: 23.5, lon: 121.0, keywords: ['taiwan', 'taipei', 'taiwanese', 'tsmc'] },
-	{ name: 'iran', lat: 32.0, lon: 53.0, keywords: ['iran', 'tehran', 'iranian', 'khamenei', 'irgc', 'persian'] },
-	{ name: 'israel', lat: 31.5, lon: 35.0, keywords: ['israel', 'israeli', 'tel aviv', 'jerusalem', 'netanyahu', 'idf'] },
+	{
+		name: 'iran',
+		lat: 32.0,
+		lon: 53.0,
+		keywords: ['iran', 'tehran', 'iranian', 'khamenei', 'irgc', 'persian']
+	},
+	{
+		name: 'israel',
+		lat: 31.5,
+		lon: 35.0,
+		keywords: ['israel', 'israeli', 'tel aviv', 'jerusalem', 'netanyahu', 'idf']
+	},
 	{ name: 'gaza', lat: 31.5, lon: 34.45, keywords: ['gaza', 'hamas', 'palestinian'] },
-	{ name: 'north_korea', lat: 40.0, lon: 127.0, keywords: ['north korea', 'pyongyang', 'kim jong', 'dprk'] },
+	{
+		name: 'north_korea',
+		lat: 40.0,
+		lon: 127.0,
+		keywords: ['north korea', 'pyongyang', 'kim jong', 'dprk']
+	},
 	{ name: 'south_korea', lat: 36.5, lon: 127.8, keywords: ['south korea', 'seoul', 'korean'] },
 	{ name: 'japan', lat: 36.0, lon: 138.0, keywords: ['japan', 'tokyo', 'japanese'] },
 	{ name: 'india', lat: 22.0, lon: 78.0, keywords: ['india', 'delhi', 'modi', 'indian'] },
@@ -580,7 +609,12 @@ export const REGION_CENTERS: RegionCenter[] = [
 	{ name: 'france', lat: 46.0, lon: 2.0, keywords: ['france', 'french', 'paris', 'macron'] },
 	{ name: 'uk', lat: 54.0, lon: -2.0, keywords: ['britain', 'british', 'uk', 'london', 'england'] },
 	{ name: 'poland', lat: 52.0, lon: 19.0, keywords: ['poland', 'polish', 'warsaw'] },
-	{ name: 'venezuela', lat: 8.0, lon: -66.0, keywords: ['venezuela', 'caracas', 'maduro', 'venezuelan'] },
+	{
+		name: 'venezuela',
+		lat: 8.0,
+		lon: -66.0,
+		keywords: ['venezuela', 'caracas', 'maduro', 'venezuelan']
+	},
 	{ name: 'brazil', lat: -14.0, lon: -51.0, keywords: ['brazil', 'brazilian', 'brasilia'] },
 	{ name: 'mexico', lat: 23.0, lon: -102.0, keywords: ['mexico', 'mexican'] },
 	{ name: 'canada', lat: 56.0, lon: -106.0, keywords: ['canada', 'canadian', 'ottawa', 'trudeau'] },
@@ -591,8 +625,29 @@ export const REGION_CENTERS: RegionCenter[] = [
 	{ name: 'myanmar', lat: 21.0, lon: 96.0, keywords: ['myanmar', 'burma', 'burmese'] },
 	{ name: 'philippines', lat: 13.0, lon: 122.0, keywords: ['philippines', 'filipino', 'manila'] },
 	{ name: 'indonesia', lat: -2.0, lon: 118.0, keywords: ['indonesia', 'indonesian', 'jakarta'] },
-	{ name: 'australia', lat: -25.0, lon: 134.0, keywords: ['australia', 'australian', 'canberra', 'sydney'] },
-	{ name: 'usa', lat: 39.0, lon: -98.0, keywords: ['united states', 'u.s.', 'us ', 'america', 'washington', 'white house', 'pentagon', 'congress', 'biden', 'trump'] },
+	{
+		name: 'australia',
+		lat: -25.0,
+		lon: 134.0,
+		keywords: ['australia', 'australian', 'canberra', 'sydney']
+	},
+	{
+		name: 'usa',
+		lat: 39.0,
+		lon: -98.0,
+		keywords: [
+			'united states',
+			'u.s.',
+			'us ',
+			'america',
+			'washington',
+			'white house',
+			'pentagon',
+			'congress',
+			'biden',
+			'trump'
+		]
+	},
 
 	// Regions (lower priority - fallback)
 	{ name: 'europe', lat: 50.0, lon: 10.0, keywords: ['europe', 'european', 'eu ', 'nato'] },
@@ -602,7 +657,12 @@ export const REGION_CENTERS: RegionCenter[] = [
 	{ name: 'south_america', lat: -15.0, lon: -60.0, keywords: ['south america', 'latin america'] },
 
 	// Strategic locations
-	{ name: 'south_china_sea', lat: 15.0, lon: 115.0, keywords: ['south china sea', 'spratly', 'paracel'] },
+	{
+		name: 'south_china_sea',
+		lat: 15.0,
+		lon: 115.0,
+		keywords: ['south china sea', 'spratly', 'paracel']
+	},
 	{ name: 'strait_hormuz', lat: 26.5, lon: 56.5, keywords: ['hormuz', 'persian gulf'] },
 	{ name: 'red_sea', lat: 20.0, lon: 38.0, keywords: ['red sea', 'bab el-mandeb', 'suez'] },
 	{ name: 'baltic', lat: 58.0, lon: 20.0, keywords: ['baltic', 'kaliningrad'] },
@@ -610,7 +670,9 @@ export const REGION_CENTERS: RegionCenter[] = [
 ];
 
 // Get coordinates for a news item based on title keywords
-export function getNewsCoordinates(title: string): { lat: number; lon: number; region: string } | null {
+export function getNewsCoordinates(
+	title: string
+): { lat: number; lon: number; region: string } | null {
 	const lowerTitle = title.toLowerCase();
 
 	for (const region of REGION_CENTERS) {

@@ -29,14 +29,12 @@
 	const categoryItems = $derived($categoryStore.items);
 	const categoryError = $derived($categoryStore.error);
 
-
 	// Sort by timestamp (most recent first)
 	const items = $derived([...categoryItems].sort((a, b) => b.timestamp - a.timestamp));
 	const error = $derived(categoryError);
-
 </script>
 
-<Panel id={panelId} title={title} {error} onSettings={() => (keywordSettingsOpen = true)}>
+<Panel id={panelId} {title} {error} onSettings={() => (keywordSettingsOpen = true)}>
 	{#if items.length === 0 && !error}
 		<div class="empty-state">No news available</div>
 	{:else}
