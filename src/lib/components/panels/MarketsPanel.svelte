@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { Panel, MarketItemDetailed } from '$lib/components/common';
 	import { MarketsConfigModal } from '$lib/components/modals';
-	import { indices, sectors, commodities, crypto, custom, marketSettings, customMarkets } from '$lib/stores';
-	import { formatPercentChange, getChangeClass } from '$lib/utils';
-	import { INDICES, SECTORS, COMMODITIES, CRYPTO } from '$lib/config/markets';
+	import { connections } from '$lib/stores/connections';
+	import { indices, sectors, commodities, crypto, custom, marketSettings } from '$lib/stores';
 
 	let configModalOpen = $state(false);
 
@@ -13,12 +12,6 @@
 	const cryptoItems = $derived($crypto.items);
 	const customItems = $derived($custom.items);
 	const error = $derived($indices.error || $sectors.error || $commodities.error || $crypto.error || $custom.error);
-
-	// Create maps for quick lookup of names by symbol
-	const indicesMap = new Map(INDICES.map((i) => [i.symbol, i.name]));
-	const sectorsMap = new Map(SECTORS.map((s) => [s.symbol, s.name]));
-	const commoditiesMap = new Map(COMMODITIES.map((c) => [c.symbol, c.name]));
-	const cryptoMap = new Map(CRYPTO.map((c) => [c.symbol, c.name]));
 
 	// Get all enabled and ordered markets across all categories
 	const allOrderedItems = $derived(() => {
@@ -94,10 +87,12 @@
 		return items;
 	});
 
-	const count = $derived(allOrderedItems().length);
 </script>
 
 <Panel id="markets" title="Markets" {error}>
+	{#if !$connections.some((key) => key.provider === 'finnhub')}
+		<p class="connection-notice">Add your Finnhub key in Settings to enable market quotes. Crypto prices use a public source.</p>
+	{/if}
 	{#snippet actions()}
 		<button
 			class="settings-btn"
@@ -111,7 +106,7 @@
 		<div class="empty-state">No market data available</div>
 	{:else}
 		<div class="markets-list">
-			{#each allOrderedItems() as { item, type, typeName } (item.symbol)}
+			{#each allOrderedItems() as { item } (item.symbol)}
 				<MarketItemDetailed {item} />
 			{/each}
 		</div>
@@ -121,6 +116,7 @@
 <MarketsConfigModal open={configModalOpen} onClose={() => (configModalOpen = false)} />
 
 <style>
+	.connection-notice { padding: .75rem; font-size: .7rem; color: var(--text-secondary); line-height: 1.6; }
 	.settings-btn {
 		width: 24px;
 		height: 24px;

@@ -4,6 +4,7 @@
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { preferenceStorage } from '$lib/services/preferences';
 import type { CustomMonitor, NewsItem } from '$lib/types';
 
 const STORAGE_KEY = 'customMonitors';
@@ -21,27 +22,27 @@ export interface MonitorsState {
 	initialized: boolean;
 }
 
-// Load monitors from localStorage
+// Load monitors from account storage
 function loadMonitors(): CustomMonitor[] {
 	if (!browser) return [];
 
 	try {
-		const data = localStorage.getItem(STORAGE_KEY);
+		const data = preferenceStorage.getItem(STORAGE_KEY);
 		return data ? JSON.parse(data) : [];
 	} catch (e) {
-		console.warn('Failed to load monitors from localStorage:', e);
+		console.warn('Failed to load monitors from account storage:', e);
 		return [];
 	}
 }
 
-// Save monitors to localStorage
+// Save monitors to account storage
 function saveMonitors(monitors: CustomMonitor[]): void {
 	if (!browser) return;
 
 	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(monitors));
+		preferenceStorage.setItem(STORAGE_KEY, JSON.stringify(monitors));
 	} catch (e) {
-		console.warn('Failed to save monitors to localStorage:', e);
+		console.warn('Failed to save monitors to account storage:', e);
 	}
 }
 
@@ -222,7 +223,7 @@ function createMonitorsStore() {
 		 */
 		reset(): void {
 			if (browser) {
-				localStorage.removeItem(STORAGE_KEY);
+				preferenceStorage.removeItem(STORAGE_KEY);
 			}
 			set({ monitors: [], matches: [], initialized: true });
 		}

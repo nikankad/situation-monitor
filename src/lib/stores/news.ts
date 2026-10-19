@@ -62,6 +62,17 @@ function createNewsStore() {
 
 	return {
 		subscribe,
+		reanalyzeAlerts() {
+			update((state) => ({
+				...state,
+				categories: Object.fromEntries(
+					Object.entries(state.categories).map(([category, value]) => [
+						category,
+						{ ...value, items: value.items.map(enrichNewsItem) }
+					])
+				) as Record<NewsCategory, CategoryState>
+			}));
+		},
 
 		/**
 		 * Initialize store

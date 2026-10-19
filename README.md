@@ -1,168 +1,82 @@
 # Situation Monitor
 
-A comprehensive real-time geopolitical intelligence platform that aggregates, analyzes, and visualizes global conflicts, developments, news, market data, and geopolitical events. This is a personal OSINT dashboard built for educational purposes, designed for analysts, researchers, traders, and anyone who needs to stay informed about world events as they unfold.
+A personal intelligence dashboard for news, markets, global events, and economic indicators. Sign in with Google, connect your own API keys, and customize your workspace. This branch runs as a SvelteKit Node application with private SQLite storage.
 
-![Situation Monitor Dashboard](static/ss.png)
+## Run locally
 
-## Features
+Requires Node.js 22.13 or newer and npm. Use an actively supported Node LTS release. SQLite uses `better-sqlite3`; a compiler toolchain may be needed if your platform has no prebuilt binary.
 
-- 📰 **Multi-source News Aggregation** - Real-time news from Reuters, AP, Foreign Affairs, CSIS, Brookings, and more
-- 📊 **Live Market & Commodity Data** - Stock prices, commodities, cryptocurrencies via Finnhub
-- 🗺️ **Interactive Global Map** - Visual representation of conflicts and geopolitical hotspots
-- ⚔️ **Real-time Conflict Tracking** - GDELT Project integration for conflict monitoring
-- 🎯 **Sentiment & Narrative Analysis** - ML-powered analysis of news narratives and sentiment
-- 🔔 **Custom Keyword Monitors** - Create alerts for specific topics and events
-- 🌐 **World Leader Tracking** - Track statements and activities of key global figures
-- 📈 **Pattern Correlation Analysis** - Discover correlations between events and market movements
-- 🏦 **Federal Reserve Monitoring** - Economic indicators and Fed data integration
-
-## Tech Stack
-
-- **Frontend**: SvelteKit, TypeScript, Tailwind CSS
-- **Build**: Vite, PostCSS
-- **Testing**: Vitest, Playwright
-- **Data Sources**: 
-  - GDELT Project (conflicts)
-  - Finnhub (financial data)
-  - Federal Reserve FRED API (economic data)
-  - Multiple news sources via proxy
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm/pnpm
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd situation-monitor
-
-# Install dependencies
-npm install
-
-# Setup environment variables
+```sh
+npm ci
 cp .env.example .env
 ```
 
-### Environment Configuration
+Create a **Web application** OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials). Configure the consent screen and add test users while the app is in testing. Add this authorized redirect URI exactly:
 
-Update `.env` with your API keys:
-
-```env
-VITE_FINNHUB_API_KEY=your_finnhub_key
-VITE_FRED_API_KEY=your_fed_api_key
+```text
+http://localhost:5173/auth/callback/google
 ```
 
-**Getting API Keys:**
-- [Finnhub](https://finnhub.io/) - Free tier available
-- [FRED API](https://fred.stlouisfed.org/docs/api/fred/) - Free from Federal Reserve
+Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in `.env`. Generate **two independent** secrets with `openssl rand -base64 32`: set one as `AUTH_SECRET` and the other as `API_KEY_ENCRYPTION_KEY`. Keep both stable and private. The encryption key must decode to exactly 32 bytes. Losing it makes saved provider keys unreadable; changing `AUTH_SECRET` signs everyone out.
 
-### Development
+```sh
+npm run dev -- --host 127.0.0.1
+```
 
-```bash
-# Start dev server
-npm run dev
+Open http://localhost:5173. The login page shows setup status if OAuth is unconfigured; there is no development login bypass. Google must verify the account's email. The authentication integration follows [Auth.js for SvelteKit](https://authjs.dev/reference/sveltekit).
 
-# Run tests
-npm test
+## Personalize your dashboard
 
-# Run end-to-end tests
-npm run test:e2e
+After signing in, open **Settings**:
 
-# Build for production
+- Save, replace, or remove your [Finnhub](https://finnhub.io/) and [FRED](https://fred.stlouisfed.org/docs/api/api_key.html) API keys. Finnhub powers market quotes; FRED powers the Economic Indicators panel. Saving checks input format; provider authorization is checked when requesting data.
+- Enable, disable, resize, and reorder dashboard panels.
+- Customize your market symbols and watchlist using the Markets panel's configuration button.
+- Create topic monitors and custom alert keywords.
+- Choose an automatic refresh interval. Your provider's quota still applies.
+
+Preferences save automatically to your account and load on your other devices. The header displays save status and offers retry on failure. Signing out waits for pending settings to save. Concurrent edits merge different preference groups; the last save wins for the same group. Old browser-only preferences are not imported automatically because they have no account owner.
+
+Google signs you in; its tokens are not used to access your data providers. All account API routes require a session. Keys are encrypted using AES-256-GCM with the user and provider bound to each ciphertext, and only masked hints are returned. The server sends credentials directly to the provider; keys never enter browser bundles, browser storage, or the public CORS proxy. News and other public feeds still use the existing public sources. Market session caches are scoped by account and kept in sessionStorage.
+
+FRED observations include their actual observation dates, which differ by series. The dashboard also retains some panels whose original data integrations are incomplete; these show empty states rather than fabricated data.
+
+## Production
+
+```sh
+npm ci
 npm run build
-
-# Preview production build
-npm run preview
+npm start
 ```
 
-## Project Structure
+Deploy the built application to a Node host with a **persistent writable disk**. `npm start` loads an optional local `.env`; managed hosts may inject environment variables instead. Set:
 
-```
-src/
-├── lib/
-│   ├── analysis/        # Sentiment, narrative, correlation analysis
-│   ├── api/            # External API integrations
-│   ├── components/     # Svelte components (panels, modals, layout)
-│   ├── config/         # Application configuration
-│   ├── services/       # Cache, circuit breaker, deduplication
-│   ├── stores/         # Svelte stores (state management)
-│   ├── types/          # TypeScript type definitions
-│   └── utils/          # Utility functions
-└── routes/             # SvelteKit routes
+```text
+ORIGIN=https://monitor.example.com
+AUTH_TRUST_HOST=true
+DATABASE_PATH=/var/lib/situation-monitor/situation-monitor.sqlite
 ```
 
-## Key Features Explained
+Also provide the four secrets described above. Add `https://monitor.example.com/auth/callback/google` to the same Google OAuth client's authorized redirect URIs. Serve behind HTTPS with a trusted reverse proxy and a correct external origin; only enable host trust when that proxy controls forwarded host headers. See [SvelteKit's Node deployment guide](https://svelte.dev/docs/kit/adapter-node).
 
-### Panel System
-The dashboard consists of configurable panels that can be enabled/disabled and reordered:
-- News Panel
-- Market Panel
-- Fed Panel
-- Heatmap Panel
-- Conflict Map
-- And more...
+SQLite tables are initialized automatically. Back up the database with SQLite's backup mechanism and retain the encryption key separately. Use a single persistent Node instance; multiple instances need a shared database implementation. Ephemeral/serverless disks are unsuitable for this storage model. GitHub Pages cannot run authentication or private server storage; the former Pages deployment workflow now validates the Node application and does not publish anything.
 
-### Settings
-Access dashboard settings to:
-- Toggle panels on/off
-- Reorder panels via drag-and-drop
-- Switch between light/dark themes
-- Reset to default configuration
+## Verification
 
-## Data Sources
-
-- **GDELT Project** - Global conflict and event data
-- **Reuters, AP, Foreign Affairs, CSIS, Brookings** - News sources
-- **War on the Rocks, Bellingcat, ISW** - Specialized geopolitical analysis
-- **Finnhub** - Financial market data
-- **Federal Reserve** - Economic indicators
-- Additional verified intelligence sources
-
-## Performance Features
-
-- **Circuit Breaker** - Prevents cascading API failures
-- **Request Deduplication** - Eliminates redundant API calls
-- **Response Caching** - Reduces API usage and improves responsiveness
-- **Request Registry** - Tracks in-flight requests to prevent duplicates
-
-## Testing
-
-```bash
-# Unit tests
-npm run test
-
-# Watch mode
-npm run test:watch
-
-# E2E tests
+```sh
+npm run check
+npm run test:unit
+npm run build
+npx playwright install chromium
 npm run test:e2e
-
-# Coverage
-npm run test:coverage
 ```
 
-## Disclaimer
+If Chromium is already installed at a custom location, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable when running the browser tests.
 
-⚠️ This tool is for informational purposes only. Always verify information through official sources before making decisions.
+End-to-end tests run the built Node server with temporary SQLite storage and isolated test credentials. They create signed test sessions in the test process, exercise route guards, account isolation, key management, preferences, sign-out, and Google OAuth initiation. They do not bypass authentication in the application or complete a real Google consent flow; verify that final flow with your configured Google client before deployment.
 
+## Stack
 
+Svelte 5, SvelteKit 2, TypeScript, Auth.js, SQLite, Tailwind CSS, D3, Vitest, and Playwright.
 
-## Contributing
-
-Contributions are welcome. Please ensure tests pass and code follows the existing style.
-
-## Support
-
-For issues, questions, or suggestions, please open an issue in the repository.
-
----
-
-_Fork of [hipcityreg/situation-monitor](https://github.com/hipcityreg/situation-monitor)_
-
----
-
+Fork of [hipcityreg/situation-monitor](https://github.com/hipcityreg/situation-monitor).

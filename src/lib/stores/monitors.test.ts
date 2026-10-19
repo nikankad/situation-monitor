@@ -10,8 +10,8 @@ vi.mock('$app/environment', () => ({
 	browser: true
 }));
 
-// Mock localStorage
-const localStorageMock = (() => {
+// Mock the account preference adapter.
+const localStorageMock = vi.hoisted(() => {
 	let store: Record<string, string> = {};
 	return {
 		getItem: vi.fn((key: string) => store[key] || null),
@@ -25,11 +25,11 @@ const localStorageMock = (() => {
 			store = {};
 		})
 	};
-})();
-
-Object.defineProperty(globalThis, 'localStorage', {
-	value: localStorageMock
 });
+
+vi.mock('$lib/services/preferences', () => ({
+	preferenceStorage: localStorageMock
+}));
 
 describe('Monitors Store', () => {
 	beforeEach(async () => {
@@ -173,7 +173,7 @@ describe('Monitors Store', () => {
 		expect(matches.length).toBe(0);
 	});
 
-	it('should persist monitors to localStorage', async () => {
+	it('should persist monitors to account storage', async () => {
 		const { monitors } = await import('./monitors');
 
 		monitors.addMonitor({
@@ -190,7 +190,11 @@ describe('Monitors Store', () => {
 
 		monitors.addMonitor({ name: 'Enabled', keywords: ['a'], enabled: true });
 		monitors.addMonitor({ name: 'Disabled', keywords: ['b'], enabled: false });
-		monitors.addMonitor({ name: 'Also Enabled', keywords: ['c'], enabled: true });
+		monitors.addMonitor({
+			name: 'Also Enabled',
+			keywords: ['c'],
+			enabled: true
+		});
 
 		expect(get(enabledMonitors).length).toBe(2);
 		expect(get(monitorCount)).toBe(3);

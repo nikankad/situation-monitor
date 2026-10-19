@@ -132,9 +132,11 @@ describe('Correlation Engine', () => {
 		expect(results?.predictiveSignals.length).toBeGreaterThan(0);
 
 		const tariffSignal = results?.predictiveSignals.find((s) => s.id === 'tariffs');
-		if (tariffSignal) {
-			expect(tariffSignal.prediction).toContain('volatility');
-		}
+		expect(tariffSignal).toBeDefined();
+		expect(tariffSignal!.score).toBeGreaterThanOrEqual(15);
+		expect(tariffSignal!.confidence).toBeGreaterThan(0);
+		expect(tariffSignal!.prediction.length).toBeGreaterThan(0);
+		expect(tariffSignal!.headlines.length).toBeGreaterThan(0);
 	});
 
 	it('should collect headlines for patterns', () => {
@@ -174,7 +176,10 @@ describe('Correlation Engine', () => {
 	});
 
 	it('should return correct summary', () => {
-		expect(getCorrelationSummary(null)).toEqual({ totalSignals: 0, status: 'NO DATA' });
+		expect(getCorrelationSummary(null)).toEqual({
+			totalSignals: 0,
+			status: 'NO DATA'
+		});
 
 		const news: NewsItem[] = [
 			{

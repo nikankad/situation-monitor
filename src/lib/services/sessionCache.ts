@@ -5,6 +5,14 @@
 import type { NewsItem, NewsCategory } from '$lib/types';
 import type { MarketItem, CryptoItem, SectorPerformance } from '$lib/types';
 
+let accountId = '';
+export function setCacheAccount(userId: string) {
+	accountId = userId;
+}
+function scoped(key: string) {
+	return `situation-monitor:${accountId}:${key}`;
+}
+
 const CACHE_VERSION = 1;
 const NEWS_CACHE_KEY = 'session_news_v' + CACHE_VERSION;
 const MARKETS_CACHE_KEY = 'session_markets_v' + CACHE_VERSION;
@@ -38,13 +46,13 @@ function isCacheValid(timestamp: number): boolean {
  */
 export function loadCachedNews(): CachedNews | null {
 	try {
-		const cached = localStorage.getItem(NEWS_CACHE_KEY);
+		const cached = sessionStorage.getItem(scoped(NEWS_CACHE_KEY));
 		if (!cached) return null;
 
 		const parsed = JSON.parse(cached);
 		if (!isCacheValid(parsed.timestamp)) {
 			// Cache expired, clear it
-			localStorage.removeItem(NEWS_CACHE_KEY);
+			sessionStorage.removeItem(scoped(NEWS_CACHE_KEY));
 			return null;
 		}
 
@@ -60,13 +68,13 @@ export function loadCachedNews(): CachedNews | null {
  */
 export function loadCachedMarkets(): CachedMarkets | null {
 	try {
-		const cached = localStorage.getItem(MARKETS_CACHE_KEY);
+		const cached = sessionStorage.getItem(scoped(MARKETS_CACHE_KEY));
 		if (!cached) return null;
 
 		const parsed = JSON.parse(cached);
 		if (!isCacheValid(parsed.timestamp)) {
 			// Cache expired, clear it
-			localStorage.removeItem(MARKETS_CACHE_KEY);
+			sessionStorage.removeItem(scoped(MARKETS_CACHE_KEY));
 			return null;
 		}
 
@@ -86,7 +94,7 @@ export function saveCachedNews(data: Record<NewsCategory, NewsItem[]>): void {
 			timestamp: Date.now(),
 			data
 		};
-		localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(toCache));
+		sessionStorage.setItem(scoped(NEWS_CACHE_KEY), JSON.stringify(toCache));
 	} catch (error) {
 		console.warn('Failed to save news cache:', error);
 	}
@@ -107,7 +115,7 @@ export function saveCachedMarkets(data: {
 			timestamp: Date.now(),
 			data
 		};
-		localStorage.setItem(MARKETS_CACHE_KEY, JSON.stringify(toCache));
+		sessionStorage.setItem(scoped(MARKETS_CACHE_KEY), JSON.stringify(toCache));
 	} catch (error) {
 		console.warn('Failed to save markets cache:', error);
 	}
@@ -118,8 +126,8 @@ export function saveCachedMarkets(data: {
  */
 export function clearSessionCache(): void {
 	try {
-		localStorage.removeItem(NEWS_CACHE_KEY);
-		localStorage.removeItem(MARKETS_CACHE_KEY);
+		sessionStorage.removeItem(scoped(NEWS_CACHE_KEY));
+		sessionStorage.removeItem(scoped(MARKETS_CACHE_KEY));
 	} catch (error) {
 		console.warn('Failed to clear session cache:', error);
 	}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
 	import { keywordsStore } from '$lib/stores/keywords';
+	import { news } from '$lib/stores/news';
 	import { ALERT_KEYWORDS } from '$lib/config/keywords';
 
 	interface Props {
@@ -41,6 +42,7 @@
 		if (useCustom !== $keywordsStore.enabled) {
 			keywordsStore.toggleEnabled();
 		}
+		news.reanalyzeAlerts();
 		onClose();
 	}
 

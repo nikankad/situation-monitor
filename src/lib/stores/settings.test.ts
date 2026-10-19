@@ -10,8 +10,8 @@ vi.mock('$app/environment', () => ({
 	browser: true
 }));
 
-// Mock localStorage
-const localStorageMock = (() => {
+// Mock the account preference adapter.
+const localStorageMock = vi.hoisted(() => {
 	let store: Record<string, string> = {};
 	return {
 		getItem: vi.fn((key: string) => store[key] || null),
@@ -25,11 +25,11 @@ const localStorageMock = (() => {
 			store = {};
 		})
 	};
-})();
-
-Object.defineProperty(globalThis, 'localStorage', {
-	value: localStorageMock
 });
+
+vi.mock('$lib/services/preferences', () => ({
+	preferenceStorage: localStorageMock
+}));
 
 describe('Settings Store', () => {
 	beforeEach(async () => {
@@ -40,7 +40,7 @@ describe('Settings Store', () => {
 		vi.resetModules();
 	});
 
-	it('should have default state with all panels enabled', async () => {
+	it('should enable the main panels and leave optional panels disabled', async () => {
 		const { settings } = await import('./settings');
 
 		const state = get(settings);
@@ -50,6 +50,7 @@ describe('Settings Store', () => {
 		expect(state.enabled['map']).toBe(true);
 		expect(state.enabled['politics']).toBe(true);
 		expect(state.enabled['tech']).toBe(true);
+		expect(state.enabled['whales']).toBe(false);
 	});
 
 	it('should toggle panel visibility', async () => {
@@ -67,7 +68,7 @@ describe('Settings Store', () => {
 		expect(get(settings).enabled['tech']).toBe(true);
 	});
 
-	it('should persist panel settings to localStorage', async () => {
+	it('should persist panel settings to account storage', async () => {
 		const { settings } = await import('./settings');
 
 		settings.togglePanel('finance');
@@ -129,11 +130,11 @@ describe('Settings Store', () => {
 		const { settings, enabledPanels } = await import('./settings');
 
 		// Disable some panels
-		settings.togglePanel('whales');
+		settings.togglePanel('markets');
 		settings.togglePanel('polymarket');
 
 		const enabled = get(enabledPanels);
-		expect(enabled).not.toContain('whales');
+		expect(enabled).not.toContain('markets');
 		expect(enabled).not.toContain('polymarket');
 		expect(enabled).toContain('map');
 		expect(enabled).toContain('politics');

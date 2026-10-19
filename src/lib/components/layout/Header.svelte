@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { page } from '$app/stores';
+	import { signOut } from '@auth/sveltekit/client';
+	import { preferenceSync, flushPreferences } from '$lib/services/preferences';
 	import { isRefreshing, lastRefresh } from '$lib/stores';
 
 	interface Props {
@@ -6,6 +9,14 @@
 	}
 
 	let { onSettingsClick }: Props = $props();
+
+	let signingOut = $state(false);
+	async function logout() {
+		signingOut = true;
+		if (!(await flushPreferences())) { signingOut = false; return; }
+		try { await signOut({ redirectTo: '/login' }); }
+		catch { signingOut = false; }
+	}
 
 	const lastRefreshText = $derived(
 		$lastRefresh
@@ -64,8 +75,13 @@
 		<div class="header-center"></div>
 
 		<div class="header-right">
+            <span class="account-name">{$page.data.user?.name ?? $page.data.user?.email ?? 'Your workspace'}</span>
+            {#if $preferenceSync === 'error'}
+                <button class="header-btn" onclick={() => flushPreferences()}>Retry saving settings</button>
+            {:else}<span class="save-status" aria-live="polite">{$preferenceSync === 'saving' ? 'Saving…' : 'Saved'}</span>{/if}
+            <button class="header-btn" onclick={logout} disabled={signingOut}>{signingOut ? 'Signing out…' : 'Sign out'}</button>
 			<button class="header-btn settings-btn" onclick={(e) => { e.preventDefault(); onSettingsClick?.(); }} title="Settings">
-				<span class="btn-icon">⚙</span>
+
 				<span class="btn-label">Settings</span>
 			</button>
 		</div>
@@ -94,6 +110,9 @@
 </div>
 
 <style>
+	.account-name { color: var(--text-secondary); font-size: .7rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.save-status { color: var(--text-muted); font-size: .6rem; }
+	@media (max-width: 640px) { .account-name, .save-status { display: none; } }
 	.header-wrapper {
 		z-index: 100;
 		background: var(--surface);

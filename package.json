@@ -13,14 +13,17 @@
 		"test:unit": "vitest run",
 		"test:e2e": "playwright test",
 		"lint": "eslint . && prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"start": "node --env-file-if-exists=.env build"
 	},
 	"devDependencies": {
+		"@auth/core": "^0.41.3",
 		"@playwright/test": "^1.49.0",
-		"@sveltejs/adapter-static": "^3.0.10",
+		"@sveltejs/adapter-node": "^5.5.7",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@testing-library/svelte": "^5.0.0",
+		"@types/better-sqlite3": "^9.6.0",
 		"@types/d3": "^7.4.0",
 		"@types/node": "^22.0.0",
 		"@types/topojson-client": "^3.1.0",
@@ -44,7 +47,13 @@
 		"vitest": "^2.0.0"
 	},
 	"dependencies": {
+		"@auth/sveltekit": "^1.11.3",
+		"better-sqlite3": "^13.0.3",
 		"d3": "^7.9.0",
-		"topojson-client": "^3.1.0"
+		"topojson-client": "^3.1.0",
+		"zod": "^4.6.7"
+	},
+	"engines": {
+		"node": ">=22.13.0"
 	}
 }

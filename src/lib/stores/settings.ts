@@ -4,11 +4,8 @@
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
-import {
-	PANELS,
-	NON_DRAGGABLE_PANELS,
-	type PanelId
-} from '$lib/config';
+import { preferenceStorage } from '$lib/services/preferences';
+import { PANELS, NON_DRAGGABLE_PANELS, type PanelId } from '$lib/config';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -40,7 +37,7 @@ function getDefaultSettings(): PanelSettings & { features: FeatureSettings } {
 	const allPanelIds = Object.keys(PANELS) as PanelId[];
 
 	return {
-		enabled: Object.fromEntries(allPanelIds.map((id) => [id, true])) as Record<PanelId, boolean>,
+		enabled: Object.fromEntries(allPanelIds.map((id) => [id, PANELS[id].defaultEnabled ?? true])) as Record<PanelId, boolean>,
 		order: allPanelIds,
 		sizes: {} as Record<PanelId, { width?: number; height?: number }>,
 		features: {
@@ -49,15 +46,15 @@ function getDefaultSettings(): PanelSettings & { features: FeatureSettings } {
 	};
 }
 
-// Load from localStorage
+// Load from account storage
 function loadFromStorage(): Partial<PanelSettings & { features: FeatureSettings }> {
 	if (!browser) return {};
 
 	try {
-		const panels = localStorage.getItem(STORAGE_KEYS.panels);
-		const order = localStorage.getItem(STORAGE_KEYS.order);
-		const sizes = localStorage.getItem(STORAGE_KEYS.sizes);
-		const features = localStorage.getItem(STORAGE_KEYS.features);
+		const panels = preferenceStorage.getItem(STORAGE_KEYS.panels);
+		const order = preferenceStorage.getItem(STORAGE_KEYS.order);
+		const sizes = preferenceStorage.getItem(STORAGE_KEYS.sizes);
+		const features = preferenceStorage.getItem(STORAGE_KEYS.features);
 
 		return {
 			enabled: panels ? JSON.parse(panels) : undefined,
@@ -66,19 +63,19 @@ function loadFromStorage(): Partial<PanelSettings & { features: FeatureSettings 
 			features: features ? JSON.parse(features) : undefined
 		};
 	} catch (e) {
-		console.warn('Failed to load settings from localStorage:', e);
+		console.warn('Failed to load settings from account storage:', e);
 		return {};
 	}
 }
 
-// Save to localStorage
+// Save to account storage
 function saveToStorage(key: keyof typeof STORAGE_KEYS, value: unknown): void {
 	if (!browser) return;
 
 	try {
-		localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(value));
+		preferenceStorage.setItem(STORAGE_KEYS[key], JSON.stringify(value));
 	} catch (e) {
-		console.warn(`Failed to save ${key} to localStorage:`, e);
+		console.warn(`Failed to save ${key} to account storage:`, e);
 	}
 }
 
@@ -201,9 +198,10 @@ function createSettingsStore() {
 		reset() {
 			const defaults = getDefaultSettings();
 			if (browser) {
-				localStorage.removeItem(STORAGE_KEYS.panels);
-				localStorage.removeItem(STORAGE_KEYS.order);
-				localStorage.removeItem(STORAGE_KEYS.sizes);
+				preferenceStorage.removeItem(STORAGE_KEYS.panels);
+				preferenceStorage.removeItem(STORAGE_KEYS.order);
+				preferenceStorage.removeItem(STORAGE_KEYS.sizes);
+				preferenceStorage.removeItem(STORAGE_KEYS.features);
 			}
 			set({ ...defaults, initialized: true });
 		},

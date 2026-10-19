@@ -4,6 +4,7 @@
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { preferenceStorage } from '$lib/services/preferences';
 
 // Refresh stages (matches existing 3-stage approach)
 export type RefreshStage = 'critical' | 'secondary' | 'tertiary';
@@ -67,8 +68,12 @@ export interface RefreshState {
 const DEFAULT_AUTO_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour
 const STORAGE_KEY = 'refreshSettings';
 
-// Load settings from localStorage
-function loadSettings(): { autoRefreshEnabled: boolean; autoRefreshInterval: number; lastRefresh: number | null } {
+// Load settings from account storage
+function loadSettings(): {
+	autoRefreshEnabled: boolean;
+	autoRefreshInterval: number;
+	lastRefresh: number | null;
+} {
 	if (!browser) {
 		return {
 			autoRefreshEnabled: true,
@@ -78,7 +83,7 @@ function loadSettings(): { autoRefreshEnabled: boolean; autoRefreshInterval: num
 	}
 
 	try {
-		const data = localStorage.getItem(STORAGE_KEY);
+		const data = preferenceStorage.getItem(STORAGE_KEY);
 		if (data) {
 			const parsed = JSON.parse(data);
 			return {
@@ -98,14 +103,14 @@ function loadSettings(): { autoRefreshEnabled: boolean; autoRefreshInterval: num
 	};
 }
 
-// Save settings to localStorage
+// Save settings to account storage
 function saveSettings(enabled: boolean, interval: number, lastRefresh?: number | null): void {
 	if (!browser) return;
 
 	try {
-		const existing = localStorage.getItem(STORAGE_KEY);
+		const existing = preferenceStorage.getItem(STORAGE_KEY);
 		const existingData = existing ? JSON.parse(existing) : {};
-		localStorage.setItem(
+		preferenceStorage.setItem(
 			STORAGE_KEY,
 			JSON.stringify({
 				autoRefreshEnabled: enabled,
@@ -211,7 +216,7 @@ function createRefreshStore() {
 				// Keep last 10 refresh entries
 				const newHistory = [historyEntry, ...state.refreshHistory].slice(0, 10);
 
-				// Persist lastRefresh to localStorage
+				// Persist lastRefresh to account storage
 				saveSettings(state.autoRefreshEnabled, state.autoRefreshInterval, now);
 
 				return {

@@ -15,7 +15,6 @@
 
 	let { whales = [], error = null }: Props = $props();
 
-	const count = $derived(whales.length);
 
 	function formatAmount(amt: number): string {
 		return amt >= 1000 ? (amt / 1000).toFixed(1) + 'K' : amt.toFixed(2);

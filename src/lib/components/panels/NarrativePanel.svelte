@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Panel, Badge } from '$lib/components/common';
+	import { Panel } from '$lib/components/common';
 	import { analyzeSentiment, getSentimentColor, getSentimentEmoji, type SentimentType } from '$lib/analysis/sentiment';
 	import type { NewsItem } from '$lib/types';
 
@@ -11,21 +11,6 @@
 	let { news = [], error = null }: Props = $props();
 
 	const sentimentAnalysis = $derived(analyzeSentiment(news, 30));
-
-	function getSentimentVariant(sentiment: SentimentType): 'default' | 'warning' | 'danger' | 'success' | 'info' {
-		switch (sentiment) {
-			case 'alarming':
-				return 'danger';
-			case 'critical':
-				return 'warning';
-			case 'negative':
-				return 'warning';
-			case 'positive':
-				return 'success';
-			default:
-				return 'default';
-		}
-	}
 
 	function formatScore(score: number): string {
 		if (score > 0) return `+${(score * 100).toFixed(0)}`;

@@ -3,7 +3,6 @@
 		import { Panel } from '$lib/components/common';
 	import {
 		HOTSPOTS,
-		CONFLICT_ZONES,
 		CHOKEPOINTS,
 		CABLE_LANDINGS,
 		NUCLEAR_SITES,
@@ -12,14 +11,13 @@
 		SANCTIONED_COUNTRY_IDS,
 		THREAT_COLORS,
 		WEATHER_CODES,
-		REGION_CENTERS,
 		getNewsCoordinates,
 		type ActiveConflict
 	} from '$lib/config/map';
 	import { fetchConflictEventsFromGDELT, type GdeltConflictEvent } from '$lib/api/gdelt-conflicts';
 	import { CACHE_TTLS } from '$lib/config/api';
 	import type { CustomMonitor, NewsItem } from '$lib/types';
-		import { getCountryName, COUNTRY_ID_TO_NAME } from '$lib/config/countries';
+		import { getCountryName } from '$lib/config/countries';
 	import { timeAgo } from '$lib/utils';
 
 
@@ -162,10 +160,11 @@
 			.filter((item): item is GeoNews => item !== null)
 	);
 
+	let currentZoomScale = $state(1);
 	// Use distance-based clustering that adapts to zoom level
 	const snappedZoomScale = $derived(snapZoomScale(currentZoomScale));
 
-	const newsClusters = $derived<NewsCluster[]>(() => {
+	const newsClusters = $derived.by<NewsCluster[]>(() => {
 		// Use distance-based clustering instead of region-based
 		const clusters = clusterNewsByDistance(geoNews, snappedZoomScale);
 
@@ -201,7 +200,7 @@
 	);
 
 	// Conflict zone intensity based on news count
-	const conflictIntensity = $derived<Map<string, number>>(() => {
+	const conflictIntensity = $derived.by<Map<string, number>>(() => {
 		const intensity = new Map<string, number>();
 
 		// Map region names to conflict zone names
@@ -246,7 +245,6 @@
 	let projection: any = null;
 	let path: any = null;
 	let zoom: any = null;
-	let currentZoomScale = $state(1);
 	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	const WIDTH = 800;
@@ -410,16 +408,6 @@
 	function hideTooltip(): void {
 		tooltipVisible = false;
 		tooltipContent = null;
-	}
-
-	// Show detailed conflict information modal
-	function showConflictDetails(conflict: ActiveConflict): void {
-		selectedConflict = conflict;
-		selectedGdeltConflict = null;
-		selectedHotspot = null;
-		selectedNewsCluster = null;
-		showDetailModal = true;
-		hideTooltip();
 	}
 
 	// Show detailed GDELT conflict information modal
@@ -837,7 +825,7 @@
 						showHotspotDetails(h);
 					})
 					.on('mouseenter', (event: MouseEvent) =>
-						showEnhancedTooltip(event, h.name, h.lat, h.lon, h.desc, color)
+						showEnhancedTooltip(event, h.name, h.lat, h.lon, h.desc ?? '', color)
 					)
 					.on('mousemove', moveTooltip)
 					.on('mouseleave', hideTooltip);
@@ -866,7 +854,6 @@
 			const [x, y] = projection([conflict.lon, conflict.lat]) || [0, 0];
 			if (x && y) {
 				const color = THREAT_COLORS[conflict.severity];
-				const size = conflict.severity === 'critical' ? 8 : conflict.severity === 'high' ? 6 : 5;
 				
 				// Icon based on type
 				let icon = '⚠';
@@ -1013,7 +1000,7 @@
 		// Skip drawing if news toggle is off
 		if (!showNews) return;
 
-		const clusters = typeof newsClusters === 'function' ? newsClusters() : newsClusters;
+		const clusters = newsClusters;
 
 		// Apply inverse scaling to maintain consistent visual size regardless of zoom
 		const scale = currentZoomScale;
@@ -1113,7 +1100,7 @@
 	function updateConflictZoneIntensity(): void {
 		if (!mapGroup) return;
 
-		const intensity = typeof conflictIntensity === 'function' ? conflictIntensity() : conflictIntensity;
+		const intensity = conflictIntensity;
 
 		mapGroup.selectAll('.conflict-zone').each(function (this: SVGPathElement) {
 			const zoneName = this.getAttribute('data-zone');

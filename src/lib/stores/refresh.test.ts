@@ -10,8 +10,8 @@ vi.mock('$app/environment', () => ({
 	browser: true
 }));
 
-// Mock localStorage
-const localStorageMock = (() => {
+// Mock the account preference adapter.
+const localStorageMock = vi.hoisted(() => {
 	let store: Record<string, string> = {};
 	return {
 		getItem: vi.fn((key: string) => store[key] || null),
@@ -25,11 +25,11 @@ const localStorageMock = (() => {
 			store = {};
 		})
 	};
-})();
-
-Object.defineProperty(globalThis, 'localStorage', {
-	value: localStorageMock
 });
+
+vi.mock('$lib/services/preferences', () => ({
+	preferenceStorage: localStorageMock
+}));
 
 describe('Refresh Store', () => {
 	beforeEach(async () => {

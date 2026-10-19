@@ -15,7 +15,6 @@
 
 	let { contracts = [], error = null }: Props = $props();
 
-	const count = $derived(contracts.length);
 
 	function formatValue(v: number): string {
 		if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';

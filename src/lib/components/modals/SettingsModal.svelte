@@ -1,14 +1,24 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
-	import { settings } from '$lib/stores';
+	import KeywordSettingsModal from './KeywordSettingsModal.svelte';
+	import MonitorFormModal from './MonitorFormModal.svelte';
+	import type { CustomMonitor } from '$lib/types';
+	import AccountSettings from '$lib/components/AccountSettings.svelte';
+	import { settings, monitors, refresh } from '$lib/stores';
 	import { PANELS, NON_DRAGGABLE_PANELS, type PanelId } from '$lib/config';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
+		onKeysChanged?: () => void;
+		onRefreshSettingsChanged?: () => void;
 	}
 
-	let { open = false, onClose }: Props = $props();
+	let { open = false, onClose, onKeysChanged, onRefreshSettingsChanged }: Props = $props();
+
+	let keywordsOpen = $state(false);
+	let monitorOpen = $state(false);
+	let editingMonitor = $state<CustomMonitor | null>(null);
 
 	// Drag state
 	let draggedPanel = $state<PanelId | null>(null);
@@ -96,7 +106,6 @@
 			// Swap in the full order array
 			const currentOrder = [...$settings.order];
 			const fromIndex = currentOrder.indexOf(panelId);
-			const toIndex = currentOrder.indexOf(panelBelow);
 			// Remove from current position and insert after the panel below
 			currentOrder.splice(fromIndex, 1);
 			// If moving down, we need to insert after the target
@@ -107,8 +116,25 @@
 	}
 </script>
 
-<Modal {open} title="Settings" {onClose}>
+<Modal open={open && !keywordsOpen && !monitorOpen} title="Settings" {onClose}>
 	<div class="settings-sections">
+		{#if open}<AccountSettings {onKeysChanged} />{/if}
+        <section class="settings-section personal-settings">
+            <h3 class="section-title">Refresh & alerts</h3>
+            <label><input type="checkbox" checked={$refresh.autoRefreshEnabled} onchange={() => { refresh.toggleAutoRefresh(); onRefreshSettingsChanged?.(); }} /> Refresh automatically</label>
+            <label>Refresh interval
+                <select value={String($refresh.autoRefreshInterval)} onchange={(event) => { refresh.setAutoRefreshInterval(Number(event.currentTarget.value)); onRefreshSettingsChanged?.(); }}>
+                    <option value="60000">Every minute</option><option value="300000">Every 5 minutes</option><option value="900000">Every 15 minutes</option><option value="3600000">Every hour</option>
+                </select>
+            </label>
+            <button onclick={() => (keywordsOpen = true)}>Customize alert keywords</button>
+            <h3 class="section-title">Your monitors</h3>
+            <p class="section-desc">Track topics with your own keyword groups.</p>
+            {#each $monitors.monitors as monitor (monitor.id)}
+                <div class="monitor-row"><span>{monitor.name}</span><button onclick={() => { editingMonitor = monitor; monitorOpen = true; }}>Edit</button></div>
+            {/each}
+            <button disabled={$monitors.monitors.length >= 20} onclick={() => { editingMonitor = null; monitorOpen = true; }}>Add monitor</button>
+        </section>
 		<section class="settings-section">
 			<h3 class="section-title">Enabled Panels</h3>
 			<p class="section-desc">Toggle panels on/off to customize your dashboard</p>
@@ -222,8 +248,15 @@
 		</section>
 	</div>
 </Modal>
+<KeywordSettingsModal open={open && keywordsOpen} onClose={() => (keywordsOpen = false)} />
+<MonitorFormModal open={open && monitorOpen} onClose={() => (monitorOpen = false)} editMonitor={editingMonitor} />
 
 <style>
+	.personal-settings { font-size: .7rem; color: var(--text-secondary); }
+	.personal-settings button, .personal-settings select { background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: .55rem; font: inherit; }
+	.personal-settings button { cursor: pointer; }
+	.personal-settings label { display: flex; align-items: center; gap: .6rem; }
+	.monitor-row { display: flex; align-items: center; justify-content: space-between; }
 	.settings-sections {
 		display: flex;
 		flex-direction: column;

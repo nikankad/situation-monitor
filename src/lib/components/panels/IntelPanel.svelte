@@ -48,7 +48,6 @@
 	}
 
 	const items = $derived(storeItems.map(transformToIntelItem));
-	const count = $derived(items.length);
 
 	type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info';
 

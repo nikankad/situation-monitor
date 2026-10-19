@@ -4,6 +4,7 @@
 
 import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { preferenceStorage } from '$lib/services/preferences';
 import { INDICES, SECTORS, COMMODITIES, CRYPTO } from '$lib/config/markets';
 
 const STORAGE_KEY = 'marketSettings';
@@ -66,7 +67,7 @@ function getDefaultSettings(): MarketDisplaySettings {
 function loadCustomMarkets(): Map<string, string> {
 	if (!browser) return new Map();
 	try {
-		const saved = localStorage.getItem(CUSTOM_MARKETS_KEY);
+		const saved = preferenceStorage.getItem(CUSTOM_MARKETS_KEY);
 		if (saved) {
 			const arr: CustomMarket[] = JSON.parse(saved);
 			return new Map(arr.map((m) => [m.symbol, m.name]));
@@ -84,7 +85,7 @@ function saveCustomMarkets(markets: Map<string, string>): void {
 			symbol,
 			name
 		}));
-		localStorage.setItem(CUSTOM_MARKETS_KEY, JSON.stringify(arr));
+		preferenceStorage.setItem(CUSTOM_MARKETS_KEY, JSON.stringify(arr));
 	} catch (e) {
 		console.warn('Failed to save custom markets:', e);
 	}
@@ -162,10 +163,10 @@ function loadFromStorage(): Partial<MarketDisplaySettings> {
 	if (!browser) return {};
 
 	try {
-		const saved = localStorage.getItem(STORAGE_KEY);
+		const saved = preferenceStorage.getItem(STORAGE_KEY);
 		return saved ? JSON.parse(saved) : {};
 	} catch (e) {
-		console.warn('Failed to load market settings from localStorage:', e);
+		console.warn('Failed to load market settings from account storage:', e);
 		return {};
 	}
 }
@@ -174,9 +175,9 @@ function saveToStorage(settings: MarketDisplaySettings): void {
 	if (!browser) return;
 
 	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+		preferenceStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 	} catch (e) {
-		console.warn('Failed to save market settings to localStorage:', e);
+		console.warn('Failed to save market settings to account storage:', e);
 	}
 }
 

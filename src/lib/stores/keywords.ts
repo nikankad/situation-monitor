@@ -4,6 +4,7 @@
 
 import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { preferenceStorage } from '$lib/services/preferences';
 import { ALERT_KEYWORDS } from '$lib/config/keywords';
 
 const STORAGE_KEY = 'situationMonitorCustomKeywords';
@@ -13,27 +14,27 @@ export interface KeywordsState {
 	enabled: boolean; // Whether to use custom keywords instead of defaults
 }
 
-// Load from localStorage
+// Load from account storage
 function loadFromStorage(): Partial<KeywordsState> {
 	if (!browser) return {};
 
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
+		const stored = preferenceStorage.getItem(STORAGE_KEY);
 		return stored ? JSON.parse(stored) : {};
 	} catch (e) {
-		console.warn('Failed to load custom keywords from localStorage:', e);
+		console.warn('Failed to load custom keywords from account storage:', e);
 		return {};
 	}
 }
 
-// Save to localStorage
+// Save to account storage
 function saveToStorage(state: KeywordsState): void {
 	if (!browser) return;
 
 	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+		preferenceStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 	} catch (e) {
-		console.warn('Failed to save custom keywords to localStorage:', e);
+		console.warn('Failed to save custom keywords to account storage:', e);
 	}
 }
 
@@ -76,7 +77,7 @@ function createKeywordsStore() {
 			update((state) => {
 				const trimmed = keyword.trim().toLowerCase();
 				if (!trimmed || state.custom.includes(trimmed)) return state;
-				
+
 				const newState = { ...state, custom: [...state.custom, trimmed] };
 				saveToStorage(newState);
 				return newState;

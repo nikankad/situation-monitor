@@ -7,7 +7,9 @@
 
 import { INDICES, SECTORS, COMMODITIES, CRYPTO } from '$lib/config/markets';
 import type { MarketItem, SectorPerformance, CryptoItem, PricePoint } from '$lib/types';
-import { logger, FINNHUB_API_KEY, FINNHUB_BASE_URL } from '$lib/config/api';
+import { logger } from '$lib/config/api';
+import { get } from 'svelte/store';
+import { connections } from '$lib/stores/connections';
 
 interface CoinGeckoPrice {
 	usd: number;
@@ -27,13 +29,6 @@ interface FinnhubQuote {
 	o: number; // Open price of the day
 	pc: number; // Previous close price
 	t: number; // Timestamp
-}
-
-/**
- * Check if Finnhub API key is configured
- */
-function hasFinnhubApiKey(): boolean {
-	return Boolean(FINNHUB_API_KEY && FINNHUB_API_KEY.length > 0);
 }
 
 /**
@@ -98,27 +93,29 @@ const INDEX_ETF_MAP: Record<string, string> = {
 // Sector market cap estimates (in billions, for treemap sizing)
 // These are approximate values for treemap visualization proportions
 const SECTOR_MARKET_CAPS: Record<string, number> = {
-	'XLK': 11000, // Technology/Communication: ~11T
-	'XLF': 5000, // Financials: ~5T
-	'XLV': 4500, // Healthcare: ~4.5T
-	'XLY': 3500, // Consumer Discretionary: ~3.5T
-	'XLI': 3000, // Industrials: ~3T
-	'XLP': 2500, // Consumer Staples: ~2.5T
-	'XLE': 2000, // Energy: ~2T
-	'XLRE': 1500, // Real Estate: ~1.5T
-	'XLU': 1500, // Utilities: ~1.5T
-	'XLB': 1000 // Materials: ~1T
+	XLK: 11000, // Technology/Communication: ~11T
+	XLF: 5000, // Financials: ~5T
+	XLV: 4500, // Healthcare: ~4.5T
+	XLY: 3500, // Consumer Discretionary: ~3.5T
+	XLI: 3000, // Industrials: ~3T
+	XLP: 2500, // Consumer Staples: ~2.5T
+	XLE: 2000, // Energy: ~2T
+	XLRE: 1500, // Real Estate: ~1.5T
+	XLU: 1500, // Utilities: ~1.5T
+	XLB: 1000 // Materials: ~1T
 };
 
 /**
  * Fetch a quote from Finnhub
  */
 async function fetchFinnhubQuote(symbol: string): Promise<FinnhubQuote | null> {
+	if (!get(connections).some((key) => key.provider === 'finnhub')) return null;
 	try {
-		const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_API_KEY}`;
+		const url = `/api/market/quote?symbol=${encodeURIComponent(symbol)}`;
 		const response = await fetch(url);
 
 		if (!response.ok) {
+			if (response.status === 409) return null;
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
 
@@ -184,11 +181,6 @@ export async function fetchIndices(): Promise<MarketItem[]> {
 	const createEmptyIndices = () =>
 		INDICES.map((i) => createEmptyMarketItem(i.symbol, i.name, 'index'));
 
-	if (!hasFinnhubApiKey()) {
-		logger.warn('Markets API', 'Finnhub API key not configured. Add VITE_FINNHUB_API_KEY to .env');
-		return createEmptyIndices();
-	}
-
 	try {
 		logger.log('Markets API', 'Fetching indices from Finnhub');
 
@@ -223,13 +215,7 @@ export async function fetchIndices(): Promise<MarketItem[]> {
  * Fetch sector performance from Finnhub (using sector ETFs)
  */
 export async function fetchSectorPerformance(): Promise<SectorPerformance[]> {
-	const createEmptySectors = () =>
-		SECTORS.map((s) => createEmptySectorItem(s.symbol, s.name));
-
-	if (!hasFinnhubApiKey()) {
-		logger.warn('Markets API', 'Finnhub API key not configured');
-		return createEmptySectors();
-	}
+	const createEmptySectors = () => SECTORS.map((s) => createEmptySectorItem(s.symbol, s.name));
 
 	try {
 		logger.log('Markets API', 'Fetching sector performance from Finnhub');
@@ -277,11 +263,6 @@ export async function fetchCommodities(): Promise<MarketItem[]> {
 	const createEmptyCommodities = () =>
 		COMMODITIES.map((c) => createEmptyMarketItem(c.symbol, c.name, 'commodity'));
 
-	if (!hasFinnhubApiKey()) {
-		logger.warn('Markets API', 'Finnhub API key not configured');
-		return createEmptyCommodities();
-	}
-
 	try {
 		logger.log('Markets API', 'Fetching commodities from Finnhub');
 
@@ -317,7 +298,7 @@ export async function fetchCommodities(): Promise<MarketItem[]> {
 export async function fetchCustomMarkets(
 	symbols: Array<{ symbol: string; name: string }>
 ): Promise<MarketItem[]> {
-	if (!hasFinnhubApiKey() || symbols.length === 0) {
+	if (symbols.length === 0) {
 		return [];
 	}
 
