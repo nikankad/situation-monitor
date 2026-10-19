@@ -82,18 +82,27 @@ npm run preview
 ## Project Structure
 
 ```
+config/                 # Build, styling, lint, and test tooling
+docs/                   # Project documentation and roadmap
 src/
 ├── lib/
 │   ├── analysis/        # Sentiment, narrative, correlation analysis
 │   ├── api/            # External API integrations
 │   ├── components/     # Svelte components (panels, modals, layout)
-│   ├── config/         # Application configuration
+│   ├── config/         # Dashboard data and feature configuration
 │   ├── services/       # Cache, circuit breaker, deduplication
 │   ├── stores/         # Svelte stores (state management)
 │   ├── types/          # TypeScript type definitions
 │   └── utils/          # Utility functions
 └── routes/             # SvelteKit routes
+static/                 # Public assets
+.github/workflows/      # CI and deployment
 ```
+
+Run tooling through the npm scripts above; they select the files in `config/`.
+SvelteKit, TypeScript, Prettier, and Vercel keep their conventional configuration
+files at the repository root for automatic discovery. See [the configuration
+guide](config/README.md) for individual tool commands.
 
 ## Key Features Explained
 

@@ -4,15 +4,15 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
+		"dev": "vite dev --config config/vite.ts",
+		"build": "vite build --config config/vite.ts",
+		"preview": "vite preview --config config/vite.ts",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "vitest",
-		"test:unit": "vitest run",
-		"test:e2e": "playwright test",
-		"lint": "eslint . && prettier --check .",
+		"test": "vitest --config config/vitest.config.ts",
+		"test:unit": "vitest run --config config/vitest.config.ts",
+		"test:e2e": "playwright test --config config/playwright.config.ts",
+		"lint": "eslint --config config/eslint.config.js . && prettier --check .",
 		"format": "prettier --write ."
 	},
 	"devDependencies": {
