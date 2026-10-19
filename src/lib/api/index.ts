@@ -11,8 +11,8 @@ export {
 	fetchCustomMarkets,
 	fetchAllMarkets
 } from './markets';
-export { fetchPolymarket, fetchWhaleTransactions, fetchGovContracts } from './misc';
-export type { Prediction, WhaleTransaction, Contract } from './misc';
+export { fetchPolymarket, fetchGovContracts } from './misc';
+export type { Prediction, Contract } from './misc';
 export { fetchWorldLeaders } from './leaders';
 
 // GDELT conflict hotspots (derived from the DOC API)

@@ -49,6 +49,7 @@
 	// Misc panel data
 	let predictions = $state<Prediction[]>([]);
 	let contracts = $state<Contract[]>([]);
+	let miscLoading = $state(true);
 
 	// Data fetching
 	async function loadNews() {
@@ -129,6 +130,8 @@
 			contracts = contractsData;
 		} catch (error) {
 			console.error('Failed to load misc data:', error);
+		} finally {
+			miscLoading = false;
 		}
 	}
 
@@ -136,7 +139,7 @@
 	async function handleRefresh() {
 		refresh.startRefresh();
 		try {
-			await Promise.all([loadNews(), loadMarkets()]);
+			await Promise.all([loadNews(), loadMarkets(), loadMiscData()]);
 			refresh.endRefresh();
 		} catch (error) {
 			refresh.endRefresh([String(error)]);
@@ -286,9 +289,9 @@
 						{:else if panelId === 'narrative'}
 							<NarrativePanel news={$allNewsItems} />
 						{:else if panelId === 'polymarket'}
-							<PolymarketPanel {predictions} />
+							<PolymarketPanel {predictions} loading={miscLoading} />
 						{:else if panelId === 'contracts'}
-							<ContractsPanel {contracts} />
+							<ContractsPanel {contracts} loading={miscLoading} />
 						{/if}
 					</div>
 				{/each}

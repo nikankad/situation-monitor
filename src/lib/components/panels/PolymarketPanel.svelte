@@ -1,25 +1,14 @@
 <script lang="ts">
 	import { Panel } from '$lib/components/common';
-
-	interface Outcome {
-		title: string;
-		price: number;
-	}
-
-	interface Prediction {
-		id: string;
-		question: string;
-		volume: number;
-		url: string;
-		outcomes: Outcome[];
-	}
+	import type { Prediction } from '$lib/api';
 
 	interface Props {
 		predictions?: Prediction[];
+		loading?: boolean;
 		error?: string | null;
 	}
 
-	let { predictions = [], error = null }: Props = $props();
+	let { predictions = [], loading = false, error = null }: Props = $props();
 
 	function formatVolume(v: number): string {
 		if (!v) return '$0';
@@ -28,31 +17,43 @@
 		return '$' + v.toFixed(0);
 	}
 
-	function formatOutcomeSubtitle(outcomes: Outcome[]): string {
-		return outcomes
-			.slice(0, 3)
-			.map((outcome) => `${outcome.title} ${(outcome.price * 100).toFixed(0)}%`)
-			.join(' · ');
+	function formatPercent(price: number): string {
+		const pct = price * 100;
+		if (pct > 0 && pct < 1) return '<1%';
+		if (pct < 100 && pct > 99) return '>99%';
+		return pct.toFixed(0) + '%';
+	}
+
+	function formatEndDate(iso?: string): string {
+		if (!iso) return '';
+		const date = new Date(iso);
+		if (isNaN(date.getTime())) return '';
+		return 'Ends ' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 	}
 </script>
 
-<Panel id="polymarket" title="Polymarket" {error}>
+<Panel id="polymarket" title="Polymarket" count={predictions.length || null} {error}>
 	{#if predictions.length === 0 && !error}
-		<div class="empty-state">No markets available</div>
+		<div class="empty-state">{loading ? 'Loading markets…' : 'No markets available'}</div>
 	{:else}
 		<div class="predictions-list">
 			{#each predictions as pred (pred.id)}
 				<a href={pred.url} target="_blank" rel="noopener noreferrer" class="prediction-item">
-					<div class="market-info">
-						<div class="market-header">
-							<div class="market-text">
-								<div class="market-question">{pred.question}</div>
-								{#if pred.outcomes.length > 0}
-									<div class="market-subtitle">{formatOutcomeSubtitle(pred.outcomes)}</div>
-								{/if}
+					<div class="market-question">{pred.question}</div>
+					<div class="outcomes">
+						{#each pred.outcomes as outcome, i (outcome.title + i)}
+							<div class="outcome" class:leading={i === 0}>
+								<div class="outcome-bar" style="width: {Math.max(outcome.price * 100, 1)}%"></div>
+								<span class="outcome-title">{outcome.title}</span>
+								<span class="outcome-price">{formatPercent(outcome.price)}</span>
 							</div>
-							<div class="market-volume">{formatVolume(pred.volume)}</div>
-						</div>
+						{/each}
+					</div>
+					<div class="market-meta">
+						<span>{formatVolume(pred.volume)} 24h vol</span>
+						{#if formatEndDate(pred.endDate)}
+							<span>{formatEndDate(pred.endDate)}</span>
+						{/if}
 					</div>
 				</a>
 			{/each}
@@ -64,7 +65,6 @@
 	.predictions-list {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
 	}
 
 	.prediction-item {
@@ -81,46 +81,67 @@
 	}
 
 	.prediction-item:hover .market-question {
-		color: var(--accent, #4a90e2);
-	}
-
-	.market-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.market-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: 1rem;
-	}
-
-	.market-text {
-		flex: 1;
-		min-width: 0;
+		color: var(--accent);
 	}
 
 	.market-question {
 		font-size: 0.7rem;
 		color: var(--text-primary);
 		line-height: 1.4;
-		flex: 1;
+		margin-bottom: 0.35rem;
 	}
 
-	.market-subtitle {
-		font-size: 0.62rem;
-		line-height: 1.35;
+	.outcomes {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+
+	.outcome {
+		position: relative;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.15rem 0.4rem;
+		border-radius: 3px;
+		background: rgba(255, 255, 255, 0.03);
+		overflow: hidden;
+		font-size: 0.6rem;
+	}
+
+	.outcome-bar {
+		position: absolute;
+		inset: 0 auto 0 0;
+		background: rgba(var(--accent-rgb), 0.12);
+	}
+
+	.outcome.leading .outcome-bar {
+		background: rgba(var(--accent-rgb), 0.25);
+	}
+
+	.outcome-title {
+		position: relative;
 		color: var(--text-secondary);
-		margin-top: 0.2rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	.market-volume {
-		font-size: 0.65rem;
-		color: var(--text-muted);
-		white-space: nowrap;
+	.outcome-price {
+		position: relative;
+		font-weight: 600;
+		color: var(--text-primary);
+		font-variant-numeric: tabular-nums;
 		flex-shrink: 0;
+	}
+
+	.market-meta {
+		display: flex;
+		justify-content: space-between;
+		margin-top: 0.3rem;
+		font-size: 0.55rem;
+		color: var(--text-muted);
 	}
 
 	.empty-state {

@@ -17,9 +17,13 @@ export const FEEDS: Record<NewsCategory, FeedSource[]> = {
 		{ name: 'Foreign Policy', url: 'https://foreignpolicy.com/feed/' }
 	],
 	tech: [
-		{ name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab' },
+		{
+			name: 'Ars Technica',
+			url: 'https://feeds.arstechnica.com/arstechnica/technology-lab'
+		},
 		{ name: 'MIT Tech Review', url: 'https://www.technologyreview.com/feed/' },
-		{ name: 'Wired', url: 'https://www.wired.com/feed/rss' }
+		{ name: 'Wired', url: 'https://www.wired.com/feed/rss' },
+		{ name: 'Krebs on Security', url: 'https://www.krebsonsecurity.com/feed/' }
 	],
 	finance: [
 		{ name: 'FT', url: 'https://www.ft.com/rss/home' },

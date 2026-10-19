@@ -1,6 +1,5 @@
 /**
  * Miscellaneous API functions for specialized panels
- * Note: Some of these use mock data as the original APIs require authentication
  */
 
 import { fetchWithProxy, logger } from '$lib/config/api';
@@ -15,35 +14,37 @@ export interface Prediction {
 	question: string;
 	volume: number;
 	url: string;
+	endDate?: string;
 	outcomes: Outcome[];
 }
 
-export interface WhaleTransaction {
-	coin: string;
-	amount: number;
-	usd: number;
-	hash: string;
-}
-
 export interface Contract {
+	id: string;
 	agency: string;
+	subAgency: string;
 	description: string;
 	vendor: string;
 	amount: number;
+	date: string;
+	url: string;
 }
 
 const POLYMARKET_API =
-	'https://gamma-api.polymarket.com/markets?active=true&closed=false&order=volume24hr&ascending=false&limit=100&marketType=normal';
+	'https://gamma-api.polymarket.com/events?active=true&closed=false&order=volume24hr&ascending=false&limit=100';
+
+// Sports and esports dominate Polymarket volume but aren't relevant to this dashboard
+const EXCLUDED_POLYMARKET_TAGS = new Set(['sports', 'esports', 'games']);
+
+const MAX_PREDICTIONS = 30;
 
 /**
- * The Gamma API returns list fields such as `outcomes` and `outcomePrices` as
- * JSON-encoded strings (e.g. '["Yes", "No"]'); accept real arrays too.
+ * Gamma API encodes array fields (outcomes, outcomePrices) as JSON strings
  */
-function parseStringArray(value: unknown): string[] {
+function parseJsonArray(value: unknown): string[] {
 	if (Array.isArray(value)) return value.map(String);
 	if (typeof value !== 'string') return [];
 	try {
-		const parsed: unknown = JSON.parse(value);
+		const parsed = JSON.parse(value);
 		return Array.isArray(parsed) ? parsed.map(String) : [];
 	} catch {
 		return [];
@@ -51,8 +52,41 @@ function parseStringArray(value: unknown): string[] {
 }
 
 /**
+ * Build the outcomes shown for an event, highest probability first.
+ * Multi-market events (e.g. "Who will win X?") list each candidate's "Yes" price;
+ * single-market events list that market's own outcomes (e.g. Yes / No).
+ */
+function getEventOutcomes(markets: Array<Record<string, unknown>>): Outcome[] {
+	const openMarkets = markets.filter((m) => !m.closed);
+
+	let outcomes: Outcome[];
+	if (openMarkets.length > 1) {
+		outcomes = openMarkets.map((m) => ({
+			title: String(m.groupItemTitle || m.question),
+			price: Number(parseJsonArray(m.outcomePrices)[0]) || 0
+		}));
+	} else if (openMarkets.length === 1) {
+		const names = parseJsonArray(openMarkets[0].outcomes);
+		const prices = parseJsonArray(openMarkets[0].outcomePrices);
+		outcomes = names.map((title, i) => ({
+			title,
+			price: Number(prices[i]) || 0
+		}));
+	} else {
+		outcomes = [];
+	}
+
+	// Hide near-zero outcomes (often placeholder candidates like "Person A") unless nothing else is left
+	const meaningful = outcomes.filter((o) => o.price >= 0.01);
+
+	return (meaningful.length > 0 ? meaningful : outcomes)
+		.sort((a, b) => b.price - a.price)
+		.slice(0, 3);
+}
+
+/**
  * Fetch Polymarket predictions via the CORS proxy
- * Returns the highest-volume active markets
+ * Returns the highest 24h-volume active events, excluding sports
  */
 export async function fetchPolymarket(): Promise<Prediction[]> {
 	try {
@@ -63,73 +97,98 @@ export async function fetchPolymarket(): Promise<Prediction[]> {
 			return [];
 		}
 
-		const markets = await res.json();
+		const events: Array<Record<string, unknown>> = await res.json();
+		logger.log('Polymarket', `Fetched ${events.length} events`);
 
-		logger.log('Polymarket', `Fetched ${markets.length} markets`);
-
-		// Deduplicate markets by question title, keeping the one with highest volume
-		const dedupeMap = new Map<string, Prediction>();
-
-		markets
-			.filter((m: Record<string, unknown>) => m.question)
-			.forEach((m: Record<string, unknown>) => {
-				// Get event slug from nested events array for working URLs
-				const events = m.events as Array<Record<string, unknown>> | undefined;
-				const eventSlug = events?.[0]?.slug as string | undefined;
-				const url = eventSlug
-					? `https://polymarket.com/event/${eventSlug}`
-					: 'https://polymarket.com';
-
-				// Get outcomes and prices, then sort by price (descending) and take top 3
-				const outcomeNames = parseStringArray(m.outcomes);
-				const outcomePrices = parseStringArray(m.outcomePrices);
-
-				let topOutcomes: Outcome[] = [];
-				if (outcomeNames.length > 0 && outcomeNames.length === outcomePrices.length) {
-					topOutcomes = outcomeNames
-						.map((name, i) => ({ title: name, price: Number(outcomePrices[i]) || 0 }))
-						.sort((a, b) => b.price - a.price)
-						.slice(0, 3);
-				}
-
-				const prediction: Prediction = {
-					id: String(m.id),
-					question: (events?.[0]?.title as string | undefined) || String(m.question),
-					volume: Number(m.volume24hr) || 0,
-					url,
-					outcomes: topOutcomes
-				};
-
-				const key = prediction.question.toLowerCase();
-				const existing = dedupeMap.get(key);
-
-				// Keep the market with highest volume
-				if (!existing || prediction.volume > existing.volume) {
-					dedupeMap.set(key, prediction);
-				}
-			});
-
-		const results = Array.from(dedupeMap.values());
-		logger.log('Polymarket', `Returning ${results.length} deduplicated markets`);
-		return results;
+		return events
+			.filter((e) => {
+				const tags = (e.tags as Array<{ slug?: string }> | undefined) ?? [];
+				return e.title && !tags.some((t) => t.slug && EXCLUDED_POLYMARKET_TAGS.has(t.slug));
+			})
+			.map((e) => ({
+				id: String(e.id),
+				question: String(e.title),
+				volume: Number(e.volume24hr) || 0,
+				url: e.slug ? `https://polymarket.com/event/${e.slug}` : 'https://polymarket.com',
+				endDate: e.endDate ? String(e.endDate) : undefined,
+				outcomes: getEventOutcomes((e.markets as Array<Record<string, unknown>>) ?? [])
+			}))
+			.filter((p) => p.outcomes.length > 0)
+			.slice(0, MAX_PREDICTIONS);
 	} catch (error) {
 		logger.error('Polymarket', 'Failed to fetch predictions:', error);
 		return [];
 	}
 }
 
-/**
- * Fetch whale transactions
- * Note: Would use Whale Alert API - currently returns empty data
- */
-export async function fetchWhaleTransactions(): Promise<WhaleTransaction[]> {
-	return [];
+const USASPENDING_API = 'https://api.usaspending.gov/api/v2/search/spending_by_award/';
+const CONTRACT_LOOKBACK_DAYS = 30;
+
+function toIsoDate(date: Date): string {
+	return date.toISOString().slice(0, 10);
 }
 
 /**
- * Fetch government contracts
- * Note: Would use USASpending.gov API - currently returns empty data
+ * Fetch the largest new federal contract awards from USASpending.gov
+ * The API allows cross-origin requests, so no proxy is needed
  */
 export async function fetchGovContracts(): Promise<Contract[]> {
-	return [];
+	const end = new Date();
+	const start = new Date(end.getTime() - CONTRACT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+
+	try {
+		const res = await fetch(USASPENDING_API, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				filters: {
+					// A-D = definitive contracts, purchase orders, delivery orders, BPA calls
+					award_type_codes: ['A', 'B', 'C', 'D'],
+					time_period: [
+						{
+							start_date: toIsoDate(start),
+							end_date: toIsoDate(end),
+							date_type: 'new_awards_only'
+						}
+					]
+				},
+				fields: [
+					'Award ID',
+					'Recipient Name',
+					'Award Amount',
+					'Awarding Agency',
+					'Awarding Sub Agency',
+					'Description',
+					'Start Date',
+					'generated_internal_id'
+				],
+				sort: 'Award Amount',
+				order: 'desc',
+				limit: 25
+			})
+		});
+
+		if (!res.ok) {
+			logger.warn('Contracts', `USASpending returned ${res.status}`);
+			return [];
+		}
+
+		const data: { results?: Array<Record<string, unknown>> } = await res.json();
+
+		return (data.results ?? []).map((r) => ({
+			id: String(r.generated_internal_id ?? r['Award ID']),
+			agency: String(r['Awarding Agency'] ?? ''),
+			subAgency: String(r['Awarding Sub Agency'] ?? ''),
+			description: String(r.Description ?? ''),
+			vendor: String(r['Recipient Name'] ?? ''),
+			amount: Number(r['Award Amount']) || 0,
+			date: String(r['Start Date'] ?? ''),
+			url: r.generated_internal_id
+				? `https://www.usaspending.gov/award/${r.generated_internal_id}`
+				: 'https://www.usaspending.gov'
+		}));
+	} catch (error) {
+		logger.error('Contracts', 'Failed to fetch contracts:', error);
+		return [];
+	}
 }
