@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { isRefreshing, lastRefresh } from '$lib/stores';
+	import { Icon } from '$lib/components/common';
 
 	interface Props {
 		onSettingsClick?: () => void;
@@ -72,7 +73,7 @@
 				}}
 				title="Settings"
 			>
-				<span class="btn-icon">⚙</span>
+				<span class="btn-icon"><Icon name="settings" size={14} /></span>
 				<span class="btn-label">Settings</span>
 			</button>
 		</div>
@@ -94,7 +95,7 @@
 	</div>
 	<div class="refresh-status-subtle">
 		{#if $isRefreshing}
-			<span class="refresh-indicator">●</span>
+			<span class="refresh-indicator"><Icon name="refresh-cw" size={10} /></span>
 		{/if}
 		<span class="status-text-subtle">{lastRefreshText}</span>
 	</div>

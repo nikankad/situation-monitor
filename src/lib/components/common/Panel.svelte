@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { PanelId } from '$lib/config';
+	import Icon from './Icon.svelte';
 
 	interface Props {
 		id: PanelId;
@@ -55,7 +56,7 @@
 						aria-label="Panel settings"
 						title="Customize keywords"
 					>
-						⚙️
+						<Icon name="settings" size={14} />
 					</button>
 				{/if}
 			</div>
@@ -77,7 +78,7 @@
 			{/if}
 			{#if collapsible}
 				<button class="panel-collapse-btn" onclick={handleCollapse} aria-label="Toggle panel">
-					{collapsed ? '▼' : '▲'}
+					<Icon name={collapsed ? 'chevron-down' : 'chevron-up'} size={14} />
 				</button>
 			{/if}
 		</div>

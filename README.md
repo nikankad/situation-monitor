@@ -6,15 +6,15 @@ A comprehensive real-time geopolitical intelligence platform that aggregates, an
 
 ## Features
 
-- 📰 **Multi-source News Aggregation** - Real-time news from Reuters, AP, Foreign Affairs, CSIS, Brookings, and more
-- 📊 **Live Market & Commodity Data** - Stock prices, commodities, cryptocurrencies via Finnhub
-- 🗺️ **Interactive Global Map** - Visual representation of conflicts and geopolitical hotspots
-- ⚔️ **Real-time Conflict Tracking** - GDELT Project integration for conflict monitoring
-- 🎯 **Sentiment & Narrative Analysis** - ML-powered analysis of news narratives and sentiment
-- 🔔 **Custom Keyword Monitors** - Create alerts for specific topics and events
-- 🌐 **World Leader Tracking** - Track statements and activities of key global figures
-- 📈 **Pattern Correlation Analysis** - Discover correlations between events and market movements
-- 🎲 **Prediction Markets** - Top Polymarket markets by 24h volume
+- **Multi-source News Aggregation** - Real-time news from Reuters, AP, Foreign Affairs, CSIS, Brookings, and more
+- **Live Market & Commodity Data** - Stock prices, commodities, cryptocurrencies via Finnhub
+- **Interactive Global Map** - Visual representation of conflicts and geopolitical hotspots
+- **Real-time Conflict Tracking** - GDELT Project integration for conflict monitoring
+- **Sentiment & Narrative Analysis** - ML-powered analysis of news narratives and sentiment
+- **Custom Keyword Monitors** - Create alerts for specific topics and events
+- **World Leader Tracking** - Track statements and activities of key global figures
+- **Pattern Correlation Analysis** - Discover correlations between events and market movements
+- **Prediction Markets** - Top Polymarket markets by 24h volume
 
 ## Tech Stack
 
@@ -155,7 +155,7 @@ npm run test:e2e
 
 ## Disclaimer
 
-⚠️ This tool is for informational purposes only. Always verify information through official sources before making decisions.
+This tool is for informational purposes only. Always verify information through official sources before making decisions.
 
 
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
+	import { Icon } from '$lib/components/common';
 	import { settings } from '$lib/stores';
 	import { PANELS, NON_DRAGGABLE_PANELS, type PanelId } from '$lib/config';
 
@@ -157,13 +158,13 @@
 								class="order-btn"
 								onclick={() => movePanelUp(panelId)}
 								disabled={index === 0}
-								title="Move up">↑</button
+								title="Move up"><Icon name="arrow-up" size={12} /></button
 							>
 							<button
 								class="order-btn"
 								onclick={() => movePanelDown(panelId)}
 								disabled={index === getOrderedPanels().length - 1}
-								title="Move down">↓</button
+								title="Move down"><Icon name="arrow-down" size={12} /></button
 							>
 						</div>
 					</div>
@@ -188,15 +189,29 @@
 					world events as they unfold.
 				</p>
 				<div class="about-features">
-					<div class="feature-item">📰 Multi-source news aggregation</div>
-					<div class="feature-item">📊 Live market & commodity data</div>
-					<div class="feature-item">🗺️ Interactive global map with conflicts</div>
-					<div class="feature-item">⚔️ Real-time conflict tracking</div>
-					<div class="feature-item">🎯 Sentiment & narrative analysis</div>
-					<div class="feature-item">🔔 Custom keyword monitors</div>
-					<div class="feature-item">🌐 World leader tracking</div>
-					<div class="feature-item">📈 Pattern correlation analysis</div>
-					<div class="feature-item">🏦 Federal Reserve monitoring</div>
+					<div class="feature-item">
+						<Icon name="newspaper" size={12} /> Multi-source news aggregation
+					</div>
+					<div class="feature-item">
+						<Icon name="chart-column" size={12} /> Live market & commodity data
+					</div>
+					<div class="feature-item">
+						<Icon name="map" size={12} /> Interactive global map with conflicts
+					</div>
+					<div class="feature-item">
+						<Icon name="swords" size={12} /> Real-time conflict tracking
+					</div>
+					<div class="feature-item">
+						<Icon name="target" size={12} /> Sentiment & narrative analysis
+					</div>
+					<div class="feature-item"><Icon name="bell" size={12} /> Custom keyword monitors</div>
+					<div class="feature-item"><Icon name="globe" size={12} /> World leader tracking</div>
+					<div class="feature-item">
+						<Icon name="trending-up" size={12} /> Pattern correlation analysis
+					</div>
+					<div class="feature-item">
+						<Icon name="landmark" size={12} /> Federal Reserve monitoring
+					</div>
 				</div>
 				<div class="about-sources">
 					<p class="sources-title">Data Sources</p>
@@ -207,11 +222,12 @@
 					</p>
 				</div>
 				<p class="about-disclaimer">
-					⚠️ This tool is for informational purposes only. Always verify information through
-					official sources before making decisions.
+					<Icon name="triangle-alert" size={12} /> This tool is for informational purposes only. Always
+					verify information through official sources before making decisions.
 				</p>
 				<p class="about-ai-note">
-					🤖 Built with the assistance of AI • Enhanced with real-time conflict monitoring
+					<Icon name="bot" size={12} /> Built with the assistance of AI • Enhanced with real-time conflict
+					monitoring
 				</p>
 				<div class="about-links">
 					<a
@@ -446,6 +462,9 @@
 	}
 
 	.feature-item {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
 		font-size: 0.6rem;
 		color: var(--text-primary);
 		padding: 0.3rem 0.5rem;
@@ -475,6 +494,9 @@
 	}
 
 	.about-disclaimer {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.4rem;
 		font-size: 0.55rem;
 		color: var(--warning);
 		background: rgba(255, 204, 0, 0.1);
@@ -485,6 +507,10 @@
 	}
 
 	.about-ai-note {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
 		font-size: 0.55rem;
 		color: var(--text-muted);
 		text-align: center;

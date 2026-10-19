@@ -347,21 +347,3 @@ export function getSentimentColor(sentiment: SentimentType): string {
 			return '#888888';
 	}
 }
-
-/**
- * Get sentiment emoji for display
- */
-export function getSentimentEmoji(sentiment: SentimentType): string {
-	switch (sentiment) {
-		case 'alarming':
-			return '🔴';
-		case 'critical':
-			return '🟠';
-		case 'negative':
-			return '🟡';
-		case 'positive':
-			return '🟢';
-		case 'neutral':
-			return '⚪';
-	}
-}

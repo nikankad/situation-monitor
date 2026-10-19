@@ -10,3 +10,4 @@ export { default as LoadingSpinner } from './LoadingSpinner.svelte';
 export { default as ErrorMessage } from './ErrorMessage.svelte';
 export { default as Badge } from './Badge.svelte';
 export { default as Sparkline } from './Sparkline.svelte';
+export { default as Icon } from './Icon.svelte';

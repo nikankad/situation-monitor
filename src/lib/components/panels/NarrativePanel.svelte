@@ -1,11 +1,6 @@
 <script lang="ts">
 	import { Panel } from '$lib/components/common';
-	import {
-		analyzeSentiment,
-		getSentimentColor,
-		getSentimentEmoji,
-		type SentimentType
-	} from '$lib/analysis/sentiment';
+	import { analyzeSentiment, getSentimentColor, type SentimentType } from '$lib/analysis/sentiment';
 	import type { NewsItem } from '$lib/types';
 
 	interface Props {
@@ -49,7 +44,10 @@
 					class="sentiment-gauge"
 					style="border-color: {getSentimentColor(sentimentAnalysis.overall)}"
 				>
-					<span class="gauge-emoji">{getSentimentEmoji(sentimentAnalysis.overall)}</span>
+					<span
+						class="sentiment-dot gauge-dot"
+						style="background: {getSentimentColor(sentimentAnalysis.overall)}"
+					></span>
 					<span class="gauge-label">{getOverallLabel(sentimentAnalysis.overall)}</span>
 					<span class="gauge-score" style="color: {getSentimentColor(sentimentAnalysis.overall)}">
 						{formatScore(sentimentAnalysis.overallScore)}
@@ -131,7 +129,8 @@
 								class="theme-tag"
 								style="border-left: 3px solid {getSentimentColor(theme.sentiment)}"
 							>
-								<span class="theme-emoji">{getSentimentEmoji(theme.sentiment)}</span>
+								<span class="sentiment-dot" style="background: {getSentimentColor(theme.sentiment)}"
+								></span>
 								<span class="theme-name">{theme.theme}</span>
 								<span class="theme-count">{theme.count}</span>
 							</div>
@@ -146,7 +145,10 @@
 				<div class="headlines-list">
 					{#each sentimentAnalysis.topHeadlines.slice(0, 15) as item}
 						<div class="headline-item">
-							<span class="headline-sentiment">{getSentimentEmoji(item.sentiment)}</span>
+							<span
+								class="sentiment-dot headline-sentiment"
+								style="background: {getSentimentColor(item.sentiment)}"
+							></span>
 							<a href={item.headline.link} target="_blank" rel="noopener" class="headline-text">
 								{item.headline.title?.slice(0, 80)}{item.headline.title &&
 								item.headline.title.length > 80
@@ -192,9 +194,18 @@
 		min-width: 120px;
 	}
 
-	.gauge-emoji {
-		font-size: 1.5rem;
-		margin-bottom: 0.25rem;
+	.sentiment-dot {
+		display: inline-block;
+		flex-shrink: 0;
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+	}
+
+	.gauge-dot {
+		width: 1rem;
+		height: 1rem;
+		margin-bottom: 0.4rem;
 	}
 
 	.gauge-label {
@@ -311,10 +322,6 @@
 		font-size: 0.55rem;
 	}
 
-	.theme-emoji {
-		font-size: 0.6rem;
-	}
-
 	.theme-name {
 		color: var(--text-primary);
 		font-weight: 500;
@@ -348,8 +355,7 @@
 	}
 
 	.headline-sentiment {
-		font-size: 0.6rem;
-		flex-shrink: 0;
+		margin-top: 0.25rem;
 	}
 
 	.headline-text {

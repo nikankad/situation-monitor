@@ -52,7 +52,6 @@ export {
 // Map configuration
 export {
 	HOTSPOTS,
-	CONFLICT_ZONES,
 	CHOKEPOINTS,
 	CABLE_LANDINGS,
 	NUCLEAR_SITES,
@@ -61,8 +60,9 @@ export {
 	SANCTIONED_COUNTRY_IDS,
 	THREAT_COLORS,
 	WEATHER_CODES,
+	type WeatherCondition,
+	type WeatherIcon,
 	type Hotspot,
-	type ConflictZone,
 	type Chokepoint,
 	type CableLanding,
 	type NuclearSite,

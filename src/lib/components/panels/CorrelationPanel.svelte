@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Panel, Badge } from '$lib/components/common';
+	import { Panel, Badge, Icon } from '$lib/components/common';
 	import { analyzeCorrelations } from '$lib/analysis/correlation';
 	import type { NewsItem } from '$lib/types';
 
@@ -38,10 +38,10 @@
 		}
 	}
 
-	function getDirectionArrow(delta: number): string {
-		if (delta > 0) return '↑';
-		if (delta < 0) return '↓';
-		return '→';
+	function getDirectionIcon(delta: number): 'arrow-up' | 'arrow-down' | 'arrow-right' {
+		if (delta > 0) return 'arrow-up';
+		if (delta < 0) return 'arrow-down';
+		return 'arrow-right';
 	}
 </script>
 
@@ -81,7 +81,7 @@
 								class:up={signal.delta > 0}
 								class:down={signal.delta < 0}
 							>
-								{getDirectionArrow(signal.delta)}
+								<Icon name={getDirectionIcon(signal.delta)} size={10} />
 								{signal.current}
 							</span>
 						</div>
@@ -95,7 +95,10 @@
 					{#each analysis.crossSourceCorrelations.slice(0, 3) as corr}
 						<div class="correlation-item">
 							<div class="correlation-sources">
-								{corr.sources.slice(0, 2).join(' ↔ ')}
+								{#each corr.sources.slice(0, 2) as source, i (source)}
+									{#if i > 0}<Icon name="arrow-left-right" size={10} />{/if}
+									{source}
+								{/each}
 							</div>
 							<div class="correlation-topic">{corr.name} ({corr.sourceCount} sources)</div>
 						</div>

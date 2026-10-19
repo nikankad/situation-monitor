@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Panel } from '$lib/components/common';
+	import { Panel, Icon } from '$lib/components/common';
+	import { getIconNodes, type IconName } from '$lib/config/icons';
 	import {
 		HOTSPOTS,
 		CHOKEPOINTS,
@@ -11,7 +12,9 @@
 		SANCTIONED_COUNTRY_IDS,
 		THREAT_COLORS,
 		WEATHER_CODES,
-		getNewsCoordinates
+		getNewsCoordinates,
+		type Hotspot,
+		type WeatherCondition
 	} from '$lib/config/map';
 	import { fetchConflictEventsFromGDELT, type GdeltConflictEvent } from '$lib/api/gdelt-conflicts';
 	import { CACHE_TTLS } from '$lib/config/api';
@@ -197,39 +200,60 @@
 			.slice(0, 10)
 	);
 
-	// Conflict zone intensity based on news count
-	const conflictIntensity = $derived.by<Map<string, number>>(() => {
-		const intensity = new Map<string, number>();
-
-		// Map region names to conflict zone names
-		const regionToZone: Record<string, string> = {
-			ukraine: 'Ukraine',
-			gaza: 'Gaza',
-			israel: 'Gaza',
-			taiwan: 'Taiwan Strait',
-			yemen: 'Yemen',
-			sudan: 'Sudan',
-			myanmar: 'Myanmar'
-		};
-
-		for (const item of geoNews) {
-			const zoneName = regionToZone[item.region];
-			if (zoneName) {
-				const current = intensity.get(zoneName) || 0;
-				intensity.set(zoneName, current + (item.isAlert ? 2 : 1));
-			}
-		}
-
-		return intensity;
+	let mapContainer: HTMLDivElement;
+	// Layer visibility toggles
+	type LayerKey = 'events' | 'hotspots' | 'infra' | 'news';
+	let layers = $state<Record<LayerKey, boolean>>({
+		events: true,
+		hotspots: true,
+		infra: true,
+		news: true
 	});
 
-	let mapContainer: HTMLDivElement;
-	// Simple layer visibility toggles
-	let showEvents = $state(true);
-	let showHotspots = $state(true);
-	let showNews = $state(true);
+	const LAYER_BUTTONS: Array<{
+		key: LayerKey;
+		label: string;
+		title: string;
+		icon: IconName;
+		color: string;
+	}> = [
+		{
+			key: 'events',
+			label: 'Conflicts',
+			title: 'Conflict regions from live GDELT coverage',
+			icon: 'swords',
+			color: THREAT_COLORS.critical
+		},
+		{
+			key: 'hotspots',
+			label: 'Hotspots',
+			title: 'Geopolitical hotspots',
+			icon: 'crosshair',
+			color: THREAT_COLORS.high
+		},
+		{
+			key: 'infra',
+			label: 'Strategic',
+			title: 'Chokepoints, nuclear sites and military bases',
+			icon: 'anchor',
+			color: '#2bb8ff'
+		},
+		{
+			key: 'news',
+			label: 'News',
+			title: 'Geo-located news clusters',
+			icon: 'newspaper',
+			color: '#7dd3fc'
+		}
+	];
 
-	// Live GDELT conflict events (replaces hardcoded ACTIVE_CONFLICTS)
+	function toggleLayer(key: LayerKey): void {
+		layers[key] = !layers[key];
+		if (key === 'news') drawNewsClusters();
+		else drawMapIcons();
+	}
+
+	// Live conflict regions derived from GDELT coverage
 	let gdeltConflicts = $state<GdeltConflictEvent[]>([]);
 	let conflictsLoading = $state(false);
 	let conflictsError = $state<string | null>(null);
@@ -248,26 +272,28 @@
 	const WIDTH = 800;
 	const HEIGHT = 400;
 
-	// Zero out conflicts when zoomed out significantly to reduce clutter
-	// At low zoom (zoomed out): show only critical items
-	// At medium zoom: show more items
-	// At high zoom: show everything
+	// Declutter the map when zoomed out: only the most important markers show at low zoom
 	const ZOOM_THRESHOLDS = {
-		showAllHotspots: 1.8, // Show all hotspots (not just critical/high)
-		showInfrastructure: 2.5, // Show chokepoints, cables, nuclear, military
-		showAllConflicts: 2.8, // Show all GDELT conflicts at 2.8 zoom
-		showSmallClusters: 1.5, // Show news clusters with < 5 items
-		showLabels: 2.2 // Show text labels on icons
+		showAllHotspots: 1.8, // Below this only critical/high hotspots are drawn
+		showAllConflicts: 1.8, // Below this only elevated-or-worse conflict regions are drawn
+		showSmallClusters: 1.5, // Below this single-item news clusters are hidden
+		showLabels: 2.2 // Text labels next to markers
 	};
 
 	// Tooltip state
+	interface TooltipLine {
+		text: string;
+		icon?: IconName;
+	}
 	let tooltipContent = $state<{
 		title: string;
+		icon?: IconName;
 		color: string;
-		lines: string[];
+		lines: TooltipLine[];
 	} | null>(null);
 	let tooltipPosition = $state({ left: 0, top: 0 });
 	let tooltipVisible = $state(false);
+	const TOOLTIP_MAX_WIDTH = 260;
 
 	// Detailed info modal state
 	let selectedGdeltConflict = $state<GdeltConflictEvent | null>(null);
@@ -311,7 +337,7 @@
 	interface WeatherResult {
 		temp: number | null;
 		wind: number | null;
-		condition: string;
+		condition: WeatherCondition | null;
 	}
 
 	// Fetch weather from Open-Meteo with TTL-based caching
@@ -326,13 +352,13 @@
 			);
 			const data = await res.json();
 			const temp = data.current?.temperature_2m;
-			const tempF = temp ? Math.round((temp * 9) / 5 + 32) : null;
+			const tempF = typeof temp === 'number' ? Math.round((temp * 9) / 5 + 32) : null;
 			const wind = data.current?.wind_speed_10m;
 			const code = data.current?.weather_code;
 			const result: WeatherResult = {
 				temp: tempF,
-				wind: wind ? Math.round(wind) : null,
-				condition: WEATHER_CODES[code] || '—'
+				wind: typeof wind === 'number' ? Math.round(wind) : null,
+				condition: WEATHER_CODES[code] ?? null
 			};
 			setCachedData(key, result);
 			return result;
@@ -374,31 +400,41 @@
 		return terminatorPoints;
 	}
 
+	// Place the tooltip next to the cursor, flipping to the left near the right edge
+	function positionTooltip(event: MouseEvent): void {
+		if (!mapContainer) return;
+		const rect = mapContainer.getBoundingClientRect();
+		const x = event.clientX - rect.left;
+		const flip = x + 15 + TOOLTIP_MAX_WIDTH > rect.width;
+		tooltipPosition = {
+			left: flip ? Math.max(4, x - 15 - TOOLTIP_MAX_WIDTH) : x + 15,
+			top: Math.max(4, Math.min(event.clientY - rect.top - 10, rect.height - 60))
+		};
+	}
+
 	// Show tooltip using state (safe rendering)
 	function showTooltip(
 		event: MouseEvent,
 		title: string,
 		color: string,
-		lines: string[] = []
+		lines: Array<string | TooltipLine> = [],
+		icon?: IconName
 	): void {
 		if (!mapContainer) return;
-		const rect = mapContainer.getBoundingClientRect();
-		tooltipContent = { title, color, lines };
-		tooltipPosition = {
-			left: event.clientX - rect.left + 15,
-			top: event.clientY - rect.top - 10
+		tooltipContent = {
+			title,
+			icon,
+			color,
+			lines: lines
+				.map((line) => (typeof line === 'string' ? { text: line } : line))
+				.filter((line) => line.text)
 		};
+		positionTooltip(event);
 		tooltipVisible = true;
 	}
 
-	// Move tooltip
 	function moveTooltip(event: MouseEvent): void {
-		if (!mapContainer) return;
-		const rect = mapContainer.getBoundingClientRect();
-		tooltipPosition = {
-			left: event.clientX - rect.left + 15,
-			top: event.clientY - rect.top - 10
-		};
+		positionTooltip(event);
 	}
 
 	// Hide tooltip
@@ -440,31 +476,34 @@
 		selectedNewsCluster = null;
 	}
 
-	// Build enhanced tooltip with weather
+	// Hotspot tooltip: description, local time, then current weather once it arrives
 	async function showEnhancedTooltip(
 		event: MouseEvent,
 		name: string,
 		lat: number,
 		lon: number,
 		desc: string | undefined,
-		color: string
+		color: string,
+		level: Hotspot['level']
 	): Promise<void> {
-		const localTime = getLocalTime(lon);
-		const lines = [`🕐 Local: ${localTime}`];
-		showTooltip(event, desc ?? name, color, lines);
+		const lines: TooltipLine[] = [{ text: `${SEVERITY_LABELS[level]} threat level` }];
+		if (desc) lines.push({ text: desc });
+		lines.push({ text: `Local time ${getLocalTime(lon)}`, icon: 'clock' });
+		showTooltip(event, name, color, lines, 'crosshair');
 
-		// Fetch weather asynchronously
 		const weather = await getWeather(lat, lon);
-		if (weather && tooltipVisible) {
-			tooltipContent = {
-				title: desc ?? name,
-				color,
-				lines: [
-					`🕐 Local: ${localTime}`,
-					`${weather.condition} ${weather.temp}°F, ${weather.wind}mph`
-				]
-			};
-		}
+		const current = tooltipContent;
+		if (!weather || !tooltipVisible || !current || current.title !== name) return;
+		const details = [
+			weather.condition?.label,
+			weather.temp !== null ? `${weather.temp}°F` : null,
+			weather.wind !== null ? `${weather.wind} mph wind` : null
+		].filter(Boolean);
+		if (details.length === 0) return;
+		tooltipContent = {
+			...current,
+			lines: [...lines, { text: details.join(' · '), icon: weather.condition?.icon ?? 'cloud' }]
+		};
 	}
 
 	// Initialize map
@@ -481,21 +520,23 @@
 
 		mapGroup = svg.append('g').attr('id', 'mapGroup');
 
-		// Setup zoom - allow touch pinch and button zoom only, disable trackpad/wheel zoom
+		// Setup zoom. Plain scrolling is left to the page; use the buttons, a pinch
+		// gesture (touch, or Ctrl+scroll / trackpad pinch) and drag to pan.
 		zoom = d3
 			.zoom<SVGSVGElement, unknown>()
 			.scaleExtent([1, 6])
+			.extent([
+				[0, 0],
+				[WIDTH, HEIGHT]
+			])
+			.translateExtent([
+				[0, 0],
+				[WIDTH, HEIGHT]
+			])
 			.filter((event) => {
-				// Disable wheel events (trackpad and mouse wheel zoom)
-				if (event.type === 'wheel') return false;
-				// Allow touch events (pinch zoom on mobile)
-				if (event.type.startsWith('touch')) return true;
-				// Allow mouse drag for panning
-				if (event.type === 'mousedown' || event.type === 'mousemove') return true;
-				// Block double-click zoom
+				if (event.type === 'wheel') return event.ctrlKey;
 				if (event.type === 'dblclick') return false;
-				// Allow other events (programmatic zoom from buttons)
-				return true;
+				return !event.button;
 			})
 			.on('zoom', (event) => {
 				mapGroup.attr('transform', event.transform.toString());
@@ -602,523 +643,356 @@
 
 			// Draw news clusters
 			drawNewsClusters();
-
-			// Update conflict zone intensity
-			updateConflictZoneIntensity();
 		} catch (err) {
 			console.error('Failed to load map data:', err);
 		}
 	}
 
-	// Draw all map icons with zoom-aware scaling
+	const SEVERITY_RANK = { critical: 3, high: 2, elevated: 1, low: 0 } as const;
+
+	const SEVERITY_LABELS = {
+		critical: 'Critical',
+		high: 'High',
+		elevated: 'Elevated',
+		low: 'Low'
+	} as const;
+
+	const CONFLICT_TYPES: Record<GdeltConflictEvent['type'], { label: string; icon: IconName }> = {
+		conflict: { label: 'Active conflict', icon: 'swords' },
+		crisis: { label: 'Crisis', icon: 'siren' },
+		tension: { label: 'Rising tension', icon: 'triangle-alert' },
+		development: { label: 'Developing story', icon: 'map-pin' }
+	};
+
+	interface InfraLayer {
+		kind: string;
+		icon: IconName;
+		color: string;
+		items: Array<{ name: string; lat: number; lon: number; desc?: string }>;
+	}
+
+	const INFRA_LAYERS: InfraLayer[] = [
+		{ kind: 'Maritime chokepoint', icon: 'anchor', color: '#2bb8ff', items: CHOKEPOINTS },
+		{ kind: 'Undersea cable landing', icon: 'cable', color: '#b36bff', items: CABLE_LANDINGS },
+		{ kind: 'Nuclear site', icon: 'radiation', color: '#ffe033', items: NUCLEAR_SITES },
+		{ kind: 'Military base', icon: 'shield', color: '#ff5ccf', items: MILITARY_BASES }
+	];
+
+	function project(lon: number, lat: number): [number, number] | null {
+		const point = projection?.([lon, lat]);
+		return point ? [point[0], point[1]] : null;
+	}
+
+	interface MarkerOptions {
+		x: number;
+		y: number;
+		icon: IconName;
+		color: string;
+		radius: number;
+		/** Filled badge with a white glyph (conflicts) vs. dark badge with a colored glyph */
+		solid?: boolean;
+		pulse?: boolean;
+		className?: string;
+		label?: string;
+		hitPadding?: number;
+	}
+
+	/**
+	 * Draw an icon badge. Markers are sized in screen pixels: the group is counter-scaled
+	 * against the zoom transform, so the badge keeps its size while the map zooms.
+	 * Returns the transparent hit circle for attaching events.
+	 */
+	function appendMarker(o: MarkerOptions) {
+		const group = mapGroup
+			.append('g')
+			.attr('class', `map-icon ${o.className ?? ''}`.trim())
+			.attr('transform', `translate(${o.x},${o.y}) scale(${1 / currentZoomScale})`);
+
+		if (o.pulse) {
+			group
+				.append('circle')
+				.attr('class', 'marker-pulse')
+				.attr('r', o.radius)
+				.attr('fill', o.color);
+		}
+
+		group
+			.append('circle')
+			.attr('class', 'marker-badge')
+			.attr('r', o.radius)
+			.attr('fill', o.solid ? o.color : '#07120e')
+			.attr('fill-opacity', o.solid ? 0.95 : 0.9)
+			.attr('stroke', o.solid ? '#ffffff' : o.color)
+			.attr('stroke-width', o.solid ? 1 : 1.3)
+			.attr('stroke-opacity', o.solid ? 0.9 : 1);
+
+		const glyphSize = o.radius * 1.35;
+		const glyphScale = glyphSize / 24;
+		const glyph = group
+			.append('g')
+			.attr('class', 'marker-glyph')
+			.attr('transform', `translate(${-glyphSize / 2},${-glyphSize / 2}) scale(${glyphScale})`)
+			.attr('fill', 'none')
+			.attr('stroke', o.solid ? '#ffffff' : o.color)
+			.attr('stroke-width', 1.5 / glyphScale)
+			.attr('stroke-linecap', 'round')
+			.attr('stroke-linejoin', 'round');
+		for (const [tag, attrs] of getIconNodes(o.icon)) {
+			const element = glyph.append(tag);
+			for (const [key, value] of Object.entries(attrs)) element.attr(key, value);
+		}
+
+		if (o.label) {
+			group
+				.append('text')
+				.attr('class', 'map-label')
+				.attr('x', o.radius + 4)
+				.attr('y', 3)
+				.attr('fill', o.color)
+				.text(o.label);
+		}
+
+		return group
+			.append('circle')
+			.attr('class', 'marker-hit')
+			.attr('r', o.radius + (o.hitPadding ?? 4))
+			.attr('fill', 'transparent');
+	}
+
+	// Conflict regions worth drawing at the current zoom, most severe first
+	function getVisibleConflicts(): GdeltConflictEvent[] {
+		const showAll = currentZoomScale >= ZOOM_THRESHOLDS.showAllConflicts;
+		return [...gdeltConflicts]
+			.filter((c) => showAll || SEVERITY_RANK[c.severity] >= SEVERITY_RANK.elevated)
+			.sort(
+				(a, b) =>
+					SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] || b.numArticles - a.numArticles
+			)
+			.slice(0, showAll ? 20 : 12);
+	}
+
+	// Draw all map markers (redrawn on zoom so they keep a constant screen size)
 	function drawMapIcons(): void {
 		if (!mapGroup || !projection) return;
 
-		// Remove existing icons
 		mapGroup.selectAll('.map-icon').remove();
 
-		const inverseScale = 1 / currentZoomScale;
 		const showLabels = currentZoomScale >= ZOOM_THRESHOLDS.showLabels;
 
-		// Check if we should show infrastructure icons (only when zoomed in enough)
-		const showInfrastructure = currentZoomScale >= ZOOM_THRESHOLDS.showInfrastructure;
-
-		// Draw chokepoints (only when zoomed in enough and no filter active)
-		if (showInfrastructure) {
-			CHOKEPOINTS.forEach((cp) => {
-				const [x, y] = projection([cp.lon, cp.lat]) || [0, 0];
-				if (x && y) {
-					const size = 3.5 * inverseScale;
-					// Outer ring for emphasis
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', size + 2)
-						.attr('fill', 'none')
-						.attr('stroke', '#00aaff')
-						.attr('stroke-width', 1 * inverseScale)
-						.attr('opacity', 0.4);
-					// Main diamond icon
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', size)
-						.attr('fill', '#00aaff')
-						.attr('opacity', 0.9);
-					if (showLabels) {
-						// Label with strategic designation
-						mapGroup
-							.append('text')
-							.attr('class', 'map-icon chokepoint-label')
-							.attr('x', x + 8 * inverseScale)
-							.attr('y', y + 2 * inverseScale)
-							.attr('fill', '#00ddff')
-							.attr('font-size', `${7.5 * inverseScale}px`)
-							.attr('font-family', 'monospace')
-							.attr('font-weight', '600')
-							.text(cp.name);
-						// Subtitle indicator
-						mapGroup
-							.append('text')
-							.attr('class', 'map-icon chokepoint-subtitle')
-							.attr('x', x + 8 * inverseScale)
-							.attr('y', y + 9 * inverseScale)
-							.attr('fill', '#00aaff')
-							.attr('font-size', `${5 * inverseScale}px`)
-							.attr('font-family', 'monospace')
-							.attr('opacity', 0.7)
-							.text('⬥ Maritime Chokepoint');
-					}
-					// Interactive hit area
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon hotspot-hit')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 12 * inverseScale)
-						.attr('fill', 'transparent')
-						.on('mouseenter', (event: MouseEvent) =>
-							showTooltip(event, cp.desc || cp.name, '#00ddff')
+		// Infrastructure: chokepoints, cable landings, nuclear sites, military bases
+		if (layers.infra) {
+			for (const layer of INFRA_LAYERS) {
+				for (const item of layer.items) {
+					const position = project(item.lon, item.lat);
+					if (!position) continue;
+					const hit = appendMarker({
+						x: position[0],
+						y: position[1],
+						icon: layer.icon,
+						color: layer.color,
+						radius: 6.5,
+						className: 'infra-marker',
+						label: showLabels ? item.name : undefined
+					});
+					const lines: TooltipLine[] = [{ text: layer.kind, icon: layer.icon }];
+					if (item.desc) lines.push({ text: item.desc });
+					hit
+						.on('mouseenter click', (event: MouseEvent) =>
+							showTooltip(event, item.name, layer.color, lines, layer.icon)
 						)
 						.on('mousemove', moveTooltip)
 						.on('mouseleave', hideTooltip);
 				}
-			});
+			}
+		}
 
-			// Draw cable landings
-			CABLE_LANDINGS.forEach((cl) => {
-				const [x, y] = projection([cl.lon, cl.lat]) || [0, 0];
-				if (x && y) {
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 3 * inverseScale)
-						.attr('fill', 'none')
-						.attr('stroke', '#aa44ff')
-						.attr('stroke-width', 1.5 * inverseScale);
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon hotspot-hit')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 10 * inverseScale)
-						.attr('fill', 'transparent')
-						.on('mouseenter', (event: MouseEvent) => showTooltip(event, `◎ ${cl.desc}`, '#aa44ff'))
-						.on('mousemove', moveTooltip)
-						.on('mouseleave', hideTooltip);
-				}
-			});
-
-			// Draw nuclear sites
-			NUCLEAR_SITES.forEach((ns) => {
-				const [x, y] = projection([ns.lon, ns.lat]) || [0, 0];
-				if (x && y) {
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 2 * inverseScale)
-						.attr('fill', '#ffff00');
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 5 * inverseScale)
-						.attr('fill', 'none')
-						.attr('stroke', '#ffff00')
-						.attr('stroke-width', 1 * inverseScale)
-						.attr('stroke-dasharray', `${3 * inverseScale},${3 * inverseScale}`);
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon hotspot-hit')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 10 * inverseScale)
-						.attr('fill', 'transparent')
-						.on('mouseenter', (event: MouseEvent) => showTooltip(event, `☢ ${ns.desc}`, '#ffff00'))
-						.on('mousemove', moveTooltip)
-						.on('mouseleave', hideTooltip);
-				}
-			});
-
-			// Draw military bases
-			MILITARY_BASES.forEach((mb) => {
-				const [x, y] = projection([mb.lon, mb.lat]) || [0, 0];
-				if (x && y) {
-					const s = inverseScale;
-					const starPath = `M${x},${y - 5 * s} L${x + 1.5 * s},${y - 1.5 * s} L${x + 5 * s},${y - 1.5 * s} L${x + 2.5 * s},${y + 1 * s} L${x + 3.5 * s},${y + 5 * s} L${x},${y + 2.5 * s} L${x - 3.5 * s},${y + 5 * s} L${x - 2.5 * s},${y + 1 * s} L${x - 5 * s},${y - 1.5 * s} L${x - 1.5 * s},${y - 1.5 * s} Z`;
-					mapGroup
-						.append('path')
-						.attr('class', 'map-icon')
-						.attr('d', starPath)
-						.attr('fill', '#ff00ff')
-						.attr('opacity', 0.8);
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon hotspot-hit')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 10 * inverseScale)
-						.attr('fill', 'transparent')
-						.on('mouseenter', (event: MouseEvent) => showTooltip(event, `★ ${mb.desc}`, '#ff00ff'))
-						.on('mousemove', moveTooltip)
-						.on('mouseleave', hideTooltip);
-				}
-			});
-		} // End infrastructure filter
-
-		// Draw hotspots when toggle is on
-		// At low zoom, only show critical/high hotspots
-		if (showHotspots) {
+		// Static geopolitical hotspots; only the most severe at the lowest zoom
+		if (layers.hotspots) {
 			const showAllHotspots = currentZoomScale >= ZOOM_THRESHOLDS.showAllHotspots;
-			HOTSPOTS.forEach((h) => {
-				// At lowest zoom, only show critical hotspots
-				if (!showAllHotspots && h.level !== 'critical') return;
-
-				const [x, y] = projection([h.lon, h.lat]) || [0, 0];
-				if (x && y) {
-					const color = THREAT_COLORS[h.level];
-					// Pulsing circle
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon pulse')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 3 * inverseScale)
-						.attr('fill', color)
-						.attr('fill-opacity', 0.15);
-					// Inner dot
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 1.5 * inverseScale)
-						.attr('fill', color)
-						.attr('fill-opacity', 0.7);
-					// Label - only show when zoomed in enough
-					if (showLabels) {
-						mapGroup
-							.append('text')
-							.attr('class', 'map-icon')
-							.attr('x', x + 6 * inverseScale)
-							.attr('y', y + 2 * inverseScale)
-							.attr('fill', color)
-							.attr('fill-opacity', 0.6)
-							.attr('font-size', `${6 * inverseScale}px`)
-							.attr('font-family', 'monospace')
-							.text(h.name);
-					}
-					// Hit area
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon hotspot-hit')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 12 * inverseScale)
-						.attr('fill', 'transparent')
-						.on('click', (event: MouseEvent) => {
-							event.stopPropagation();
-							showHotspotDetails(h);
-						})
-						.on('mouseenter', (event: MouseEvent) =>
-							showEnhancedTooltip(event, h.name, h.lat, h.lon, h.desc, color)
-						)
-						.on('mousemove', moveTooltip)
-						.on('mouseleave', hideTooltip);
-				}
-			});
-		} // End hotspots filter
-
-		// Draw live GDELT conflict events (only major conflicts)
-		// Show "No GDELT results" message if empty
-		if (gdeltConflicts.length === 0 && !conflictsLoading) {
-			// No conflicts to draw - this is normal if GDELT returns no results
+			for (const h of HOTSPOTS) {
+				if (!showAllHotspots && SEVERITY_RANK[h.level] < SEVERITY_RANK.high) continue;
+				const position = project(h.lon, h.lat);
+				if (!position) continue;
+				const color = THREAT_COLORS[h.level];
+				const hit = appendMarker({
+					x: position[0],
+					y: position[1],
+					icon: 'crosshair',
+					color,
+					radius: 6.5,
+					pulse: SEVERITY_RANK[h.level] >= SEVERITY_RANK.high,
+					className: 'hotspot-marker',
+					label: showLabels ? h.name : undefined
+				});
+				hit
+					.on('click', (event: MouseEvent) => {
+						event.stopPropagation();
+						showHotspotDetails(h);
+					})
+					.on('mouseenter', (event: MouseEvent) =>
+						showEnhancedTooltip(event, h.name, h.lat, h.lon, h.desc, color, h.level)
+					)
+					.on('mousemove', moveTooltip)
+					.on('mouseleave', hideTooltip);
+			}
 		}
 
-		// Prepare filtered list of conflicts - only show critical severity conflicts
-		let conflictsToDisplay: GdeltConflictEvent[] = [];
-
-		if (showEvents) {
-			// Show only top 8 critical conflicts by article count
-			conflictsToDisplay = [...gdeltConflicts]
-				.filter((c) => c.severity === 'critical')
-				.sort((a, b) => b.numArticles - a.numArticles)
-				.slice(0, 8);
-		}
-
-		conflictsToDisplay.forEach((conflict) => {
-			const [x, y] = projection([conflict.lon, conflict.lat]) || [0, 0];
-			if (x && y) {
+		// Live conflict regions derived from GDELT coverage; drawn least severe first so
+		// the most severe ends up on top
+		if (layers.events) {
+			for (const conflict of getVisibleConflicts().reverse()) {
+				const position = project(conflict.lon, conflict.lat);
+				if (!position) continue;
 				const color = THREAT_COLORS[conflict.severity];
-				// Icon based on type
-				let icon = '⚠';
-				if (conflict.type === 'conflict') icon = '⚔';
-				else if (conflict.type === 'crisis') icon = '🚨';
-				else if (conflict.type === 'tension') icon = '⚡';
-				else if (conflict.type === 'development') icon = '📍';
-
-				// Pulsing ring for active conflicts
-				if (conflict.status === 'active') {
-					mapGroup
-						.append('circle')
-						.attr('class', 'map-icon conflict-pulse')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 5 * inverseScale)
-						.attr('fill', 'none')
-						.attr('stroke', color)
-						.attr('stroke-width', 1 * inverseScale)
-						.attr('stroke-opacity', 0.3);
-				}
-
-				// Icon marker
-				mapGroup
-					.append('text')
-					.attr('class', 'map-icon conflict-icon')
-					.attr('x', x)
-					.attr('y', y + 3 * inverseScale)
-					.attr('text-anchor', 'middle')
-					.attr('font-size', `${7 * inverseScale}px`)
-					.attr('fill', color)
-					.attr('fill-opacity', 0.7)
-					.attr('stroke', '#000')
-					.attr('stroke-width', 0.3 * inverseScale)
-					.text(icon);
-
-				// Label - use location name, truncated (only when zoomed in)
-				if (showLabels) {
-					const label =
-						conflict.name.length > 20 ? conflict.name.substring(0, 18) + '...' : conflict.name;
-					mapGroup
-						.append('text')
-						.attr('class', 'map-icon conflict-label')
-						.attr('x', x)
-						.attr('y', y - 8 * inverseScale)
-						.attr('text-anchor', 'middle')
-						.attr('fill', color)
-						.attr('fill-opacity', 0.5)
-						.attr('font-size', `${5.5 * inverseScale}px`)
-						.attr('font-family', 'monospace')
-						.attr('font-weight', 'normal')
-						.text(label);
-				}
-
-				// Hit area for tooltip and click
-				mapGroup
-					.append('circle')
-					.attr('class', 'map-icon conflict-hit')
-					.attr('cx', x)
-					.attr('cy', y)
-					.attr('r', 15 * inverseScale)
-					.attr('fill', 'transparent')
+				const typeInfo = CONFLICT_TYPES[conflict.type];
+				const important = SEVERITY_RANK[conflict.severity] >= SEVERITY_RANK.high;
+				const name = conflict.name.length > 20 ? conflict.name.slice(0, 18) + '…' : conflict.name;
+				const hit = appendMarker({
+					x: position[0],
+					y: position[1],
+					icon: typeInfo.icon,
+					color,
+					radius: 9,
+					solid: true,
+					pulse: important,
+					className: 'conflict-marker',
+					label: important || showLabels ? name : undefined,
+					hitPadding: 3
+				});
+				hit
 					.on('click', (event: MouseEvent) => {
 						event.stopPropagation();
 						showGdeltConflictDetails(conflict);
 					})
-					.on('mouseenter', (event: MouseEvent) => {
-						const tooltipLines = [
-							`${conflict.numArticles} articles`,
-							`Type: ${conflict.type.toUpperCase()}`,
-							conflict.eventCodeDescription,
-							'Click for details'
-						].filter(Boolean);
-						showTooltip(event, `${icon} ${conflict.name}`, color, tooltipLines);
-					})
+					.on('mouseenter', (event: MouseEvent) =>
+						showTooltip(
+							event,
+							conflict.name,
+							color,
+							[
+								{ text: `${SEVERITY_LABELS[conflict.severity]} · ${typeInfo.label}` },
+								{ text: `${conflict.numArticles} articles in the last 48h`, icon: 'newspaper' },
+								{ text: 'Click for coverage' }
+							],
+							typeInfo.icon
+						)
+					)
 					.on('mousemove', moveTooltip)
 					.on('mouseleave', hideTooltip);
 			}
-		});
+		}
 	}
 
 	// Draw custom monitor locations
 	function drawMonitors(): void {
 		if (!mapGroup || !projection) return;
 
-		// Remove existing monitor markers
 		mapGroup.selectAll('.monitor-marker').remove();
 
-		const inverseScale = 1 / currentZoomScale;
+		for (const m of monitors) {
+			if (!m.enabled || !m.location) continue;
+			const position = project(m.location.lon, m.location.lat);
+			if (!position) continue;
+			const color = m.color || '#00ffff';
+			const lines: TooltipLine[] = [];
+			if (m.location.name) lines.push({ text: m.location.name, icon: 'map-pin' });
+			if (m.keywords.length > 0) lines.push({ text: m.keywords.join(', ') });
+			appendMarker({
+				x: position[0],
+				y: position[1],
+				icon: 'radar',
+				color,
+				radius: 7,
+				className: 'monitor-marker',
+				label: m.name
+			})
+				.on('mouseenter click', (event: MouseEvent) =>
+					showTooltip(event, m.name, color, lines, 'radar')
+				)
+				.on('mousemove', moveTooltip)
+				.on('mouseleave', hideTooltip);
+		}
+	}
 
-		monitors
-			.filter((m) => m.enabled && m.location)
-			.forEach((m) => {
-				if (!m.location) return;
-				const [x, y] = projection([m.location.lon, m.location.lat]) || [0, 0];
-				if (x && y) {
-					const color = m.color || '#00ffff';
-					mapGroup
-						.append('circle')
-						.attr('class', 'monitor-marker')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 5 * inverseScale)
-						.attr('fill', color)
-						.attr('fill-opacity', 0.6)
-						.attr('stroke', color)
-						.attr('stroke-width', 2 * inverseScale);
-					mapGroup
-						.append('text')
-						.attr('class', 'monitor-marker')
-						.attr('x', x + 8 * inverseScale)
-						.attr('y', y + 3 * inverseScale)
-						.attr('fill', color)
-						.attr('font-size', `${8 * inverseScale}px`)
-						.attr('font-family', 'monospace')
-						.text(m.name);
-					mapGroup
-						.append('circle')
-						.attr('class', 'monitor-marker')
-						.attr('cx', x)
-						.attr('cy', y)
-						.attr('r', 10 * inverseScale)
-						.attr('fill', 'transparent')
-						.on('mouseenter', (event: MouseEvent) =>
-							showTooltip(event, `📡 ${m.name}`, color, [
-								m.location?.name || '',
-								m.keywords.join(', ')
-							])
-						)
-						.on('mousemove', moveTooltip)
-						.on('mouseleave', hideTooltip);
-				}
-			});
+	// Cluster color by share of alerts: blue (none) -> yellow -> orange -> red
+	function getClusterColor(cluster: NewsCluster): string {
+		const alertRatio = cluster.alertCount / cluster.count;
+		if (alertRatio > 0.5) return THREAT_COLORS.critical;
+		if (alertRatio > 0.2) return THREAT_COLORS.high;
+		if (cluster.alertCount > 0) return THREAT_COLORS.elevated;
+		return '#2bb8ff';
 	}
 
 	// Draw news clusters on map
 	function drawNewsClusters(): void {
 		if (!mapGroup || !projection) return;
 
-		// Remove existing cluster markers
 		mapGroup.selectAll('.news-cluster').remove();
 
-		// Skip drawing if news toggle is off
-		if (!showNews) return;
+		if (!layers.news) return;
 
-		const clusters = newsClusters;
+		const inverseScale = 1 / currentZoomScale;
+		const minClusterSize = currentZoomScale >= ZOOM_THRESHOLDS.showSmallClusters ? 1 : 2;
 
-		// Apply inverse scaling to maintain consistent visual size regardless of zoom
-		const scale = currentZoomScale;
-		const inverseScale = 1 / scale;
-
-		// Determine minimum cluster size based on zoom level
-		const showSmallClusters = scale >= ZOOM_THRESHOLDS.showSmallClusters;
-		const minClusterSize = showSmallClusters ? 1 : 2; // At low zoom, show clusters with 2+ items for better visibility
-
-		clusters.forEach((cluster) => {
-			// Skip small clusters when zoomed out
-			if (cluster.count < minClusterSize) return;
-
+		for (const cluster of newsClusters) {
+			if (cluster.count < minClusterSize) continue;
 			// Only show clusters with alerts or multiple items (important news)
-			if (cluster.alertCount === 0 && cluster.count < 3) return;
+			if (cluster.alertCount === 0 && cluster.count < 3) continue;
 
-			const [x, y] = projection([cluster.lon, cluster.lat]) || [0, 0];
-			if (!x || !y) return;
+			const position = project(cluster.lon, cluster.lat);
+			if (!position) continue;
 
-			// Determine color based on alert ratio
-			const alertRatio = cluster.alertCount / cluster.count;
-			let color = '#00aaff'; // Default blue
-			if (alertRatio > 0.5)
-				color = '#ff4444'; // Red for mostly alerts
-			else if (alertRatio > 0.2)
-				color = '#ffaa00'; // Orange for some alerts
-			else if (cluster.alertCount > 0) color = '#ffcc00'; // Yellow for any alerts
+			const color = getClusterColor(cluster);
+			const radius = Math.min(12, Math.max(6, 6 + cluster.count * 0.3));
 
-			// Size based on count (min 4, max 10) - scaled inversely to zoom
-			const baseRadius = Math.min(10, Math.max(4, 4 + cluster.count * 0.25));
-			const radius = baseRadius * inverseScale;
-			const strokeWidth = 1 * inverseScale;
-			const fontSize = (baseRadius > 6 ? 5 : 4) * inverseScale;
-
-			// Main cluster circle
-			mapGroup
-				.append('circle')
+			const group = mapGroup
+				.append('g')
 				.attr('class', 'news-cluster')
-				.attr('cx', x)
-				.attr('cy', y)
+				.attr('transform', `translate(${position[0]},${position[1]}) scale(${inverseScale})`);
+
+			group
+				.append('circle')
 				.attr('r', radius)
 				.attr('fill', color)
-				.attr('fill-opacity', 0.4)
+				.attr('fill-opacity', 0.45)
 				.attr('stroke', '#fff')
-				.attr('stroke-width', strokeWidth)
-				.attr('stroke-opacity', 0.5)
-				.style('cursor', 'pointer');
+				.attr('stroke-width', 1)
+				.attr('stroke-opacity', 0.6);
 
-			// Count label
-			mapGroup
+			group
 				.append('text')
-				.attr('class', 'news-cluster')
-				.attr('x', x)
-				.attr('y', y)
-				.attr('dominant-baseline', 'middle')
+				.attr('class', 'cluster-count')
+				.attr('dominant-baseline', 'central')
 				.attr('text-anchor', 'middle')
-				.attr('fill', '#fff')
-				.attr('font-size', `${fontSize}px`)
-				.attr('font-weight', 'bold')
-				.attr('font-family', 'monospace')
-				.attr('pointer-events', 'none')
 				.text(cluster.count);
 
-			// Hit area for tooltip and click
-			mapGroup
+			group
 				.append('circle')
-				.attr('class', 'news-cluster')
-				.attr('cx', x)
-				.attr('cy', y)
-				.attr('r', (baseRadius + 4) * inverseScale)
+				.attr('class', 'marker-hit')
+				.attr('r', radius + 3)
 				.attr('fill', 'transparent')
-				.style('cursor', 'pointer')
 				.on('click', (event: MouseEvent) => {
 					event.stopPropagation();
 					showNewsClusterDetails(cluster);
 				})
 				.on('mouseenter', (event: MouseEvent) => {
-					const recentItems = cluster.items.slice(0, 3);
-					const lines = recentItems.map(
-						(item) => `${item.isAlert ? '⚠️' : '📰'} ${item.title.slice(0, 50)}...`
-					);
-					if (cluster.items.length > 3) {
-						lines.push(`+${cluster.items.length - 3} more...`);
-					}
-					lines.push('Click for details');
+					const lines: TooltipLine[] = cluster.items.slice(0, 3).map((item) => ({
+						text: item.title.length > 60 ? item.title.slice(0, 57) + '…' : item.title,
+						icon: item.isAlert ? 'triangle-alert' : 'newspaper'
+					}));
+					if (cluster.items.length > 3) lines.push({ text: `+${cluster.items.length - 3} more` });
+					lines.push({ text: 'Click for details' });
 					showTooltip(
 						event,
-						`${cluster.region.toUpperCase()} (${cluster.count} news, ${cluster.alertCount} alerts)`,
+						`${cluster.region.toUpperCase()} · ${cluster.count} news, ${cluster.alertCount} alerts`,
 						color,
-						lines
+						lines,
+						'newspaper'
 					);
 				})
 				.on('mousemove', moveTooltip)
 				.on('mouseleave', hideTooltip);
-		});
-	}
-
-	// Update conflict zone opacity based on news intensity
-	function updateConflictZoneIntensity(): void {
-		if (!mapGroup) return;
-
-		const intensity = conflictIntensity;
-
-		mapGroup.selectAll('.conflict-zone').each(function (this: SVGPathElement) {
-			const zoneName = this.getAttribute('data-zone');
-			if (!zoneName) return;
-
-			const newsCount = intensity.get(zoneName) || 0;
-			// Base opacity 0.15, max 0.5 based on news count
-			const opacity = Math.min(0.5, 0.15 + newsCount * 0.03);
-
-			if (d3Module) {
-				d3Module.select(this).attr('fill-opacity', opacity);
-			}
-		});
+		}
 	}
 
 	// Zoom controls
@@ -1155,110 +1029,151 @@
 		const _newsRef = news;
 		if (_newsRef && mapGroup && projection) {
 			drawNewsClusters();
-			updateConflictZoneIntensity();
 		}
 	});
 
-	// Fetch GDELT conflict events
+	let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// Fetch conflict regions; on failure keep the previous markers and retry sooner
 	async function loadGdeltConflicts(): Promise<void> {
+		if (retryTimer) {
+			clearTimeout(retryTimer);
+			retryTimer = null;
+		}
 		conflictsLoading = true;
 		conflictsError = null;
 
 		try {
-			const events = await fetchConflictEventsFromGDELT({
+			gdeltConflicts = await fetchConflictEventsFromGDELT({
 				timespan: '48h',
 				maxRecords: 250
 			});
 
-			gdeltConflicts = events;
-
-			// Redraw map icons if map is initialized
 			if (mapGroup && projection) {
 				drawMapIcons();
 			}
 		} catch (err) {
 			conflictsError = err instanceof Error ? err.message : 'Failed to load conflict data';
 			console.error('GDELT Conflicts error:', err);
+			retryTimer = setTimeout(loadGdeltConflicts, CONFLICT_RETRY_MS);
 		} finally {
 			conflictsLoading = false;
 		}
 	}
 
+	const CONFLICT_REFRESH_MS = 5 * 60 * 1000;
+	const CONFLICT_RETRY_MS = 60 * 1000;
+
 	onMount(() => {
 		initMap();
-		// Load GDELT conflict events
 		loadGdeltConflicts();
 
-		// Refresh conflicts every 5 minutes
-		const conflictRefreshInterval = setInterval(loadGdeltConflicts, 5 * 60 * 1000);
+		const conflictRefreshInterval = setInterval(loadGdeltConflicts, CONFLICT_REFRESH_MS);
 
 		return () => {
 			clearInterval(conflictRefreshInterval);
+			if (retryTimer) clearTimeout(retryTimer);
 		};
 	});
+
+	// Nearby headlines for the selected hotspot
+	const hotspotNews = $derived.by<GeoNews[]>(() => {
+		const h = selectedHotspot;
+		if (!h) return [];
+		return geoNews
+			.filter((n) => haversineDistance(h.lat, h.lon, n.lat, n.lon) < 600)
+			.sort((a, b) => Number(b.isAlert) - Number(a.isAlert) || b.timestamp - a.timestamp)
+			.slice(0, 6);
+	});
+
+	// Level shown in the cluster modal header
+	const selectedClusterColor = $derived(
+		selectedNewsCluster ? getClusterColor(selectedNewsCluster) : ''
+	);
 </script>
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && showDetailModal && closeDetailModal()} />
 
 <Panel id="map" title="World Map" {error}>
 	<div class="map-container" bind:this={mapContainer}>
-		<svg class="map-svg"></svg>
+		<svg class="map-svg" role="img" aria-label="World map of conflicts, hotspots and news"></svg>
 		{#if tooltipVisible && tooltipContent}
 			<div
 				class="map-tooltip"
-				style="left: {tooltipPosition.left}px; top: {tooltipPosition.top}px;"
+				style="left: {tooltipPosition.left}px; top: {tooltipPosition.top}px; max-width: {TOOLTIP_MAX_WIDTH}px;"
 			>
-				<strong style="color: {tooltipContent.color}">{tooltipContent.title}</strong>
-				{#each tooltipContent.lines as line}
-					<br /><span class="tooltip-line">{line}</span>
+				<div class="tooltip-title" style="color: {tooltipContent.color}">
+					{#if tooltipContent.icon}<Icon name={tooltipContent.icon} size={12} />{/if}
+					<span>{tooltipContent.title}</span>
+				</div>
+				{#each tooltipContent.lines as line, i (i)}
+					<div class="tooltip-line">
+						{#if line.icon}<Icon name={line.icon} size={10} />{/if}
+						<span>{line.text}</span>
+					</div>
 				{/each}
 			</div>
 		{/if}
 		<div class="zoom-controls">
-			<button class="zoom-btn" onclick={zoomIn} title="Zoom in">+</button>
-			<button class="zoom-btn" onclick={zoomOut} title="Zoom out">−</button>
-			<button class="zoom-btn" onclick={resetZoom} title="Reset">⟲</button>
+			<button class="zoom-btn" onclick={zoomIn} title="Zoom in" aria-label="Zoom in">
+				<Icon name="plus" size={14} />
+			</button>
+			<button class="zoom-btn" onclick={zoomOut} title="Zoom out" aria-label="Zoom out">
+				<Icon name="minus" size={14} />
+			</button>
+			<button class="zoom-btn" onclick={resetZoom} title="Reset view" aria-label="Reset view">
+				<Icon name="rotate-ccw" size={14} />
+			</button>
 		</div>
 		<div class="map-legend">
-			<button
-				class="legend-btn"
-				class:active={showEvents}
-				onclick={() => {
-					showEvents = !showEvents;
-					drawMapIcons();
-				}}
-				title="GDELT Events"
-			>
-				⚔
-			</button>
-			<button
-				class="legend-btn"
-				class:active={showHotspots}
-				onclick={() => {
-					showHotspots = !showHotspots;
-					drawMapIcons();
-				}}
-				title="Hotspots"
-			>
-				<span class="legend-dot hotspot"></span>
-			</button>
-			<button
-				class="legend-btn"
-				class:active={showNews}
-				onclick={() => {
-					showNews = !showNews;
-					drawNewsClusters();
-				}}
-				title="News"
-			>
-				<span class="legend-dot news"></span>
-			</button>
-			<div class="legend-status" title="GDELT events">
-				{#if conflictsLoading}
-					<span class="status-loading">⟳</span>
-				{:else if conflictsError}
-					<span class="status-error">!</span>
-				{:else}
-					<span class="status-ok">{gdeltConflicts.length}</span>
-				{/if}
+			<div class="legend-row">
+				{#each LAYER_BUTTONS as layer (layer.key)}
+					<button
+						class="legend-btn"
+						class:active={layers[layer.key]}
+						style="--layer-color: {layer.color}"
+						onclick={() => toggleLayer(layer.key)}
+						title="{layers[layer.key] ? 'Hide' : 'Show'}: {layer.title}"
+						aria-pressed={layers[layer.key]}
+					>
+						<Icon name={layer.icon} size={12} />
+						<span class="legend-label">{layer.label}</span>
+					</button>
+				{/each}
+				<div class="legend-status">
+					{#if conflictsLoading}
+						<span class="status-loading" title="Loading conflict regions from GDELT">
+							<Icon name="refresh-cw" size={12} class="spin" />
+						</span>
+					{:else if conflictsError}
+						<button
+							class="status-error"
+							onclick={loadGdeltConflicts}
+							title="Conflict data unavailable - click to retry"
+							aria-label="Conflict data unavailable, retry"
+						>
+							<Icon name="circle-alert" size={12} />
+						</button>
+					{:else}
+						<span
+							class="status-ok"
+							title="{gdeltConflicts.length} conflict regions in the last 48h"
+						>
+							{gdeltConflicts.length}
+						</span>
+					{/if}
+				</div>
+			</div>
+			<div class="severity-key" aria-label="Severity colors">
+				{#each Object.entries(SEVERITY_LABELS).reverse() as [level, label] (level)}
+					<span class="severity-item">
+						<span
+							class="severity-dot"
+							style="background: {THREAT_COLORS[level as keyof typeof THREAT_COLORS]}"
+						></span>
+						{label}
+					</span>
+				{/each}
 			</div>
 		</div>
 
@@ -1267,22 +1182,28 @@
 			<div class="live-ticker">
 				<div class="ticker-label">LIVE</div>
 				<div class="ticker-content">
-					<div class="ticker-scroll">
-						{#each liveEvents as event (event.id)}
-							<a
-								href={event.link}
-								target="_blank"
-								rel="noopener noreferrer"
-								class="ticker-item"
-								class:critical={event.alertKeyword &&
-									['war', 'attack', 'missile', 'nuclear', 'invasion'].some((k) =>
-										event.alertKeyword?.includes(k)
-									)}
-							>
-								<span class="ticker-region">{event.region.toUpperCase()}</span>
-								<span class="ticker-title">{event.title}</span>
-								<span class="ticker-time">{timeAgo(event.timestamp)}</span>
-							</a>
+					<div class="ticker-scroll" style="animation-duration: {liveEvents.length * 8}s">
+						<!-- The list is rendered twice so the scroll loops without a gap -->
+						{#each [0, 1] as copy (copy)}
+							<div class="ticker-group" aria-hidden={copy === 1 ? 'true' : undefined}>
+								{#each liveEvents as event (event.id)}
+									<a
+										href={event.link}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="ticker-item"
+										tabindex={copy === 1 ? -1 : undefined}
+										class:critical={event.alertKeyword &&
+											['war', 'attack', 'missile', 'nuclear', 'invasion'].some((k) =>
+												event.alertKeyword?.includes(k)
+											)}
+									>
+										<span class="ticker-region">{event.region.toUpperCase()}</span>
+										<span class="ticker-title">{event.title}</span>
+										<span class="ticker-time">{timeAgo(event.timestamp)}</span>
+									</a>
+								{/each}
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -1307,15 +1228,20 @@
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.key === 'Escape' && closeDetailModal()}
 		>
-			<button class="modal-close" onclick={closeDetailModal}>×</button>
+			<button class="modal-close" onclick={closeDetailModal} aria-label="Close">
+				<Icon name="x" size={16} />
+			</button>
 
 			{#if selectedGdeltConflict}
 				<div
 					class="modal-header"
 					style="border-color: {THREAT_COLORS[selectedGdeltConflict.severity]}"
 				>
-					<div class="modal-icon">
-						{#if selectedGdeltConflict.type === 'conflict'}⚔{:else if selectedGdeltConflict.type === 'crisis'}🚨{:else if selectedGdeltConflict.type === 'tension'}⚡{:else}📍{/if}
+					<div
+						class="modal-icon"
+						style="background: {THREAT_COLORS[selectedGdeltConflict.severity]}"
+					>
+						<Icon name={CONFLICT_TYPES[selectedGdeltConflict.type].icon} size={22} />
 					</div>
 					<div class="modal-title-group">
 						<h3 class="modal-title">{selectedGdeltConflict.name}</h3>
@@ -1323,7 +1249,9 @@
 							<span class="badge badge-{selectedGdeltConflict.severity}"
 								>{selectedGdeltConflict.severity.toUpperCase()}</span
 							>
-							<span class="badge badge-type">{selectedGdeltConflict.type.toUpperCase()}</span>
+							<span class="badge badge-type"
+								>{CONFLICT_TYPES[selectedGdeltConflict.type].label.toUpperCase()}</span
+							>
 							<span class="badge" style="background: rgba(0, 170, 255, 0.2); color: #00aaff;">
 								{selectedGdeltConflict.numArticles} ARTICLES
 							</span>
@@ -1372,7 +1300,7 @@
 									>
 										<div class="news-item-header">
 											<span class="news-source">{article.source || 'News Source'}</span>
-											<span class="news-icon">↗</span>
+											<span class="news-icon"><Icon name="external-link" size={12} /></span>
 										</div>
 										<div class="news-item-title">{article.title}</div>
 									</a>
@@ -1389,7 +1317,7 @@
 									rel="noopener noreferrer"
 									class="source-link"
 								>
-									View Original Article →
+									View Original Article <Icon name="arrow-right" size={12} />
 								</a>
 							{:else}
 								<p class="no-source">No source URL available</p>
@@ -1409,7 +1337,9 @@
 				</div>
 			{:else if selectedHotspot}
 				<div class="modal-header" style="border-color: {THREAT_COLORS[selectedHotspot.level]}">
-					<div class="modal-icon">📍</div>
+					<div class="modal-icon" style="background: {THREAT_COLORS[selectedHotspot.level]}">
+						<Icon name="crosshair" size={22} />
+					</div>
 					<div class="modal-title-group">
 						<h3 class="modal-title">{selectedHotspot.name}</h3>
 						<div class="modal-badges">
@@ -1421,10 +1351,12 @@
 				</div>
 
 				<div class="modal-body">
-					<div class="info-section">
-						<h4>Information</h4>
-						<p>{selectedHotspot.desc}</p>
-					</div>
+					{#if selectedHotspot.desc}
+						<div class="info-section">
+							<h4>Information</h4>
+							<p>{selectedHotspot.desc}</p>
+						</div>
+					{/if}
 
 					<div class="info-grid">
 						<div class="info-item">
@@ -1435,22 +1367,42 @@
 						</div>
 						<div class="info-item">
 							<div class="info-label">Threat Level</div>
-							<div class="info-value">{selectedHotspot.level}</div>
+							<div class="info-value">{SEVERITY_LABELS[selectedHotspot.level]}</div>
 						</div>
+					</div>
+
+					<div class="info-section">
+						<h4>Nearby Headlines</h4>
+						{#if hotspotNews.length > 0}
+							<div class="news-list">
+								{#each hotspotNews as item}
+									<a
+										href={item.link}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="news-item-card"
+									>
+										<div class="news-item-header">
+											<span class="news-icon">
+												<Icon name={item.isAlert ? 'triangle-alert' : 'newspaper'} size={12} />
+											</span>
+											<span class="news-source">{item.source}</span>
+											<span class="news-time">{timeAgo(item.timestamp)}</span>
+										</div>
+										<div class="news-item-title">{item.title}</div>
+									</a>
+								{/each}
+							</div>
+						{:else}
+							<p class="no-source">No recent headlines mention this area.</p>
+						{/if}
 					</div>
 				</div>
 			{:else if selectedNewsCluster}
-				{@const alertRatio = selectedNewsCluster.alertCount / selectedNewsCluster.count}
-				{@const color =
-					alertRatio > 0.5
-						? '#ff4444'
-						: alertRatio > 0.2
-							? '#ffaa00'
-							: alertRatio > 0
-								? '#ffcc00'
-								: '#00aaff'}
-				<div class="modal-header" style="border-color: {color}">
-					<div class="modal-icon">📰</div>
+				<div class="modal-header" style="border-color: {selectedClusterColor}">
+					<div class="modal-icon" style="background: {selectedClusterColor}">
+						<Icon name="newspaper" size={22} />
+					</div>
 					<div class="modal-title-group">
 						<h3 class="modal-title">{selectedNewsCluster.region.toUpperCase()} News</h3>
 						<div class="modal-badges">
@@ -1499,7 +1451,9 @@
 									class="news-item-card"
 								>
 									<div class="news-item-header">
-										<span class="news-icon">{item.isAlert ? '⚠️' : '📰'}</span>
+										<span class="news-icon">
+											<Icon name={item.isAlert ? 'triangle-alert' : 'newspaper'} size={12} />
+										</span>
 										<span class="news-source">{item.source}</span>
 										<span class="news-time">{timeAgo(item.timestamp)}</span>
 									</div>
@@ -1536,32 +1490,38 @@
 		height: 100%;
 	}
 
-	.search-container {
-		position: absolute;
-		top: 0.5rem;
-		left: 0.5rem;
-		z-index: 50;
-		display: flex;
-		flex-direction: column;
-		width: 140px;
-	}
-
 	.map-tooltip {
 		position: absolute;
-		background: rgba(10, 10, 10, 0.95);
-		border: 1px solid #333;
-		border-radius: 4px;
-		padding: 0.5rem;
+		background: rgba(8, 14, 12, 0.96);
+		border: 1px solid #2a3a35;
+		border-radius: 6px;
+		padding: 0.5rem 0.6rem;
 		font-size: 0.65rem;
+		line-height: 1.4;
 		color: #ddd;
-		max-width: 250px;
 		pointer-events: none;
 		z-index: 100;
+		box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+	}
+
+	.tooltip-title {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-weight: 700;
+		margin-bottom: 0.2rem;
 	}
 
 	.tooltip-line {
-		opacity: 1;
-		color: #fff;
+		display: flex;
+		align-items: flex-start;
+		gap: 0.35rem;
+		color: #cfd8d4;
+	}
+
+	.tooltip-line :global(.icon) {
+		margin-top: 0.15rem;
+		opacity: 0.8;
 	}
 
 	.zoom-controls {
@@ -1587,6 +1547,12 @@
 		cursor: pointer;
 	}
 
+	.zoom-btn:focus-visible,
+	.legend-btn:focus-visible {
+		outline: 2px solid #44ff88;
+		outline-offset: 1px;
+	}
+
 	.zoom-btn:hover {
 		background: rgba(40, 40, 40, 0.9);
 		color: #fff;
@@ -1597,172 +1563,179 @@
 		bottom: 36px;
 		left: 0.5rem;
 		display: flex;
-		flex-direction: row;
+		flex-direction: column;
+		gap: 4px;
+		background: rgba(8, 14, 12, 0.82);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		padding: 4px 6px;
+		border-radius: 6px;
+		backdrop-filter: blur(4px);
+	}
+
+	.legend-row {
+		display: flex;
 		align-items: center;
 		gap: 2px;
-		background: rgba(0, 0, 0, 0.75);
-		padding: 4px 6px;
-		border-radius: 4px;
-		backdrop-filter: blur(4px);
 	}
 
 	.legend-btn {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		width: 24px;
-		height: 24px;
-		color: #666;
+		gap: 4px;
+		height: 22px;
+		padding: 0 6px;
+		color: #6f7c77;
 		background: none;
-		border: none;
-		padding: 0;
-		margin: 0;
+		border: 1px solid transparent;
+		border-radius: 4px;
 		cursor: pointer;
-		border-radius: 3px;
-		transition: all 0.15s ease;
-		font-size: 0.8rem;
-		opacity: 0.55;
+		font-size: 0.6rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
 		line-height: 1;
+		transition: all 0.15s ease;
 	}
 
 	.legend-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
-		color: #aaa;
+		background: rgba(255, 255, 255, 0.08);
+		color: #c5d0cb;
 	}
 
 	.legend-btn.active {
-		background: rgba(68, 255, 136, 0.25);
-		color: #44ff88;
-		opacity: 1;
-	}
-
-	.legend-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		opacity: 0.5;
-	}
-
-	.legend-dot.hotspot {
-		background: #ff4444;
-	}
-
-	.legend-dot.news {
-		background: #44ff88;
-	}
-
-	.legend-btn.active .legend-dot {
-		opacity: 1;
+		color: var(--layer-color);
+		background: color-mix(in srgb, var(--layer-color) 14%, transparent);
+		border-color: color-mix(in srgb, var(--layer-color) 40%, transparent);
 	}
 
 	.legend-status {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 18px;
-		height: 20px;
-		font-size: 0.55rem;
-		font-weight: 700;
-		text-align: center;
-		padding: 0 3px;
+		min-width: 22px;
+		height: 22px;
+		margin-left: 2px;
 		border-left: 1px solid rgba(255, 255, 255, 0.15);
-		color: #888;
+		font-size: 0.6rem;
+		font-weight: 700;
+		color: #889;
+	}
+
+	.legend-status button {
+		display: flex;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
 	}
 
 	.status-loading {
+		display: flex;
 		color: #ffaa00;
-		animation: pulse-text 1.5s ease-in-out infinite;
 	}
 
-	@keyframes pulse-text {
-		0%,
-		100% {
-			opacity: 0.5;
-		}
-		50% {
-			opacity: 1;
+	.status-loading :global(.spin) {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
 		}
 	}
 
 	.status-error {
-		color: #ff4444;
-	}
-
-	.status-empty {
-		color: #666;
-		font-style: italic;
+		color: #ff4466;
 	}
 
 	.status-ok {
 		color: #44ff88;
 	}
 
-	/* Pulse animation for hotspots */
-	:global(.pulse) {
-		animation: pulse 3s ease-in-out infinite;
+	.severity-key {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0 6px 2px;
+		font-size: 0.55rem;
+		color: #8a9892;
 	}
 
-	@keyframes pulse {
-		0%,
-		100% {
-			r: 4;
-			opacity: 0.15;
-		}
-		50% {
-			r: 6;
-			opacity: 0.05;
-		}
+	.severity-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
 	}
 
-	/* Conflict pulse animation */
-	:global(.conflict-pulse) {
-		animation: conflict-pulse 3s ease-in-out infinite;
+	.severity-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
 	}
 
-	@keyframes conflict-pulse {
-		0%,
-		100% {
-			r: 7;
-			stroke-opacity: 0.3;
-		}
-		50% {
-			r: 10;
-			stroke-opacity: 0.1;
-		}
-	}
-
-	:global(.conflict-icon) {
+	/* Markers drawn by D3 */
+	:global(.marker-glyph),
+	:global(.map-label),
+	:global(.cluster-count) {
 		pointer-events: none;
 	}
 
-	:global(.conflict-label) {
-		pointer-events: none;
-	}
-
-	:global(.conflict-hit) {
+	:global(.marker-hit) {
 		cursor: pointer;
 	}
 
-	:global(.hotspot-hit) {
-		cursor: pointer;
+	:global(.map-icon:hover .marker-badge) {
+		filter: brightness(1.3);
 	}
 
-	/* Chokepoint label styling */
-	:global(.chokepoint-label) {
+	:global(.marker-pulse) {
+		transform-box: fill-box;
+		transform-origin: center;
 		pointer-events: none;
-		text-shadow:
-			0 0 3px rgba(0, 0, 0, 0.8),
-			0 0 6px rgba(0, 170, 255, 0.5);
+		animation: marker-pulse 2.8s ease-out infinite;
 	}
 
-	:global(.chokepoint-subtitle) {
-		pointer-events: none;
-		text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+	@keyframes marker-pulse {
+		0% {
+			transform: scale(1);
+			opacity: 0.55;
+		}
+		100% {
+			transform: scale(2.4);
+			opacity: 0;
+		}
+	}
+
+	:global(.map-label) {
+		font-family: monospace;
+		font-size: 8px;
+		font-weight: 600;
+		paint-order: stroke;
+		stroke: #04100c;
+		stroke-width: 2.5px;
+		stroke-linejoin: round;
+	}
+
+	:global(.cluster-count) {
+		font-family: monospace;
+		font-size: 8px;
+		font-weight: 700;
+		fill: #fff;
 	}
 
 	/* Selected country highlight with glow effect */
 	:global(.country-selected) {
 		filter: drop-shadow(0 0 6px rgba(34, 255, 153, 0.6));
+	}
+
+	@media (max-width: 768px) {
+		.legend-label,
+		.severity-key {
+			display: none;
+		}
+
+		.legend-btn {
+			padding: 0 5px;
+		}
 	}
 
 	/* Live Event Ticker */
@@ -1809,9 +1782,15 @@
 
 	.ticker-scroll {
 		display: flex;
-		gap: 2rem;
-		animation: ticker-scroll 30s linear infinite;
+		width: max-content;
+		animation: ticker-scroll 60s linear infinite;
 		white-space: nowrap;
+	}
+
+	.ticker-group {
+		display: flex;
+		gap: 2rem;
+		padding-right: 2rem;
 	}
 
 	.ticker-scroll:hover {
@@ -1823,7 +1802,7 @@
 			transform: translateX(0);
 		}
 		100% {
-			transform: translateX(-100%);
+			transform: translateX(-50%);
 		}
 	}
 
@@ -1947,8 +1926,9 @@
 		border: none;
 		background: rgba(255, 255, 255, 0.1);
 		color: var(--text);
-		font-size: 1.5rem;
-		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		border-radius: 4px;
 		cursor: pointer;
 		transition: background 0.2s;
@@ -1967,8 +1947,14 @@
 	}
 
 	.modal-icon {
-		font-size: 2.5rem;
-		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		width: 2.75rem;
+		height: 2.75rem;
+		border-radius: 50%;
+		color: #fff;
 	}
 
 	.modal-title-group {
@@ -2105,7 +2091,9 @@
 	}
 
 	.source-link {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
 		color: #44ff88;
 		text-decoration: none;
 		padding: 0.5rem 1rem;
@@ -2184,7 +2172,9 @@
 	}
 
 	.news-icon {
-		font-size: 0.9rem;
+		display: inline-flex;
+		align-items: center;
+		color: var(--text-dim);
 	}
 
 	.news-source {

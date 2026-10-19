@@ -163,25 +163,20 @@ function groupByRegion(articles: GdeltArticle[]): GdeltConflictEvent[] {
 
 /**
  * Fetch conflict hotspots from recent GDELT coverage.
- * Returns an empty array if GDELT is unavailable.
+ * Rejects if GDELT is unavailable so callers can tell "no events" from "request failed".
  */
 export async function fetchConflictEventsFromGDELT(
 	options: { query?: string; timespan?: string; maxRecords?: number } = {}
 ): Promise<GdeltConflictEvent[]> {
 	const query = options.query ? `(${options.query}) AND ${CONFLICT_QUERY}` : CONFLICT_QUERY;
 
-	try {
-		const articles = await fetchGdeltArticles({
-			query,
-			timespan: options.timespan ?? '48h',
-			maxRecords: options.maxRecords ?? 250,
-			priority: 'high'
-		});
-		const events = groupByRegion(articles);
-		logger.log('GDELT Conflicts', `${articles.length} articles -> ${events.length} regions`);
-		return events;
-	} catch (error) {
-		logger.error('GDELT Conflicts', 'Error fetching conflict events:', error);
-		return [];
-	}
+	const articles = await fetchGdeltArticles({
+		query,
+		timespan: options.timespan ?? '48h',
+		maxRecords: options.maxRecords ?? 250,
+		priority: 'high'
+	});
+	const events = groupByRegion(articles);
+	logger.log('GDELT Conflicts', `${articles.length} articles -> ${events.length} regions`);
+	return events;
 }

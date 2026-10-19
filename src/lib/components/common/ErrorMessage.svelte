@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Icon from './Icon.svelte';
+
 	interface Props {
 		message: string;
 		retry?: () => void;
@@ -8,7 +10,7 @@
 </script>
 
 <div class="error-container">
-	<div class="error-icon">⚠</div>
+	<div class="error-icon"><Icon name="triangle-alert" size={24} /></div>
 	<div class="error-message">{message}</div>
 	{#if retry}
 		<button class="retry-btn" onclick={retry}>Retry</button>

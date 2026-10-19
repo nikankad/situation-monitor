@@ -1,4 +1,4 @@
-// Map configuration - hotspots, conflict zones, and strategic locations
+// Map configuration - hotspots and strategic locations
 
 export interface Hotspot {
 	name: string;
@@ -6,12 +6,6 @@ export interface Hotspot {
 	lon: number;
 	level: 'critical' | 'high' | 'elevated' | 'low';
 	desc?: string;
-}
-
-export interface ConflictZone {
-	name: string;
-	coords: [number, number][];
-	color: string;
 }
 
 export interface Chokepoint {
@@ -55,38 +49,11 @@ export interface RegionCenter {
 	keywords: string[];
 }
 
-export interface MapEvent {
-	id: string;
-	title: string;
-	lat: number;
-	lon: number;
-	timestamp: number;
-	severity: 'critical' | 'high' | 'elevated' | 'low';
-	source: string;
-	link?: string;
-}
-
-export interface ActiveConflict {
-	id: string;
-	name: string;
-	lat: number;
-	lon: number;
-	type: 'conflict' | 'crisis' | 'tension' | 'development';
-	severity: 'critical' | 'high' | 'elevated' | 'low';
-	status: 'active' | 'escalating' | 'de-escalating' | 'frozen';
-	description: string;
-	startDate: string;
-	lastUpdate: string;
-	casualties?: string;
-	parties: string[];
-	keywords: string[];
-}
-
 export const THREAT_COLORS = {
-	critical: '#ff0000',
-	high: '#ff4444',
-	elevated: '#ffcc00',
-	low: '#00ff88'
+	critical: '#ff2d55',
+	high: '#ff8a1f',
+	elevated: '#ffd60a',
+	low: '#3ddc84'
 } as const;
 
 export const SANCTIONED_COUNTRY_IDS = [
@@ -105,340 +72,113 @@ export const HOTSPOTS: Hotspot[] = [
 		name: 'DC',
 		lat: 38.9,
 		lon: -77.0,
-		level: 'low'
+		level: 'low',
+		desc: 'Washington, DC - US seat of government; policy decisions here move markets and alliances.'
 	},
 	{
 		name: 'Moscow',
 		lat: 55.75,
 		lon: 37.6,
-		level: 'elevated'
+		level: 'elevated',
+		desc: 'Moscow - Russian leadership and command centre for the war in Ukraine; sanctions and nuclear signaling originate here.'
 	},
 	{
 		name: 'Beijing',
 		lat: 39.9,
 		lon: 116.4,
-		level: 'elevated'
+		level: 'elevated',
+		desc: 'Beijing - Chinese leadership; focal point for Taiwan, South China Sea and US-China trade tensions.'
 	},
 	{
 		name: 'Kyiv',
 		lat: 50.45,
 		lon: 30.5,
-		level: 'high'
+		level: 'high',
+		desc: 'Kyiv - Ukrainian capital and political centre of the defence against the Russian invasion.'
 	},
 	{
 		name: 'Taipei',
 		lat: 25.03,
 		lon: 121.5,
-		level: 'elevated'
+		level: 'elevated',
+		desc: 'Taipei - Capital of Taiwan; the Taiwan Strait is a key flashpoint between China and the US.'
 	},
 	{
 		name: 'Tehran',
 		lat: 35.7,
 		lon: 51.4,
-		level: 'critical'
+		level: 'critical',
+		desc: 'Tehran - Iranian leadership; nuclear programme, regional proxy networks and Gulf shipping risk.'
 	},
 	{
 		name: 'Tel Aviv',
 		lat: 32.07,
 		lon: 34.78,
-		level: 'high'
+		level: 'high',
+		desc: 'Tel Aviv - Israeli political and economic centre; focal point of the Gaza and wider regional conflict.'
 	},
 	{
 		name: 'London',
 		lat: 51.5,
 		lon: -0.12,
-		level: 'low'
+		level: 'low',
+		desc: 'London - UK government and a major financial centre; NATO and sanctions coordination.'
 	},
 	{
 		name: 'Brussels',
 		lat: 50.85,
 		lon: 4.35,
-		level: 'low'
+		level: 'low',
+		desc: 'Brussels - EU and NATO headquarters; sanctions, defence and trade policy.'
 	},
 	{
 		name: 'Pyongyang',
 		lat: 39.03,
 		lon: 125.75,
-		level: 'elevated'
+		level: 'elevated',
+		desc: 'Pyongyang - North Korean leadership; missile tests and nuclear escalation risk.'
 	},
 	{
 		name: 'Riyadh',
 		lat: 24.7,
 		lon: 46.7,
-		level: 'elevated'
+		level: 'elevated',
+		desc: 'Riyadh - Saudi leadership; OPEC+ oil policy and Gulf diplomacy.'
 	},
 	{
 		name: 'Delhi',
 		lat: 28.6,
 		lon: 77.2,
-		level: 'low'
+		level: 'low',
+		desc: 'New Delhi - Indian government; border tensions with China and Pakistan, and a growing diplomatic swing state.'
 	},
 	{
 		name: 'Singapore',
 		lat: 1.35,
 		lon: 103.82,
-		level: 'low'
+		level: 'low',
+		desc: 'Singapore - Key financial and shipping hub beside the Strait of Malacca.'
 	},
 	{
 		name: 'Tokyo',
 		lat: 35.68,
 		lon: 139.76,
-		level: 'low'
+		level: 'low',
+		desc: 'Tokyo - Japanese government; regional security alignment with the US amid China and North Korea tensions.'
 	},
 	{
 		name: 'Caracas',
 		lat: 10.5,
 		lon: -66.9,
-		level: 'high'
+		level: 'high',
+		desc: 'Caracas - Venezuelan government; sanctions, oil and regional instability.'
 	},
 	{
 		name: 'Nuuk',
 		lat: 64.18,
 		lon: -51.72,
-		level: 'elevated'
-	}
-];
-
-export const CONFLICT_ZONES: ConflictZone[] = [
-	{
-		name: 'Ukraine',
-		coords: [
-			[30, 52],
-			[40, 52],
-			[40, 45],
-			[30, 45],
-			[30, 52]
-		],
-		color: '#ff4444'
-	},
-	{
-		name: 'Gaza',
-		coords: [
-			[34, 32],
-			[35, 32],
-			[35, 31],
-			[34, 31],
-			[34, 32]
-		],
-		color: '#ff4444'
-	},
-	{
-		name: 'Taiwan Strait',
-		coords: [
-			[117, 28],
-			[122, 28],
-			[122, 22],
-			[117, 22],
-			[117, 28]
-		],
-		color: '#ffaa00'
-	},
-	{
-		name: 'Yemen',
-		coords: [
-			[42, 19],
-			[54, 19],
-			[54, 12],
-			[42, 12],
-			[42, 19]
-		],
-		color: '#ff6644'
-	},
-	{
-		name: 'Sudan',
-		coords: [
-			[22, 23],
-			[38, 23],
-			[38, 8],
-			[22, 8],
-			[22, 23]
-		],
-		color: '#ff6644'
-	},
-	{
-		name: 'Myanmar',
-		coords: [
-			[92, 28],
-			[101, 28],
-			[101, 10],
-			[92, 10],
-			[92, 28]
-		],
-		color: '#ff8844'
-	}
-];
-
-/**
- * @deprecated Use fetchConflictEventsFromGDELT() from '$lib/api/gdelt-conflicts' instead.
- * This hardcoded array is kept for backward compatibility but should not be used.
- * All conflict data should come from live GDELT API calls.
- *
- * The dashboard now uses real-time GDELT GEO 2.0 API data for conflict events,
- * filtered using QuadClass 3 (verbal conflict) and 4 (material conflict) as per
- * the GDELT Event schema and CAMEO codebook.
- */
-export const ACTIVE_CONFLICTS: ActiveConflict[] = [
-	// Note: This data is deprecated. Use fetchConflictEventsFromGDELT() for live data.
-	{
-		id: 'ukraine-russia',
-		name: 'Russia-Ukraine War',
-		lat: 49.0,
-		lon: 32.0,
-		type: 'conflict',
-		severity: 'critical',
-		status: 'active',
-		description: 'Full-scale military conflict since February 2022',
-		startDate: '2022-02-24',
-		lastUpdate: '2026-01-15',
-		casualties: '500,000+',
-		parties: ['Russia', 'Ukraine', 'NATO (support)'],
-		keywords: ['ukraine', 'russia', 'kiev', 'donbas', 'crimea', 'putin', 'zelensky']
-	},
-	{
-		id: 'israel-hamas',
-		name: 'Israel-Hamas Conflict',
-		lat: 31.5,
-		lon: 34.5,
-		type: 'conflict',
-		severity: 'critical',
-		status: 'active',
-		description: 'Gaza military operations following October 7 attacks',
-		startDate: '2023-10-07',
-		lastUpdate: '2026-01-15',
-		casualties: '45,000+',
-		parties: ['Israel', 'Hamas', 'Hezbollah', 'Iran (support)'],
-		keywords: ['gaza', 'israel', 'hamas', 'hostage', 'netanyahu', 'hezbollah']
-	},
-	{
-		id: 'taiwan-strait',
-		name: 'Taiwan Strait Tensions',
-		lat: 24.5,
-		lon: 120.5,
-		type: 'tension',
-		severity: 'high',
-		status: 'escalating',
-		description: 'Military buildup and increased Chinese activities around Taiwan',
-		startDate: '2020-01-01',
-		lastUpdate: '2026-01-15',
-		parties: ['China', 'Taiwan', 'USA (support)'],
-		keywords: ['taiwan', 'china', 'strait', 'xi', 'beijing', 'taipei']
-	},
-	{
-		id: 'yemen-houthis',
-		name: 'Yemen Crisis',
-		lat: 15.5,
-		lon: 48.0,
-		type: 'conflict',
-		severity: 'high',
-		status: 'active',
-		description: 'Civil war and Houthi attacks on Red Sea shipping',
-		startDate: '2014-09-21',
-		lastUpdate: '2026-01-15',
-		casualties: '377,000+',
-		parties: ['Houthis', 'Saudi Arabia', 'UAE', 'Yemen Gov'],
-		keywords: ['yemen', 'houthi', 'red sea', 'saudi', 'shipping']
-	},
-	{
-		id: 'sudan-civil-war',
-		name: 'Sudan Civil War',
-		lat: 15.5,
-		lon: 32.5,
-		type: 'conflict',
-		severity: 'high',
-		status: 'active',
-		description: 'Armed conflict between SAF and RSF',
-		startDate: '2023-04-15',
-		lastUpdate: '2026-01-15',
-		casualties: '20,000+',
-		parties: ['SAF', 'RSF'],
-		keywords: ['sudan', 'khartoum', 'rsf', 'humanitarian']
-	},
-	{
-		id: 'myanmar-civil-war',
-		name: 'Myanmar Civil War',
-		lat: 21.0,
-		lon: 96.0,
-		type: 'conflict',
-		severity: 'elevated',
-		status: 'active',
-		description: 'Resistance against military junta since 2021 coup',
-		startDate: '2021-02-01',
-		lastUpdate: '2026-01-15',
-		casualties: '50,000+',
-		parties: ['Military Junta', 'Resistance Forces', 'Ethnic Armies'],
-		keywords: ['myanmar', 'burma', 'coup', 'rohingya']
-	},
-	{
-		id: 'north-korea-threats',
-		name: 'North Korea Nuclear Program',
-		lat: 40.0,
-		lon: 127.5,
-		type: 'tension',
-		severity: 'elevated',
-		status: 'active',
-		description: 'Nuclear weapons development and missile tests',
-		startDate: '2006-10-09',
-		lastUpdate: '2026-01-15',
-		parties: ['North Korea', 'South Korea', 'USA', 'Japan'],
-		keywords: ['north korea', 'nuclear', 'missile', 'kim jong', 'pyongyang']
-	},
-	{
-		id: 'iran-nuclear',
-		name: 'Iran Nuclear Crisis',
-		lat: 32.0,
-		lon: 53.0,
-		type: 'crisis',
-		severity: 'high',
-		status: 'escalating',
-		description: 'Nuclear program tensions and regional proxy conflicts',
-		startDate: '2018-05-08',
-		lastUpdate: '2026-01-15',
-		parties: ['Iran', 'Israel', 'USA', 'IAEA'],
-		keywords: ['iran', 'nuclear', 'tehran', 'irgc', 'sanctions']
-	},
-	{
-		id: 'ethiopia-tigray',
-		name: 'Ethiopia-Tigray Conflict',
-		lat: 14.0,
-		lon: 38.5,
-		type: 'conflict',
-		severity: 'elevated',
-		status: 'frozen',
-		description: 'Ceasefire holding but tensions remain',
-		startDate: '2020-11-04',
-		lastUpdate: '2026-01-15',
-		casualties: '600,000+',
-		parties: ['Ethiopia Gov', 'Tigray Forces'],
-		keywords: ['ethiopia', 'tigray', 'humanitarian']
-	},
-	{
-		id: 'south-china-sea',
-		name: 'South China Sea Disputes',
-		lat: 12.0,
-		lon: 114.0,
-		type: 'tension',
-		severity: 'elevated',
-		status: 'active',
-		description: 'Territorial disputes and militarization',
-		startDate: '2013-01-01',
-		lastUpdate: '2026-01-15',
-		parties: ['China', 'Philippines', 'Vietnam', 'Malaysia'],
-		keywords: ['south china sea', 'spratly', 'philippines', 'vietnam']
-	},
-	{
-		id: 'sahel-insurgency',
-		name: 'Sahel Insurgency',
-		lat: 15.0,
-		lon: 0.0,
-		type: 'conflict',
-		severity: 'high',
-		status: 'active',
-		description: 'Islamist insurgency across West Africa',
-		startDate: '2012-01-01',
-		lastUpdate: '2026-01-15',
-		casualties: '40,000+',
-		parties: ['JNIM', 'ISIS-Sahel', 'Regional Forces'],
-		keywords: ['sahel', 'mali', 'burkina faso', 'niger', 'jihadist']
+		level: 'elevated',
+		desc: 'Nuuk - Capital of Greenland; Arctic strategic interest and US-Denmark-Greenland tensions.'
 	}
 ];
 
@@ -487,7 +227,32 @@ export const NUCLEAR_SITES: NuclearSite[] = [
 	{
 		name: 'Zaporizhzhia',
 		lat: 47.5,
-		lon: 34.6
+		lon: 34.6,
+		desc: "Zaporizhzhia NPP - Europe's largest nuclear power plant (6 reactors). Under Russian occupation since March 2022, with repeated shelling and off-site power losses."
+	},
+	{
+		name: 'Natanz',
+		lat: 33.72,
+		lon: 51.73,
+		desc: "Natanz - Iran's main uranium enrichment complex, a recurring focus of IAEA inspections and sabotage."
+	},
+	{
+		name: 'Bushehr',
+		lat: 28.83,
+		lon: 50.89,
+		desc: "Bushehr NPP - Iran's only operating commercial nuclear power plant, built with Russian assistance."
+	},
+	{
+		name: 'Dimona',
+		lat: 31.0,
+		lon: 35.15,
+		desc: "Negev Nuclear Research Center (Dimona) - Israel's undeclared nuclear facility."
+	},
+	{
+		name: 'Yongbyon',
+		lat: 39.8,
+		lon: 125.75,
+		desc: "Yongbyon - North Korea's main nuclear complex: reactor, reprocessing and enrichment facilities."
 	}
 ];
 
@@ -495,27 +260,56 @@ export const MILITARY_BASES: MilitaryBase[] = [
 	{
 		name: 'Diego Garcia',
 		lat: -7.3,
-		lon: 72.4
+		lon: 72.4,
+		desc: 'Diego Garcia - Joint US/UK base in the Indian Ocean; bomber and naval logistics hub.'
 	},
 	{
 		name: 'Okinawa',
 		lat: 26.5,
-		lon: 127.9
+		lon: 127.9,
+		desc: 'Okinawa - Largest concentration of US forces in Japan, including Kadena Air Base; 400 miles from Taiwan.'
 	},
 	{
 		name: 'Djibouti',
 		lat: 11.5,
-		lon: 43.1
+		lon: 43.1,
+		desc: "Djibouti - Hosts US Camp Lemonnier and China's first overseas military base, overlooking Bab el-Mandeb."
 	},
 	{
 		name: 'Kaliningrad',
 		lat: 54.7,
-		lon: 20.5
+		lon: 20.5,
+		desc: 'Kaliningrad - Russian exclave between Poland and Lithuania; home of the Baltic Fleet and Iskander missiles.'
 	},
 	{
 		name: 'Hainan',
 		lat: 18.2,
-		lon: 109.5
+		lon: 109.5,
+		desc: 'Hainan (Yulin) - PLA Navy submarine and carrier base facing the South China Sea.'
+	},
+	{
+		name: 'Guam',
+		lat: 13.58,
+		lon: 144.93,
+		desc: "Guam - Andersen Air Force Base and Naval Base Guam; the US's forward hub in the western Pacific."
+	},
+	{
+		name: 'Ramstein',
+		lat: 49.44,
+		lon: 7.6,
+		desc: 'Ramstein Air Base - US Air Forces in Europe headquarters and key logistics hub for NATO.'
+	},
+	{
+		name: 'Al Udeid',
+		lat: 25.12,
+		lon: 51.32,
+		desc: 'Al Udeid Air Base (Qatar) - Forward headquarters of US Central Command air operations.'
+	},
+	{
+		name: 'Sevastopol',
+		lat: 44.62,
+		lon: 33.53,
+		desc: "Sevastopol - Home port of Russia's Black Sea Fleet, in occupied Crimea."
 	}
 ];
 
@@ -527,31 +321,47 @@ export const OCEANS: Ocean[] = [
 	{ name: 'SOUTHERN', lat: -60, lon: 0 }
 ];
 
-export const WEATHER_CODES: Record<number, string> = {
-	0: '☀️ Clear',
-	1: '🌤️ Mostly clear',
-	2: '⛅ Partly cloudy',
-	3: '☁️ Overcast',
-	45: '🌫️ Fog',
-	48: '🌫️ Fog',
-	51: '🌧️ Drizzle',
-	53: '🌧️ Drizzle',
-	55: '🌧️ Drizzle',
-	61: '🌧️ Rain',
-	63: '🌧️ Rain',
-	65: '🌧️ Heavy rain',
-	71: '🌨️ Snow',
-	73: '🌨️ Snow',
-	75: '🌨️ Heavy snow',
-	77: '🌨️ Snow',
-	80: '🌧️ Showers',
-	81: '🌧️ Showers',
-	82: '⛈️ Heavy showers',
-	85: '🌨️ Snow',
-	86: '🌨️ Snow',
-	95: '⛈️ Thunderstorm',
-	96: '⛈️ Thunderstorm',
-	99: '⛈️ Thunderstorm'
+export type WeatherIcon =
+	| 'sun'
+	| 'cloud-sun'
+	| 'cloud'
+	| 'cloud-fog'
+	| 'cloud-drizzle'
+	| 'cloud-rain'
+	| 'cloud-snow'
+	| 'cloud-lightning';
+
+export interface WeatherCondition {
+	label: string;
+	icon: WeatherIcon;
+}
+
+/** Open-Meteo WMO weather interpretation codes */
+export const WEATHER_CODES: Record<number, WeatherCondition> = {
+	0: { label: 'Clear', icon: 'sun' },
+	1: { label: 'Mostly clear', icon: 'sun' },
+	2: { label: 'Partly cloudy', icon: 'cloud-sun' },
+	3: { label: 'Overcast', icon: 'cloud' },
+	45: { label: 'Fog', icon: 'cloud-fog' },
+	48: { label: 'Fog', icon: 'cloud-fog' },
+	51: { label: 'Drizzle', icon: 'cloud-drizzle' },
+	53: { label: 'Drizzle', icon: 'cloud-drizzle' },
+	55: { label: 'Drizzle', icon: 'cloud-drizzle' },
+	61: { label: 'Rain', icon: 'cloud-rain' },
+	63: { label: 'Rain', icon: 'cloud-rain' },
+	65: { label: 'Heavy rain', icon: 'cloud-rain' },
+	71: { label: 'Snow', icon: 'cloud-snow' },
+	73: { label: 'Snow', icon: 'cloud-snow' },
+	75: { label: 'Heavy snow', icon: 'cloud-snow' },
+	77: { label: 'Snow', icon: 'cloud-snow' },
+	80: { label: 'Showers', icon: 'cloud-rain' },
+	81: { label: 'Showers', icon: 'cloud-rain' },
+	82: { label: 'Heavy showers', icon: 'cloud-rain' },
+	85: { label: 'Snow showers', icon: 'cloud-snow' },
+	86: { label: 'Snow showers', icon: 'cloud-snow' },
+	95: { label: 'Thunderstorm', icon: 'cloud-lightning' },
+	96: { label: 'Thunderstorm', icon: 'cloud-lightning' },
+	99: { label: 'Thunderstorm', icon: 'cloud-lightning' }
 };
 
 // Region centers for geo-locating news items

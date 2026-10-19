@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Panel, MarketItemDetailed } from '$lib/components/common';
+	import { Panel, MarketItemDetailed, Icon } from '$lib/components/common';
 	import { MarketsConfigModal } from '$lib/components/modals';
 	import { indices, sectors, commodities, crypto, custom, marketSettings } from '$lib/stores';
 	import type { MarketItem, CryptoItem } from '$lib/types';
@@ -74,7 +74,7 @@
 <Panel id="markets" title="Markets" count={count || null} {error}>
 	{#snippet actions()}
 		<button class="settings-btn" onclick={() => (configModalOpen = true)} title="Configure markets">
-			⚙
+			<Icon name="settings" size={14} />
 		</button>
 	{/snippet}
 	{#if count === 0 && !error}
