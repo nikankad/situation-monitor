@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import Icon from '$lib/components/common/Icon.svelte';
 
 	interface Props {
 		open: boolean;
@@ -37,7 +38,9 @@
 				{#if header}
 					{@render header()}
 				{/if}
-				<button class="modal-close" onclick={onClose} aria-label="Close">×</button>
+				<button class="modal-close" onclick={onClose} aria-label="Close"
+					><Icon name="x" size={16} /></button
+				>
 			</div>
 
 			<div class="modal-content">

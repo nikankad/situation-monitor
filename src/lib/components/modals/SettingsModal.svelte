@@ -150,7 +150,7 @@
 						ondragend={handleDragEnd}
 						role="listitem"
 					>
-						<span class="drag-handle">⋮⋮</span>
+						<span class="drag-handle"><Icon name="grip-vertical" size={14} /></span>
 						<span class="order-index">{index + 1}</span>
 						<span class="order-name">{config.name}</span>
 						<div class="order-buttons">
@@ -370,6 +370,8 @@
 	}
 
 	.drag-handle {
+		display: flex;
+		align-items: center;
 		color: var(--text-muted);
 		font-size: 0.7rem;
 		cursor: grab;

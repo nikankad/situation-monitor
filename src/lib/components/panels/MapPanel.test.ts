@@ -91,9 +91,10 @@ describe('MapPanel', () => {
 	it('draws a glyph-bearing badge for every marker type', () => {
 		const count = (selector: string) => target.querySelectorAll(selector).length;
 
-		// Zoomed out: hotspots limited to critical/high, all strategic sites visible
-		expect(count('.hotspot-marker')).toBe(4);
-		expect(count('.infra-marker')).toBe(20);
+		// Zoomed out: hotspots limited to critical/high, and markers that would overlap a
+		// more important one (e.g. Kyiv under the Ukraine conflict badge) are held back
+		expect(count('.hotspot-marker')).toBe(3);
+		expect(count('.infra-marker')).toBe(11);
 		// Low-severity conflict regions are hidden at the default zoom
 		expect(count('.conflict-marker')).toBe(2);
 
@@ -103,10 +104,30 @@ describe('MapPanel', () => {
 		}
 	});
 
+	it('never stacks markers on top of each other', () => {
+		const points = [...target.querySelectorAll('.map-icon')].map((group) => {
+			const match = group.getAttribute('transform')!.match(/translate\(([-\d.]+),([-\d.]+)\)/)!;
+			return { x: Number(match[1]), y: Number(match[2]) };
+		});
+		expect(points.length).toBeGreaterThan(0);
+		for (let i = 0; i < points.length; i++) {
+			for (let j = i + 1; j < points.length; j++) {
+				// Smallest badge radius is 6.5 and the map is drawn at zoom 1, so units are pixels
+				expect(
+					Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y)
+				).toBeGreaterThanOrEqual(13);
+			}
+		}
+	});
+
 	it('uses icons instead of emoji in the legend and controls', () => {
 		const labels = [...target.querySelectorAll('.legend-btn')].map((b) => b.textContent?.trim());
 		expect(labels).toEqual(['Conflicts', 'Hotspots', 'Strategic', 'News']);
 		expect(target.querySelectorAll('.zoom-btn svg').length).toBe(3);
+		// Icon children must be created in the SVG namespace or they render blank
+		expect(target.querySelector('.zoom-btn svg > *')?.namespaceURI).toBe(
+			'http://www.w3.org/2000/svg'
+		);
 		expect(target.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
 	});
 
@@ -115,7 +136,7 @@ describe('MapPanel', () => {
 		hit.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
 		flushSync();
 		const tooltip = target.querySelector('.map-tooltip');
-		expect(tooltip?.textContent).toContain('Maritime chokepoint');
+		expect(tooltip?.textContent).toMatch(/chokepoint|cable|Nuclear|Military/);
 		expect(tooltip?.textContent).not.toContain('undefined');
 	});
 
@@ -129,6 +150,6 @@ describe('MapPanel', () => {
 		expect(infra.getAttribute('aria-pressed')).toBe('false');
 		infra.click();
 		flushSync();
-		expect(target.querySelectorAll('.infra-marker').length).toBe(20);
+		expect(target.querySelectorAll('.infra-marker').length).toBe(11);
 	});
 });

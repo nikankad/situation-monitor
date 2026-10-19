@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
+	import { Icon } from '$lib/components/common';
 	import { marketSettings, customMarkets } from '$lib/stores';
 	import { INDICES, SECTORS, COMMODITIES, CRYPTO } from '$lib/config/markets';
 	import type { MarketDisplaySettings } from '$lib/stores';
@@ -161,7 +162,7 @@
 								onchange={() => handleToggle(category, symbol)}
 								class="checkbox"
 							/>
-							<span class="drag-handle">⋮⋮</span>
+							<span class="drag-handle"><Icon name="grip-vertical" size={14} /></span>
 							<span class="market-name">{getMarketName(category, symbol)}</span>
 							<span class="market-category">{categoryLabels[category]}</span>
 							{#if isCustom}
@@ -170,7 +171,7 @@
 									onclick={() => handleRemoveCustom(symbol)}
 									title="Remove"
 								>
-									×
+									<Icon name="x" size={12} />
 								</button>
 							{/if}
 						</label>
@@ -285,6 +286,8 @@
 	}
 
 	.drag-handle {
+		display: flex;
+		align-items: center;
 		color: var(--text-muted);
 		font-size: 0.6rem;
 		user-select: none;

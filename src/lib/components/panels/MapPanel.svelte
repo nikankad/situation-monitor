@@ -771,6 +771,16 @@
 			.slice(0, showAll ? 20 : 12);
 	}
 
+	// A marker waiting to be drawn. Lower-priority markers are dropped when they would sit
+	// on top of a higher-priority one; zooming in spreads them apart so they reappear.
+	interface MarkerPlan {
+		priority: number;
+		x: number;
+		y: number;
+		radius: number;
+		draw: () => void;
+	}
+
 	// Draw all map markers (redrawn on zoom so they keep a constant screen size)
 	function drawMapIcons(): void {
 		if (!mapGroup || !projection) return;
@@ -778,31 +788,56 @@
 		mapGroup.selectAll('.map-icon').remove();
 
 		const showLabels = currentZoomScale >= ZOOM_THRESHOLDS.showLabels;
+		const plans: MarkerPlan[] = [];
 
-		// Infrastructure: chokepoints, cable landings, nuclear sites, military bases
-		if (layers.infra) {
-			for (const layer of INFRA_LAYERS) {
-				for (const item of layer.items) {
-					const position = project(item.lon, item.lat);
-					if (!position) continue;
-					const hit = appendMarker({
-						x: position[0],
-						y: position[1],
-						icon: layer.icon,
-						color: layer.color,
-						radius: 6.5,
-						className: 'infra-marker',
-						label: showLabels ? item.name : undefined
-					});
-					const lines: TooltipLine[] = [{ text: layer.kind, icon: layer.icon }];
-					if (item.desc) lines.push({ text: item.desc });
-					hit
-						.on('mouseenter click', (event: MouseEvent) =>
-							showTooltip(event, item.name, layer.color, lines, layer.icon)
-						)
-						.on('mousemove', moveTooltip)
-						.on('mouseleave', hideTooltip);
-				}
+		// Live conflict regions derived from GDELT coverage (highest priority)
+		if (layers.events) {
+			for (const conflict of getVisibleConflicts()) {
+				const position = project(conflict.lon, conflict.lat);
+				if (!position) continue;
+				const color = THREAT_COLORS[conflict.severity];
+				const typeInfo = CONFLICT_TYPES[conflict.type];
+				const important = SEVERITY_RANK[conflict.severity] >= SEVERITY_RANK.high;
+				const name = conflict.name.length > 20 ? conflict.name.slice(0, 18) + '…' : conflict.name;
+				plans.push({
+					priority: 3,
+					x: position[0],
+					y: position[1],
+					radius: 9,
+					draw: () => {
+						appendMarker({
+							x: position[0],
+							y: position[1],
+							icon: typeInfo.icon,
+							color,
+							radius: 9,
+							solid: true,
+							pulse: important,
+							className: 'conflict-marker',
+							label: important || showLabels ? name : undefined,
+							hitPadding: 3
+						})
+							.on('click', (event: MouseEvent) => {
+								event.stopPropagation();
+								showGdeltConflictDetails(conflict);
+							})
+							.on('mouseenter', (event: MouseEvent) =>
+								showTooltip(
+									event,
+									conflict.name,
+									color,
+									[
+										{ text: `${SEVERITY_LABELS[conflict.severity]} · ${typeInfo.label}` },
+										{ text: `${conflict.numArticles} articles in the last 48h`, icon: 'newspaper' },
+										{ text: 'Click for coverage' }
+									],
+									typeInfo.icon
+								)
+							)
+							.on('mousemove', moveTooltip)
+							.on('mouseleave', hideTooltip);
+					}
+				});
 			}
 		}
 
@@ -814,73 +849,84 @@
 				const position = project(h.lon, h.lat);
 				if (!position) continue;
 				const color = THREAT_COLORS[h.level];
-				const hit = appendMarker({
+				plans.push({
+					priority: 2,
 					x: position[0],
 					y: position[1],
-					icon: 'crosshair',
-					color,
 					radius: 6.5,
-					pulse: SEVERITY_RANK[h.level] >= SEVERITY_RANK.high,
-					className: 'hotspot-marker',
-					label: showLabels ? h.name : undefined
+					draw: () => {
+						appendMarker({
+							x: position[0],
+							y: position[1],
+							icon: 'crosshair',
+							color,
+							radius: 6.5,
+							pulse: SEVERITY_RANK[h.level] >= SEVERITY_RANK.high,
+							className: 'hotspot-marker',
+							label: showLabels ? h.name : undefined
+						})
+							.on('click', (event: MouseEvent) => {
+								event.stopPropagation();
+								showHotspotDetails(h);
+							})
+							.on('mouseenter', (event: MouseEvent) =>
+								showEnhancedTooltip(event, h.name, h.lat, h.lon, h.desc, color, h.level)
+							)
+							.on('mousemove', moveTooltip)
+							.on('mouseleave', hideTooltip);
+					}
 				});
-				hit
-					.on('click', (event: MouseEvent) => {
-						event.stopPropagation();
-						showHotspotDetails(h);
-					})
-					.on('mouseenter', (event: MouseEvent) =>
-						showEnhancedTooltip(event, h.name, h.lat, h.lon, h.desc, color, h.level)
-					)
-					.on('mousemove', moveTooltip)
-					.on('mouseleave', hideTooltip);
 			}
 		}
 
-		// Live conflict regions derived from GDELT coverage; drawn least severe first so
-		// the most severe ends up on top
-		if (layers.events) {
-			for (const conflict of getVisibleConflicts().reverse()) {
-				const position = project(conflict.lon, conflict.lat);
-				if (!position) continue;
-				const color = THREAT_COLORS[conflict.severity];
-				const typeInfo = CONFLICT_TYPES[conflict.type];
-				const important = SEVERITY_RANK[conflict.severity] >= SEVERITY_RANK.high;
-				const name = conflict.name.length > 20 ? conflict.name.slice(0, 18) + '…' : conflict.name;
-				const hit = appendMarker({
-					x: position[0],
-					y: position[1],
-					icon: typeInfo.icon,
-					color,
-					radius: 9,
-					solid: true,
-					pulse: important,
-					className: 'conflict-marker',
-					label: important || showLabels ? name : undefined,
-					hitPadding: 3
-				});
-				hit
-					.on('click', (event: MouseEvent) => {
-						event.stopPropagation();
-						showGdeltConflictDetails(conflict);
-					})
-					.on('mouseenter', (event: MouseEvent) =>
-						showTooltip(
-							event,
-							conflict.name,
-							color,
-							[
-								{ text: `${SEVERITY_LABELS[conflict.severity]} · ${typeInfo.label}` },
-								{ text: `${conflict.numArticles} articles in the last 48h`, icon: 'newspaper' },
-								{ text: 'Click for coverage' }
-							],
-							typeInfo.icon
-						)
-					)
-					.on('mousemove', moveTooltip)
-					.on('mouseleave', hideTooltip);
+		// Infrastructure: chokepoints, cable landings, nuclear sites, military bases
+		if (layers.infra) {
+			for (const layer of INFRA_LAYERS) {
+				for (const item of layer.items) {
+					const position = project(item.lon, item.lat);
+					if (!position) continue;
+					plans.push({
+						priority: 1,
+						x: position[0],
+						y: position[1],
+						radius: 6.5,
+						draw: () => {
+							const lines: TooltipLine[] = [{ text: layer.kind, icon: layer.icon }];
+							if (item.desc) lines.push({ text: item.desc });
+							appendMarker({
+								x: position[0],
+								y: position[1],
+								icon: layer.icon,
+								color: layer.color,
+								radius: 6.5,
+								className: 'infra-marker',
+								label: showLabels ? item.name : undefined
+							})
+								.on('mouseenter click', (event: MouseEvent) =>
+									showTooltip(event, item.name, layer.color, lines, layer.icon)
+								)
+								.on('mousemove', moveTooltip)
+								.on('mouseleave', hideTooltip);
+						}
+					});
+				}
 			}
 		}
+
+		// Keep the highest-priority markers, dropping any that would overlap (in screen
+		// pixels: map distances grow with the zoom scale, marker sizes do not)
+		const accepted: MarkerPlan[] = [];
+		for (const plan of [...plans].sort((a, b) => b.priority - a.priority)) {
+			const overlaps = accepted.some(
+				(other) =>
+					Math.hypot(plan.x - other.x, plan.y - other.y) * currentZoomScale <
+					plan.radius + other.radius + 2
+			);
+			if (!overlaps) accepted.push(plan);
+		}
+
+		// Draw lowest priority first so important markers end up on top
+		for (const plan of accepted.reverse()) plan.draw();
 	}
 
 	// Draw custom monitor locations

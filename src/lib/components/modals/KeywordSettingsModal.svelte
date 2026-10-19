@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
+	import { Icon } from '$lib/components/common';
 	import { keywordsStore } from '$lib/stores/keywords';
 	import { ALERT_KEYWORDS } from '$lib/config/keywords';
 
@@ -82,7 +83,7 @@
 							onclick={() => handleRemoveKeyword(keyword)}
 							aria-label="Remove keyword"
 						>
-							×
+							<Icon name="x" size={12} />
 						</button>
 					</div>
 				{/each}
@@ -176,6 +177,8 @@
 	}
 
 	.keyword-remove {
+		display: inline-flex;
+		align-items: center;
 		background: none;
 		border: none;
 		color: var(--text-secondary);
