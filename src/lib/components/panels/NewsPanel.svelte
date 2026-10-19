@@ -35,7 +35,10 @@
 	function dedupe(list: NewsItemType[]): NewsItemType[] {
 		const seen = new Set<string>();
 		return list.filter((item) => {
-			const key = item.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+			const key = item.title
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, ' ')
+				.trim();
 			if (seen.has(key) || seen.has(item.link)) return false;
 			seen.add(key);
 			seen.add(item.link);

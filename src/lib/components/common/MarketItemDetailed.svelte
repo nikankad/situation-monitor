@@ -35,9 +35,9 @@
 
 	const hasOHLCData = $derived(
 		!isNaN(item.open || NaN) ||
-		!isNaN(item.high || NaN) ||
-		!isNaN(item.low || NaN) ||
-		!isNaN(item.previousClose || NaN)
+			!isNaN(item.high || NaN) ||
+			!isNaN(item.low || NaN) ||
+			!isNaN(item.previousClose || NaN)
 	);
 </script>
 

@@ -16,7 +16,7 @@
 	let newName = $state('');
 	let addError = $state('');
 
-	const categoryConfigs = {
+	const categoryConfigs: Record<string, Array<{ symbol: string; name: string }>> = {
 		indices: INDICES,
 		sectors: SECTORS,
 		commodities: COMMODITIES,
@@ -35,9 +35,9 @@
 		if (category === 'custom') {
 			return $customMarkets.get(symbol) || symbol;
 		}
-		const config = (categoryConfigs as any)[category];
+		const config = categoryConfigs[category];
 		if (!config) return symbol;
-		return config.find((c: any) => c.symbol === symbol)?.name || symbol;
+		return config.find((c) => c.symbol === symbol)?.name || symbol;
 	}
 
 	function handleToggle(category: keyof MarketDisplaySettings, symbol: string) {
@@ -146,6 +146,7 @@
 				{#each allMarkets as { category, symbol, isCustom } (category + symbol)}
 					<div
 						class="market-item"
+						role="listitem"
 						draggable={true}
 						ondragstart={() => handleDragStart(category, symbol)}
 						ondragover={handleDragOver}
@@ -180,7 +181,13 @@
 			<div class="add-market">
 				<div class="add-header">
 					<div class="add-title">Add Custom Market</div>
-					<a href="https://finance.yahoo.com/lookup" target="_blank" rel="noopener noreferrer" class="help-link" title="Find ticker symbols">
+					<a
+						href="https://finance.yahoo.com/lookup"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="help-link"
+						title="Find ticker symbols"
+					>
 						?
 					</a>
 				</div>
@@ -191,12 +198,7 @@
 						bind:value={newSymbol}
 						class="add-input"
 					/>
-					<input
-						type="text"
-						placeholder="Name (optional)"
-						bind:value={newName}
-						class="add-input"
-					/>
+					<input type="text" placeholder="Name (optional)" bind:value={newName} class="add-input" />
 					<button class="add-btn" onclick={handleAddMarket}>Add</button>
 				</div>
 				{#if addError}

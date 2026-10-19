@@ -88,7 +88,7 @@ export function containsAlertKeyword(
 ): { isAlert: boolean; keyword?: string } {
 	const lowerText = text.toLowerCase();
 	const keywordsToCheck = customKeywords || ALERT_KEYWORDS;
-	
+
 	for (const keyword of keywordsToCheck) {
 		if (lowerText.includes(keyword)) {
 			return { isAlert: true, keyword };

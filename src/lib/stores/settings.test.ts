@@ -125,6 +125,23 @@ describe('Settings Store', () => {
 		expect(state.sizes['map']).toBeUndefined();
 	});
 
+	it('should drop stale panel IDs and append new panels from a saved order', async () => {
+		localStorageMock.setItem(
+			'panelOrder',
+			JSON.stringify(['tech', 'heatmap', 'politics', 'tech', 'fed'])
+		);
+
+		const { settings } = await import('./settings');
+		const { PANELS } = await import('$lib/config');
+
+		const { order } = get(settings);
+		expect(order.slice(0, 2)).toEqual(['tech', 'politics']);
+		expect(order).not.toContain('heatmap' as never);
+		expect(order).not.toContain('fed' as never);
+		expect(new Set(order).size).toBe(order.length);
+		expect([...order].sort()).toEqual(Object.keys(PANELS).sort());
+	});
+
 	it('should derive enabled panels correctly', async () => {
 		const { settings, enabledPanels } = await import('./settings');
 

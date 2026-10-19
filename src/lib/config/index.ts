@@ -14,7 +14,7 @@ export {
 } from './panels';
 
 // Feed configuration
-export { FEEDS, INTEL_SOURCES, type FeedSource, type IntelSource } from './feeds';
+export { FEEDS, type FeedSource } from './feeds';
 
 // Keyword configuration
 export {
@@ -71,7 +71,15 @@ export {
 } from './map';
 
 // API configuration
-export { CORS_PROXY_URL, API_DELAYS, CACHE_TTLS, DEBUG, logger, FINNHUB_API_KEY, FINNHUB_BASE_URL } from './api';
+export {
+	CORS_PROXY_URL,
+	API_DELAYS,
+	CACHE_TTLS,
+	DEBUG,
+	logger,
+	FINNHUB_API_KEY,
+	FINNHUB_BASE_URL
+} from './api';
 
 // World leaders configuration
 export { WORLD_LEADERS } from './leaders';

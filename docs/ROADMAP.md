@@ -2,8 +2,8 @@
 
 ## 1. Fix Broken / Empty Panels
 
-- [ ] Commit `misc.ts` changes — switch Polymarket to `fetchWithProxy` (fixes GitHub Pages)
-- [ ] Delete dead server route `src/routes/api/polymarket/+server.ts`
+- [x] Commit `misc.ts` changes — switch Polymarket to `fetchWithProxy` (fixes GitHub Pages)
+- [x] Delete dead server route `src/routes/api/polymarket/+server.ts`
 - [ ] Add `VITE_FINNHUB_API_KEY` as a GitHub Actions secret
 - [ ] Implement `fetchGovContracts()` using USASpending.gov API (stub already exists)
 - [ ] Implement `fetchWhaleTransactions()` using Whale Alert API (stub already exists)

@@ -64,7 +64,14 @@
 		<div class="header-center"></div>
 
 		<div class="header-right">
-			<button class="header-btn settings-btn" onclick={(e) => { e.preventDefault(); onSettingsClick?.(); }} title="Settings">
+			<button
+				class="header-btn settings-btn"
+				onclick={(e) => {
+					e.preventDefault();
+					onSettingsClick?.();
+				}}
+				title="Settings"
+			>
 				<span class="btn-icon">⚙</span>
 				<span class="btn-label">Settings</span>
 			</button>
@@ -132,15 +139,6 @@
 		display: flex;
 		align-items: baseline;
 		gap: 0.5rem;
-	}
-
-	.local-time {
-		font-size: 0.85rem;
-		font-weight: 400;
-		color: var(--green);
-
-		letter-spacing: 0.05em;
-		opacity: 0.9;
 	}
 
 	.header-center {
@@ -237,7 +235,6 @@
 		align-items: baseline;
 		gap: 0.3rem;
 		font-size: 0.55rem;
-
 	}
 
 	.refresh-status-subtle {
@@ -256,8 +253,13 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.4; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
 	}
 
 	.status-text-subtle {
@@ -274,7 +276,6 @@
 		color: var(--text-muted);
 		font-weight: 500;
 		letter-spacing: 0.05em;
-
 	}
 
 	.tz-time {

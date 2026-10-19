@@ -226,10 +226,18 @@ function generateDynamicPrediction(
 	sourceCount: number,
 	delta: number
 ): string {
-	const mentionLevel = count >= 10 ? 'explosive' : count >= 7 ? 'rapid' : count >= 4 ? 'growing' : 'emerging';
+	const mentionLevel =
+		count >= 10 ? 'explosive' : count >= 7 ? 'rapid' : count >= 4 ? 'growing' : 'emerging';
 	const sourceLevel =
-		sourceCount >= 6 ? 'widespread' : sourceCount >= 4 ? 'broad' : sourceCount >= 2 ? 'multi-source' : 'focused';
-	const momentumLevel = delta >= 5 ? 'accelerating' : delta >= 3 ? 'building' : delta >= 1 ? 'increasing' : 'stable';
+		sourceCount >= 6
+			? 'widespread'
+			: sourceCount >= 4
+				? 'broad'
+				: sourceCount >= 2
+					? 'multi-source'
+					: 'focused';
+	const momentumLevel =
+		delta >= 5 ? 'accelerating' : delta >= 3 ? 'building' : delta >= 1 ? 'increasing' : 'stable';
 
 	// Category-based prediction templates
 	if (topic.category === 'Conflict') {

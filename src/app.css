@@ -28,7 +28,8 @@
 /* Base styles */
 html {
 	font-size: 110%;
-	font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Inconsolata, 'Fira Code', Consolas, monospace;
+	font-family:
+		'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Inconsolata, 'Fira Code', Consolas, monospace;
 	background-color: var(--bg);
 	color: var(--text);
 }

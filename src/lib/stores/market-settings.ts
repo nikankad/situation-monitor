@@ -203,8 +203,8 @@ function createMarketSettingsStore() {
 			order: cleanedSaved.crypto?.order ?? defaults.crypto.order
 		},
 		custom: {
-			enabled: (saved as any).custom?.enabled ?? defaults.custom.enabled,
-			order: (saved as any).custom?.order ?? defaults.custom.order
+			enabled: saved.custom?.enabled ?? defaults.custom.enabled,
+			order: saved.custom?.order ?? defaults.custom.order
 		}
 	};
 

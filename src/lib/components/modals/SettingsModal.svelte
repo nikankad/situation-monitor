@@ -24,7 +24,9 @@
 
 	// Get ordered panels (only enabled ones)
 	function getOrderedPanels(): PanelId[] {
-		return $settings.order.filter(id => $settings.enabled[id] && !NON_DRAGGABLE_PANELS.includes(id));
+		return $settings.order.filter(
+			(id) => $settings.enabled[id] && !NON_DRAGGABLE_PANELS.includes(id)
+		);
 	}
 
 	// Drag and drop handlers
@@ -57,7 +59,7 @@
 			const currentOrder = [...$settings.order];
 			const fromIndex = currentOrder.indexOf(draggedPanel);
 			const toIndex = currentOrder.indexOf(targetPanelId);
-			
+
 			if (fromIndex !== -1 && toIndex !== -1) {
 				currentOrder.splice(fromIndex, 1);
 				currentOrder.splice(toIndex, 0, draggedPanel);
@@ -96,7 +98,6 @@
 			// Swap in the full order array
 			const currentOrder = [...$settings.order];
 			const fromIndex = currentOrder.indexOf(panelId);
-			const toIndex = currentOrder.indexOf(panelBelow);
 			// Remove from current position and insert after the panel below
 			currentOrder.splice(fromIndex, 1);
 			// If moving down, we need to insert after the target
@@ -152,18 +153,18 @@
 						<span class="order-index">{index + 1}</span>
 						<span class="order-name">{config.name}</span>
 						<div class="order-buttons">
-							<button 
-								class="order-btn" 
+							<button
+								class="order-btn"
 								onclick={() => movePanelUp(panelId)}
 								disabled={index === 0}
-								title="Move up"
-							>↑</button>
-							<button 
-								class="order-btn" 
+								title="Move up">↑</button
+							>
+							<button
+								class="order-btn"
 								onclick={() => movePanelDown(panelId)}
 								disabled={index === getOrderedPanels().length - 1}
-								title="Move down"
-							>↓</button>
+								title="Move down">↓</button
+							>
 						</div>
 					</div>
 				{/each}
@@ -181,9 +182,10 @@
 				<div class="about-logo">SITUATION MONITOR</div>
 				<p class="about-version">v2.0.0</p>
 				<p class="about-desc">
-					A comprehensive real-time geopolitical intelligence platform that aggregates, analyzes, and visualizes 
-					global conflicts, developments, news, market data, and geopolitical events. Designed for analysts, 
-					researchers, traders, and anyone who needs to stay informed about world events as they unfold.
+					A comprehensive real-time geopolitical intelligence platform that aggregates, analyzes,
+					and visualizes global conflicts, developments, news, market data, and geopolitical events.
+					Designed for analysts, researchers, traders, and anyone who needs to stay informed about
+					world events as they unfold.
 				</p>
 				<div class="about-features">
 					<div class="feature-item">📰 Multi-source news aggregation</div>
@@ -199,24 +201,36 @@
 				<div class="about-sources">
 					<p class="sources-title">Data Sources</p>
 					<p class="sources-list">
-						GDELT Project, Reuters, AP, Foreign Affairs, CSIS, Brookings, CFR, 
-						War on the Rocks, Bellingcat, ISW, Financial markets, Federal Reserve, 
-						and multiple verified intelligence sources.
+						GDELT Project, Reuters, AP, Foreign Affairs, CSIS, Brookings, CFR, War on the Rocks,
+						Bellingcat, ISW, Financial markets, Federal Reserve, and multiple verified intelligence
+						sources.
 					</p>
 				</div>
 				<p class="about-disclaimer">
-					⚠️ This tool is for informational purposes only. Always verify information 
-					through official sources before making decisions.
+					⚠️ This tool is for informational purposes only. Always verify information through
+					official sources before making decisions.
 				</p>
 				<p class="about-ai-note">
 					🤖 Built with the assistance of AI • Enhanced with real-time conflict monitoring
 				</p>
 				<div class="about-links">
-					<a href="https://github.com/nikankad/situation-monitor" target="_blank" rel="noopener noreferrer" class="link-text">
+					<a
+						href="https://github.com/nikankad/situation-monitor"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="link-text"
+					>
 						source code
 					</a>
 					<span class="link-divider">•</span>
-					<span>By: <a href="https://github.com/nikankad" target="_blank" rel="noopener noreferrer" class="link-text">Nikan</a></span>
+					<span
+						>By: <a
+							href="https://github.com/nikankad"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="link-text">Nikan</a
+						></span
+					>
 				</div>
 			</div>
 		</section>

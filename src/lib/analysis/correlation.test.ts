@@ -131,10 +131,12 @@ describe('Correlation Engine', () => {
 
 		expect(results?.predictiveSignals.length).toBeGreaterThan(0);
 
+		// Predictions are generated from the data pattern (counts, sources, momentum),
+		// not from fixed per-topic text
 		const tariffSignal = results?.predictiveSignals.find((s) => s.id === 'tariffs');
-		if (tariffSignal) {
-			expect(tariffSignal.prediction).toContain('volatility');
-		}
+		expect(tariffSignal).toBeDefined();
+		expect(tariffSignal!.prediction.length).toBeGreaterThan(0);
+		expect(tariffSignal!.confidence).toBeGreaterThan(0);
 	});
 
 	it('should collect headlines for patterns', () => {

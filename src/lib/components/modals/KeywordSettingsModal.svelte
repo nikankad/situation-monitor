@@ -90,12 +90,7 @@
 		</div>
 
 		<form class="keyword-add-form" onsubmit={handleAddKeyword}>
-			<input
-				type="text"
-				bind:value={newKeyword}
-				placeholder="Add new keyword..."
-				maxlength="50"
-			/>
+			<input type="text" bind:value={newKeyword} placeholder="Add new keyword..." maxlength="50" />
 			<button type="submit" class="btn-add">Add</button>
 		</form>
 

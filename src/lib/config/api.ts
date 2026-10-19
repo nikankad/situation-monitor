@@ -17,17 +17,6 @@ export const FINNHUB_API_KEY = browser
 export const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 
 /**
- * FRED API key (St. Louis Fed)
- * Get your free key at: https://fred.stlouisfed.org/docs/api/api_key.html
- * Free tier: Unlimited requests
- */
-export const FRED_API_KEY = browser
-	? (import.meta.env?.VITE_FRED_API_KEY ?? '')
-	: (process.env.VITE_FRED_API_KEY ?? '');
-
-export const FRED_BASE_URL = 'https://api.stlouisfed.org/fred';
-
-/**
  * Check if we're in development mode
  * Uses import.meta.env which is available in both browser and test environments
  */

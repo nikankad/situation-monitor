@@ -78,11 +78,29 @@ function saveToStorage(key: keyof typeof STORAGE_KEYS, value: unknown): void {
 	}
 }
 
-// Drop panels that no longer exist and append any new ones missing from a saved order
-function normalizeOrder(saved: PanelId[] | undefined, defaults: PanelId[]): PanelId[] {
+/**
+ * Reconcile a saved panel order with the current panel registry:
+ * drop IDs for panels that no longer exist, de-duplicate, and append new panels.
+ */
+function sanitizeOrder(saved: unknown, defaults: PanelId[]): PanelId[] {
 	if (!Array.isArray(saved)) return defaults;
-	const valid = [...new Set(saved.filter((id) => id in PANELS))];
-	return [...valid, ...defaults.filter((id) => !valid.includes(id))];
+
+	const known = new Set<PanelId>(defaults);
+	const seen = new Set<PanelId>();
+	const order: PanelId[] = [];
+
+	for (const id of saved) {
+		if (known.has(id as PanelId) && !seen.has(id as PanelId)) {
+			seen.add(id as PanelId);
+			order.push(id as PanelId);
+		}
+	}
+
+	for (const id of defaults) {
+		if (!seen.has(id)) order.push(id);
+	}
+
+	return order;
 }
 
 // Create the store
@@ -92,7 +110,7 @@ function createSettingsStore() {
 
 	const initialState: SettingsState = {
 		enabled: { ...defaults.enabled, ...saved.enabled },
-		order: normalizeOrder(saved.order, defaults.order),
+		order: sanitizeOrder(saved.order, defaults.order),
 		sizes: { ...defaults.sizes, ...saved.sizes },
 		features: { ...defaults.features, ...saved.features },
 		initialized: false

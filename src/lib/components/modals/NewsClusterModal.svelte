@@ -13,12 +13,10 @@
 	let { open, region, items, onClose }: Props = $props();
 
 	// Sort items by timestamp (newest first)
-	const sortedItems = $derived(
-		[...items].sort((a, b) => b.timestamp - a.timestamp)
-	);
+	const sortedItems = $derived([...items].sort((a, b) => b.timestamp - a.timestamp));
 
 	// Count alerts
-	const alertCount = $derived(items.filter(item => item.isAlert).length);
+	const alertCount = $derived(items.filter((item) => item.isAlert).length);
 </script>
 
 <Modal {open} title="{region.toUpperCase()} - {items.length} News Items" {onClose}>

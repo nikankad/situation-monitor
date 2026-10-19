@@ -49,7 +49,12 @@
 			<div class="panel-title-group">
 				<h3 class="panel-title">{title}</h3>
 				{#if onSettings}
-					<button class="panel-settings-btn" onclick={onSettings} aria-label="Panel settings" title="Customize keywords">
+					<button
+						class="panel-settings-btn"
+						onclick={onSettings}
+						aria-label="Panel settings"
+						title="Customize keywords"
+					>
 						⚙️
 					</button>
 				{/if}
@@ -108,7 +113,6 @@
 		overflow: visible;
 	}
 
-
 	.panel-header {
 		display: flex;
 		align-items: center;
@@ -149,7 +153,9 @@
 		font-size: 0.7rem;
 		line-height: 1;
 		opacity: 0.6;
-		transition: opacity 0.2s, color 0.2s;
+		transition:
+			opacity 0.2s,
+			color 0.2s;
 	}
 
 	.panel-settings-btn:hover {

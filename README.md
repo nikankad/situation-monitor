@@ -14,7 +14,7 @@ A comprehensive real-time geopolitical intelligence platform that aggregates, an
 - 🔔 **Custom Keyword Monitors** - Create alerts for specific topics and events
 - 🌐 **World Leader Tracking** - Track statements and activities of key global figures
 - 📈 **Pattern Correlation Analysis** - Discover correlations between events and market movements
-- 🏦 **Federal Reserve Monitoring** - Economic indicators and Fed data integration
+- 🎲 **Prediction Markets** - Top Polymarket markets by 24h volume
 
 ## Tech Stack
 
@@ -24,14 +24,15 @@ A comprehensive real-time geopolitical intelligence platform that aggregates, an
 - **Data Sources**: 
   - GDELT Project (conflicts)
   - Finnhub (financial data)
-  - Federal Reserve FRED API (economic data)
+  - CoinGecko (crypto prices)
+  - Polymarket Gamma API (prediction markets)
   - Multiple news sources via proxy
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - npm/pnpm
 
 ### Installation
@@ -54,12 +55,10 @@ Update `.env` with your API keys:
 
 ```env
 VITE_FINNHUB_API_KEY=your_finnhub_key
-VITE_FRED_API_KEY=your_fed_api_key
 ```
 
 **Getting API Keys:**
 - [Finnhub](https://finnhub.io/) - Free tier available
-- [FRED API](https://fred.stlouisfed.org/docs/api/fred/) - Free from Federal Reserve
 
 ### Development
 
@@ -100,12 +99,11 @@ src/
 
 ### Panel System
 The dashboard consists of configurable panels that can be enabled/disabled and reordered:
-- News Panel
-- Market Panel
-- Fed Panel
-- Heatmap Panel
-- Conflict Map
-- And more...
+- Global Situation map (GDELT-derived conflict hotspots, news clusters, strategic locations)
+- News panels (Politics, Tech, Finance, Government)
+- Markets (indices, sectors, commodities, crypto)
+- Pattern Analysis and Global Sentiment
+- Polymarket and Gov Contracts
 
 ### Settings
 Access dashboard settings to:
@@ -120,7 +118,6 @@ Access dashboard settings to:
 - **Reuters, AP, Foreign Affairs, CSIS, Brookings** - News sources
 - **War on the Rocks, Bellingcat, ISW** - Specialized geopolitical analysis
 - **Finnhub** - Financial market data
-- **Federal Reserve** - Economic indicators
 - Additional verified intelligence sources
 
 ## Performance Features
@@ -133,17 +130,18 @@ Access dashboard settings to:
 ## Testing
 
 ```bash
-# Unit tests
-npm run test
+# Unit tests (once)
+npm run test:unit
 
 # Watch mode
-npm run test:watch
+npm run test
 
-# E2E tests
+# Type checking and lint
+npm run check
+npm run lint
+
+# E2E tests (requires a built preview server)
 npm run test:e2e
-
-# Coverage
-npm run test:coverage
 ```
 
 ## Disclaimer

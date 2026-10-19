@@ -9,13 +9,7 @@
 		color?: 'auto' | 'up' | 'down' | 'neutral';
 	}
 
-	let {
-		data,
-		width = 100,
-		height = 30,
-		strokeWidth = 1.5,
-		color = 'auto'
-	}: Props = $props();
+	let { data, width = 100, height = 30, strokeWidth = 1.5, color = 'auto' }: Props = $props();
 
 	// Calculate the SVG path and color based on data
 	const chartData = $derived(() => {

@@ -305,7 +305,7 @@ export const LEADER_ENRICHMENTS: Record<string, LeaderEnrichment> = {
 				'KGB Officer'
 			],
 			background:
-				"Former KGB intelligence officer who has dominated Russian politics for over two decades. After serving as President (2000-2008) and Prime Minister (2008-2012), he returned to the presidency. In 2020, constitutional changes allowed him to potentially remain in power until 2036. He launched the full-scale invasion of Ukraine in February 2022, the largest military conflict in Europe since World War II."
+				'Former KGB intelligence officer who has dominated Russian politics for over two decades. After serving as President (2000-2008) and Prime Minister (2008-2012), he returned to the presidency. In 2020, constitutional changes allowed him to potentially remain in power until 2036. He launched the full-scale invasion of Ukraine in February 2022, the largest military conflict in Europe since World War II.'
 		},
 		publicConsensus: {
 			approval: {
@@ -663,7 +663,10 @@ export const LEADER_ENRICHMENTS: Record<string, LeaderEnrichment> = {
 			birthYear: 1984,
 			birthPlace: 'Pyongyang, North Korea',
 			education: 'Kim Il Sung Military University; reportedly studied in Switzerland',
-			previousRoles: ['Vice Chairman of Central Military Commission', 'Heir apparent under Kim Jong Il'],
+			previousRoles: [
+				'Vice Chairman of Central Military Commission',
+				'Heir apparent under Kim Jong Il'
+			],
 			background:
 				"Third generation leader of North Korea, succeeding his father Kim Jong Il in 2011. Holds multiple titles including General Secretary of the Workers' Party and Supreme Commander of the Armed Forces. Has dramatically accelerated North Korea's nuclear and missile programs."
 		},
@@ -695,7 +698,11 @@ export const LEADER_ENRICHMENTS: Record<string, LeaderEnrichment> = {
 			birthYear: 1957,
 			birthPlace: 'Tottori Prefecture, Japan',
 			education: 'Keio University (Law)',
-			previousRoles: ['Minister of Defense (twice)', 'Minister of Agriculture', 'LDP Secretary-General'],
+			previousRoles: [
+				'Minister of Defense (twice)',
+				'Minister of Agriculture',
+				'LDP Secretary-General'
+			],
 			background:
 				'Long-serving LDP politician known for expertise in defense and security policy. Made multiple bids for LDP leadership before succeeding in 2024. Known for his detailed policy knowledge and independent stance within the party.'
 		},
@@ -915,7 +922,7 @@ export const LEADER_ENRICHMENTS: Record<string, LeaderEnrichment> = {
 	'yoon suk yeol': {
 		keywords: ['yoon', 'south korea president', 'seoul'],
 		since: 'May 2022',
-		party: "People Power Party",
+		party: 'People Power Party',
 		focus: ['north korea', 'japan relations', 'economy'],
 		bio: {
 			birthYear: 1960,
