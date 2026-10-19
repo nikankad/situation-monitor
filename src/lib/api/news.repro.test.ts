@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { fetchCategoryNews } from './src/lib/api/news';
+import { fetchCategoryNews } from './news';
 
 describe('Politics Feed Reproduction', () => {
   it('should fetch politics news', async () => {
