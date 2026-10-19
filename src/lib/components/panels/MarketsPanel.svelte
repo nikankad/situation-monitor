@@ -1,120 +1,96 @@
 <script lang="ts">
 	import { Panel, MarketItemDetailed } from '$lib/components/common';
 	import { MarketsConfigModal } from '$lib/components/modals';
-	import { indices, sectors, commodities, crypto, custom, marketSettings, customMarkets } from '$lib/stores';
-	import { formatPercentChange, getChangeClass } from '$lib/utils';
-	import { INDICES, SECTORS, COMMODITIES, CRYPTO } from '$lib/config/markets';
+	import { indices, sectors, commodities, crypto, custom, marketSettings } from '$lib/stores';
+	import type { MarketItem, CryptoItem } from '$lib/types';
 
 	let configModalOpen = $state(false);
 
-	const indicesItems = $derived($indices.items);
-	const sectorsItems = $derived($sectors.items);
-	const commoditiesItems = $derived($commodities.items);
-	const cryptoItems = $derived($crypto.items);
-	const customItems = $derived($custom.items);
-	const error = $derived($indices.error || $sectors.error || $commodities.error || $crypto.error || $custom.error);
+	const error = $derived(
+		$indices.error || $sectors.error || $commodities.error || $crypto.error || $custom.error
+	);
 
-	// Create maps for quick lookup of names by symbol
-	const indicesMap = new Map(INDICES.map((i) => [i.symbol, i.name]));
-	const sectorsMap = new Map(SECTORS.map((s) => [s.symbol, s.name]));
-	const commoditiesMap = new Map(COMMODITIES.map((c) => [c.symbol, c.name]));
-	const cryptoMap = new Map(CRYPTO.map((c) => [c.symbol, c.name]));
+	type SectionKey = 'indices' | 'sectors' | 'commodities' | 'crypto' | 'custom';
 
-	// Get all enabled and ordered markets across all categories
-	const allOrderedItems = $derived(() => {
-		const items: Array<{ item: any; type: string; typeName: string }> = [];
+	const SECTION_TITLES: Record<SectionKey, string> = {
+		indices: 'Indices',
+		sectors: 'Sectors',
+		commodities: 'Commodities',
+		crypto: 'Crypto',
+		custom: 'Watchlist'
+	};
 
-		// Add indices
-		const enabledIndices = $marketSettings.indices.order.filter((symbol) =>
-			$marketSettings.indices.enabled.includes(symbol)
-		);
-		const indicesItemMap = new Map(indicesItems.map((i) => [i.symbol, i]));
-		enabledIndices.forEach((symbol) => {
-			const item = indicesItemMap.get(symbol);
-			if (item) items.push({ item, type: 'indices', typeName: 'Index' });
-		});
+	// CoinGecko only gives a 24h percent change; derive the absolute change from it
+	function cryptoToMarketItem(c: CryptoItem): MarketItem {
+		const pct = c.price_change_percentage_24h || 0;
+		const price = c.current_price || NaN;
+		return {
+			symbol: c.symbol,
+			name: c.name,
+			price,
+			change: price - price / (1 + pct / 100),
+			changePercent: pct,
+			type: 'crypto'
+		};
+	}
 
-		// Add sectors
-		const enabledSectors = $marketSettings.sectors.order.filter((symbol) =>
-			$marketSettings.sectors.enabled.includes(symbol)
-		);
-		const sectorsItemMap = new Map(sectorsItems.map((s) => [s.symbol, s]));
-		enabledSectors.forEach((symbol) => {
-			const item = sectorsItemMap.get(symbol);
-			if (item) items.push({ item, type: 'sectors', typeName: 'Sector' });
-		});
+	// Enabled items in the user's configured order, keyed by symbol
+	function orderedEnabled(key: SectionKey, items: MarketItem[]): MarketItem[] {
+		const { order, enabled } = $marketSettings[key];
+		const bySymbol = new Map(items.map((i) => [i.symbol, i]));
+		return order
+			.filter((symbol) => enabled.includes(symbol))
+			.map((symbol) => bySymbol.get(symbol))
+			.filter((i): i is MarketItem => i !== undefined);
+	}
 
-		// Add commodities
-		const enabledCommodities = $marketSettings.commodities.order.filter((symbol) =>
-			$marketSettings.commodities.enabled.includes(symbol)
-		);
-		const commoditiesItemMap = new Map(commoditiesItems.map((c) => [c.symbol, c]));
-		enabledCommodities.forEach((symbol) => {
-			const item = commoditiesItemMap.get(symbol);
-			if (item) items.push({ item, type: 'commodities', typeName: 'Commodity' });
-		});
+	const sections = $derived(
+		(
+			[
+				['indices', $indices.items],
+				['sectors', $sectors.items],
+				['commodities', $commodities.items],
+				['crypto', $crypto.items.map(cryptoToMarketItem)],
+				['custom', $custom.items]
+			] as [SectionKey, MarketItem[]][]
+		)
+			.map(([key, items]) => ({
+				key,
+				title: SECTION_TITLES[key],
+				items: orderedEnabled(key, items)
+			}))
+			.filter((s) => s.items.length > 0)
+	);
 
-		// Add crypto - transform to match MarketItem interface
-		const enabledCrypto = $marketSettings.crypto.order.filter((symbol) =>
-			$marketSettings.crypto.enabled.includes(symbol)
-		);
-		const cryptoItemMap = new Map(cryptoItems.map((c) => [c.symbol, c]));
-		enabledCrypto.forEach((symbol) => {
-			const cryptoItem = cryptoItemMap.get(symbol);
-			if (cryptoItem) {
-				// Transform CryptoItem to MarketItem format
-				const transformedItem: any = {
-					symbol: cryptoItem.symbol,
-					name: cryptoItem.name,
-					price: cryptoItem.current_price || 0,
-					change: cryptoItem.price_change_24h || 0,
-					changePercent: (cryptoItem.price_change_24h || 0),
-					type: 'crypto' as const,
-					high: NaN,
-					low: NaN,
-					open: NaN,
-					previousClose: NaN
-				};
-				items.push({ item: transformedItem, type: 'crypto', typeName: 'Crypto' });
-			}
-		});
+	const count = $derived(sections.reduce((n, s) => n + s.items.length, 0));
 
-		// Add custom markets
-		const enabledCustom = $marketSettings.custom.order.filter((symbol) =>
-			$marketSettings.custom.enabled.includes(symbol)
-		);
-		const customItemMap = new Map(customItems.map((c) => [c.symbol, c]));
-		enabledCustom.forEach((symbol) => {
-			const item = customItemMap.get(symbol);
-			if (item) {
-				items.push({ item, type: 'custom', typeName: 'Custom' });
-			}
-		});
-
-		return items;
-	});
-
-	const count = $derived(allOrderedItems().length);
+	// Stock quotes come from Finnhub; if every quote is missing the API key is likely absent
+	const quotesUnavailable = $derived(
+		[...$indices.items, ...$sectors.items, ...$commodities.items].length > 0 &&
+			[...$indices.items, ...$sectors.items, ...$commodities.items].every((i) => isNaN(i.price))
+	);
 </script>
 
-<Panel id="markets" title="Markets" {error}>
+<Panel id="markets" title="Markets" count={count || null} {error}>
 	{#snippet actions()}
-		<button
-			class="settings-btn"
-			onclick={() => (configModalOpen = true)}
-			title="Configure markets"
-		>
+		<button class="settings-btn" onclick={() => (configModalOpen = true)} title="Configure markets">
 			⚙
 		</button>
 	{/snippet}
-	{#if allOrderedItems().length === 0 && !error}
+	{#if count === 0 && !error}
 		<div class="empty-state">No market data available</div>
 	{:else}
-		<div class="markets-list">
-			{#each allOrderedItems() as { item, type, typeName } (item.symbol)}
-				<MarketItemDetailed {item} />
-			{/each}
-		</div>
+		{#if quotesUnavailable}
+			<div class="notice">Stock quotes unavailable — check the Finnhub API key.</div>
+		{/if}
+		{#each sections as section (section.key)}
+			<div class="section">
+				<div class="section-title">{section.title}</div>
+				{#each section.items as item (item.symbol)}
+					<MarketItemDetailed {item} />
+				{/each}
+			</div>
+		{/each}
 	{/if}
 </Panel>
 
@@ -142,9 +118,31 @@
 		color: var(--accent);
 	}
 
-	.markets-list {
-		display: flex;
-		flex-direction: column;
+	.section + .section {
+		margin-top: 0.5rem;
+	}
+
+	.section-title {
+		position: sticky;
+		top: -0.5rem;
+		z-index: 1;
+		padding: 0.3rem 0;
+		background: var(--surface);
+		border-bottom: 1px solid var(--border);
+		font-size: 0.6rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.notice {
+		font-size: 0.6rem;
+		color: var(--yellow);
+		padding: 0.3rem 0.4rem;
+		margin-bottom: 0.4rem;
+		border-left: 2px solid var(--yellow);
+		background: rgba(255, 170, 0, 0.08);
 	}
 
 	.empty-state {

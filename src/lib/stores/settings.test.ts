@@ -129,11 +129,11 @@ describe('Settings Store', () => {
 		const { settings, enabledPanels } = await import('./settings');
 
 		// Disable some panels
-		settings.togglePanel('whales');
+		settings.togglePanel('contracts');
 		settings.togglePanel('polymarket');
 
 		const enabled = get(enabledPanels);
-		expect(enabled).not.toContain('whales');
+		expect(enabled).not.toContain('contracts');
 		expect(enabled).not.toContain('polymarket');
 		expect(enabled).toContain('map');
 		expect(enabled).toContain('politics');

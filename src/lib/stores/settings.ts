@@ -4,11 +4,7 @@
 
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
-import {
-	PANELS,
-	NON_DRAGGABLE_PANELS,
-	type PanelId
-} from '$lib/config';
+import { PANELS, NON_DRAGGABLE_PANELS, type PanelId } from '$lib/config';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -82,6 +78,13 @@ function saveToStorage(key: keyof typeof STORAGE_KEYS, value: unknown): void {
 	}
 }
 
+// Drop panels that no longer exist and append any new ones missing from a saved order
+function normalizeOrder(saved: PanelId[] | undefined, defaults: PanelId[]): PanelId[] {
+	if (!Array.isArray(saved)) return defaults;
+	const valid = [...new Set(saved.filter((id) => id in PANELS))];
+	return [...valid, ...defaults.filter((id) => !valid.includes(id))];
+}
+
 // Create the store
 function createSettingsStore() {
 	const defaults = getDefaultSettings();
@@ -89,7 +92,7 @@ function createSettingsStore() {
 
 	const initialState: SettingsState = {
 		enabled: { ...defaults.enabled, ...saved.enabled },
-		order: saved.order ?? defaults.order,
+		order: normalizeOrder(saved.order, defaults.order),
 		sizes: { ...defaults.sizes, ...saved.sizes },
 		features: { ...defaults.features, ...saved.features },
 		initialized: false

@@ -9,10 +9,8 @@
 		CorrelationPanel,
 		NarrativePanel,
 		MapPanel,
-		WhalePanel,
 		PolymarketPanel,
-		ContractsPanel,
-		SituationPanel
+		ContractsPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -28,11 +26,11 @@
 		fetchAllMarkets,
 		fetchCustomMarkets,
 		fetchPolymarket,
-		fetchWhaleTransactions,
 		fetchGovContracts
 	} from '$lib/api';
 	import { loadCachedNews, loadCachedMarkets, saveCachedNews, saveCachedMarkets } from '$lib/services/sessionCache';
-	import type { Prediction, WhaleTransaction, Contract } from '$lib/api';
+	import type { Prediction, Contract } from '$lib/api';
+	import type { MarketItem } from '$lib/types';
 	import type { CustomMonitor } from '$lib/types';
 	import type { PanelId } from '$lib/config';
 
@@ -46,8 +44,8 @@
 
 	// Misc panel data
 	let predictions = $state<Prediction[]>([]);
-	let whales = $state<WhaleTransaction[]>([]);
 	let contracts = $state<Contract[]>([]);
+	let miscLoading = $state(true);
 
 	// Data fetching
 	async function loadNews() {
@@ -100,7 +98,7 @@
 				name
 			}));
 
-			let customData: typeof import('$lib/api').MarketItem[] = [];
+			let customData: MarketItem[] = [];
 			if (customSymbols.length > 0) {
 				customData = await fetchCustomMarkets(customSymbols);
 				markets.setCustom(customData);
@@ -116,20 +114,16 @@
 
 	async function loadMiscData() {
 		try {
-			const [predictionsData, whalesData, contractsData] = await Promise.all([
+			const [predictionsData, contractsData] = await Promise.all([
 				fetchPolymarket(),
-				fetchWhaleTransactions(),
 				fetchGovContracts()
 			]);
-			console.log('[+page] Polymarket predictions loaded:', predictionsData.length);
-			if (predictionsData.length > 0) {
-				console.log('[+page] First prediction:', predictionsData[0]);
-			}
 			predictions = predictionsData;
-			whales = whalesData;
 			contracts = contractsData;
 		} catch (error) {
 			console.error('Failed to load misc data:', error);
+		} finally {
+			miscLoading = false;
 		}
 	}
 
@@ -137,7 +131,7 @@
 	async function handleRefresh() {
 		refresh.startRefresh();
 		try {
-			await Promise.all([loadNews(), loadMarkets()]);
+			await Promise.all([loadNews(), loadMarkets(), loadMiscData()]);
 			refresh.endRefresh();
 		} catch (error) {
 			refresh.endRefresh([String(error)]);
@@ -169,31 +163,6 @@
 			return true;
 		});
 	})());
-
-	// Check if all visible panels are loaded
-	function arePanelsReady(): boolean {
-		// Check news categories
-		const newsCategories = ['politics', 'tech', 'finance', 'gov'];
-		const newsState = get(news);
-		const newsReady = newsCategories.every(cat => {
-			// Panel must have data OR have tried to load and has no items yet
-			const categoryState = newsState.categories[cat as any];
-			return categoryState && (categoryState.items.length > 0 || !categoryState.loading);
-		});
-
-		// Check markets
-		const marketsState = get(markets);
-		const marketsReady =
-			(marketsState.indices.items.length > 0 || !marketsState.indices.loading) &&
-			(marketsState.sectors.items.length > 0 || !marketsState.sectors.loading) &&
-			(marketsState.commodities.items.length > 0 || !marketsState.commodities.loading) &&
-			(marketsState.crypto.items.length > 0 || !marketsState.crypto.loading);
-
-		// Map panel always has data (it's derived from news)
-		const mapReady = true;
-
-		return newsReady && marketsReady && mapReady;
-	}
 
 	// Initial load with multi-stage approach and session caching
 	onMount(() => {
@@ -309,66 +278,10 @@
 						<CorrelationPanel news={$allNewsItems} />
 					{:else if panelId === 'narrative'}
 						<NarrativePanel news={$allNewsItems} />
-					{:else if panelId === 'venezuela'}
-						<SituationPanel
-							panelId="venezuela"
-							config={{
-								title: 'Venezuela Watch',
-								subtitle: 'Humanitarian crisis monitoring',
-								criticalKeywords: ['maduro', 'caracas', 'venezuela', 'guaido']
-							}}
-							news={$allNewsItems.filter(
-								(n) =>
-									n.title.toLowerCase().includes('venezuela') ||
-									n.title.toLowerCase().includes('maduro')
-							)}
-						/>
-					{:else if panelId === 'greenland'}
-						<SituationPanel
-							panelId="greenland"
-							config={{
-								title: 'Greenland Watch',
-								subtitle: 'Arctic geopolitics monitoring',
-								criticalKeywords: ['greenland', 'arctic', 'nuuk', 'denmark']
-							}}
-							news={$allNewsItems.filter(
-								(n) =>
-									n.title.toLowerCase().includes('greenland') ||
-									n.title.toLowerCase().includes('arctic')
-							)}
-						/>
-					{:else if panelId === 'iran'}
-						<SituationPanel
-							panelId="iran"
-							config={{
-								title: 'Iran Crisis',
-								subtitle: 'Revolution protests, regime instability & nuclear program',
-								criticalKeywords: [
-									'protest',
-									'uprising',
-									'revolution',
-									'crackdown',
-									'killed',
-									'nuclear',
-									'strike',
-									'attack',
-									'irgc',
-									'khamenei'
-								]
-							}}
-							news={$allNewsItems.filter(
-								(n) =>
-									n.title.toLowerCase().includes('iran') ||
-									n.title.toLowerCase().includes('tehran') ||
-									n.title.toLowerCase().includes('irgc')
-							)}
-						/>
-					{:else if panelId === 'whales'}
-						<WhalePanel {whales} />
 					{:else if panelId === 'polymarket'}
-						<PolymarketPanel {predictions} />
+						<PolymarketPanel {predictions} loading={miscLoading} />
 					{:else if panelId === 'contracts'}
-						<ContractsPanel {contracts} />
+						<ContractsPanel {contracts} loading={miscLoading} />
 					{/if}
 				</div>
 			{/each}

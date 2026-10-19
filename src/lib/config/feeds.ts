@@ -17,41 +17,57 @@ export interface IntelSource extends FeedSource {
 
 export const FEEDS: Record<NewsCategory, FeedSource[]> = {
 	politics: [
-		{ name: 'Reuters World', url: 'https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best' },
-		{ name: 'AP News', url: 'https://apnews.com/hub/world-news/feed' },
 		{ name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+		{ name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
 		{ name: 'Foreign Affairs', url: 'https://www.foreignaffairs.com/rss.xml' },
 		{ name: 'Foreign Policy', url: 'https://foreignpolicy.com/feed/' }
 	],
 	tech: [
-		{ name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/technology-lab' },
+		{
+			name: 'Ars Technica',
+			url: 'https://feeds.arstechnica.com/arstechnica/technology-lab'
+		},
 		{ name: 'MIT Tech Review', url: 'https://www.technologyreview.com/feed/' },
-		{ name: 'Wired', url: 'https://www.wired.com/feed/rss' }
+		{ name: 'Wired', url: 'https://www.wired.com/feed/rss' },
+		{ name: 'Krebs on Security', url: 'https://www.krebsonsecurity.com/feed/' }
 	],
 	finance: [
-		{ name: 'Reuters Business', url: 'https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best' },
+		{
+			name: 'Bloomberg Markets',
+			url: 'https://feeds.bloomberg.com/markets/news.rss'
+		},
+		{
+			name: 'BBC Business',
+			url: 'https://feeds.bbci.co.uk/news/business/rss.xml'
+		},
 		{ name: 'FT', url: 'https://www.ft.com/rss/home' },
-		{ name: 'Bloomberg', url: 'https://feeds.bloomberg.com/politics/news.rss' },
-		{ name: 'The Economist', url: 'https://www.economist.com/the-world-this-week/rss.xml' }
+		{
+			name: 'The Economist',
+			url: 'https://www.economist.com/the-world-this-week/rss.xml'
+		}
 	],
 	gov: [
 		{ name: 'White House', url: 'https://www.whitehouse.gov/news/feed/' },
-		{ name: 'State Dept', url: 'https://www.state.gov/rss-feed/press-releases/feed/' },
-		{ name: 'DoD News', url: 'https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?max=10&ContentType=1&Site=945' },
-		{ name: 'NATO News', url: 'https://www.nato.int/cps/en/natohq/news.xml' },
-		{ name: 'UN News', url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml' }
+		{
+			name: 'DoD News',
+			url: 'https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?max=10&ContentType=1&Site=945'
+		},
+		{
+			name: 'UN News',
+			url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml'
+		},
+		{ name: 'CISA', url: 'https://www.cisa.gov/news.xml' }
 	],
 	ai: [
 		{ name: 'OpenAI Blog', url: 'https://openai.com/news/rss.xml' },
 		{ name: 'ArXiv AI', url: 'https://rss.arxiv.org/rss/cs.AI' }
 	],
 	intel: [
-		{ name: 'CSIS', url: 'https://www.csis.org/analysis/feed' },
-		{ name: 'Brookings', url: 'https://www.brookings.edu/feed/' },
-		{ name: 'CFR', url: 'https://www.cfr.org/rss.xml' },
-		{ name: 'RAND', url: 'https://www.rand.org/blog.xml' },
 		{ name: 'War on the Rocks', url: 'https://warontherocks.com/feed/' },
-		{ name: 'Carnegie Endowment', url: 'https://carnegieendowment.org/rss/solr/?fa=experts' }
+		{ name: 'Atlantic Council', url: 'https://www.atlanticcouncil.org/feed/' },
+		{ name: 'Defense One', url: 'https://www.defenseone.com/rss/all/' },
+		{ name: 'Breaking Defense', url: 'https://breakingdefense.com/feed/' },
+		{ name: 'Bellingcat', url: 'https://www.bellingcat.com/feed/' }
 	]
 };
 
@@ -189,7 +205,7 @@ export const INTEL_SOURCES: IntelSource[] = [
 	},
 	{
 		name: 'Krebs Security',
-		url: 'https://krebsonsecurity.com/feed/',
+		url: 'https://www.krebsonsecurity.com/feed/',
 		type: 'cyber',
 		topics: ['cyber', 'security']
 	},
