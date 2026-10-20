@@ -6,12 +6,13 @@ Status: draft for review. No code yet.
 
 | Question | Decision |
 | --- | --- |
-| Signals | All four, as separate heads on one shared pipeline: market direction, geopolitical risk, anomaly, news ranking |
+| Signals | All four: market direction, geopolitical risk, anomaly, news ranking |
+| Model | **One multi-task neural network** producing all four outputs, from day one |
 | Freshness | Hourly/daily batch |
 | Hosting | Small VPS (about $5-40/month) |
 | Audience | Personal research tool |
 
-The four signals do not ship together. They share ingestion, storage and features, so phase 1 builds that foundation and one head, and the other heads come in later phases.
+All four signals come from one network. Phase 1 builds the data foundation it trains on, and phase 2 trains it. Each output is still validated and published on its own (see Evaluation), so a weak output can be hidden without touching the others.
 
 ## Starting point
 
@@ -26,7 +27,7 @@ The four signals do not ship together. They share ingestion, storage and feature
 2. **RSS has no history.** It can't be backfilled, so ingestion starts first, before any model exists. Every day without storage is training data lost.
 3. **Backfillable sources.** GDELT has historical archives. Free market APIs give limited history, and their terms often restrict storage and redistribution. Check terms per source (see Sources).
 4. **Start narrow.** The "huge amount of sources" goal is phase 3. Phase 1 is a few sources, one target and a backtest that beats a naive baseline.
-5. **Be honest about expectations.** Predicting liquid-market returns from public news is very hard and the edge is usually small or zero. The geopolitical-risk and ranking heads have a better chance of being useful. The backtest framework has to be able to say "no signal".
+5. **Be honest about expectations.** Predicting liquid-market returns from public news is very hard and the edge is usually small or zero. The geopolitical-risk and ranking outputs have a better chance of being useful. The backtest framework has to be able to say "no signal".
 
 ## Architecture
 
@@ -73,16 +74,38 @@ Rule: a source is kept only if ablating it makes a backtest metric worse.
 - Features are versioned. A feature definition change creates a new version, never edits history.
 - The existing TypeScript analysis stays in the UI for live display. The Python port is the one used for training, so there is a single source of truth for training features. A parity test compares the two on a fixed fixture set.
 
-## Signal heads
+## Model: one multi-task network
 
-| Head | Target (label) | Label source | Model ladder | Primary metric |
-| --- | --- | --- | --- | --- |
-| **Market direction** | Sign of forward return and realized-vol bucket, per asset, at 1d and 5d | Price history | Naive (previous direction / vol persistence) → logistic regression → LightGBM | Out-of-sample AUC and Sharpe of a simple rule after costs, vs. baseline |
-| **Geopolitical risk** | Probability of an escalation event in the next 7d per region (ACLED/GDELT conflict-event surge) | ACLED / GDELT | Naive (trailing event rate) → logistic regression → LightGBM | PR-AUC, calibration (Brier score) |
-| **Anomaly** | "Unusual" level per topic/region, no label | None | Rolling z-score / STL residual → isolation forest → autoencoder over embeddings | Backtested against known events; precision@k of alerts you judge useful |
-| **News ranking** | Item importance | Your own thumbs up/down in the UI, plus proxy labels (cross-source pickup, later market or event moves) | Heuristic score → logistic regression on features → pairwise ranker | NDCG@k on held-out feedback |
+One network and one saved artifact. It reads the feature row for an entity (region, topic or asset) at time T and returns every output at once.
 
-General ladder rule: a more complex model is only adopted if it beats the previous rung out of sample. Gradient-boosted trees on tabular features are expected to be the workhorse. Deep sequence models are a phase 4 option, not a starting point.
+```
+feature row ──────┐
+text embeddings ──┼─► shared encoder ─► shared representation ─┬─► risk        P(escalation in 7d)
+entity + time ────┘   (MLP first,         (64-256 dims)         ├─► direction   P(up) at 1d, 5d + vol bucket
+                       temporal layer                           ├─► anomaly     reconstruction error
+                       later)                                   └─► importance  ranking score
+```
+
+| Output | Loss | Label source | Primary metric |
+| --- | --- | --- | --- |
+| Geopolitical risk | Binary cross-entropy | ACLED / GDELT conflict-event surge in the next 7d | PR-AUC, Brier score |
+| Market direction | Binary cross-entropy per horizon, plus cross-entropy on a volatility bucket | Price history | AUC, and a simple rule's return after costs |
+| Anomaly | Reconstruction error of a decoder branch, no labels | None | Precision@k against known events and your reviews |
+| News importance | Pairwise ranking loss | Your thumbs up/down, plus proxy labels (cross-source pickup, later market or event moves) | NDCG@k |
+
+Training rules:
+
+- **Masked loss.** A row only contributes to the outputs it has a label for. The last 7 days have no risk label yet, and few items have thumbs.
+- **Loss weighting.** Start with learned uncertainty weighting. The market-direction output gets a low weight, and if an ablation shows it hurts the others, its gradient is detached from the shared encoder.
+- **Entity embeddings** for region and asset ids, so one network serves every entity.
+- **Small and regularized.** Dropout, weight decay, early stopping on the walk-forward validation fold, and an average over about 5 seeds, which also gives an uncertainty estimate. It trains on CPU in minutes at this data size.
+- **Frozen text encoder.** Text embeddings come from a small open sentence-embedding model and are not fine-tuned.
+- **Missing sources.** Only some sources can be backfilled (GDELT yes, RSS no). Feature groups are randomly dropped during training and carry a "missing" indicator, so the network works both with and without them.
+- **Framework:** PyTorch.
+
+Comparators (never shipped, always reported next to the network): the naive baseline for each output, and a per-output LightGBM trained on the same walk-forward folds. They show whether the network learned anything beyond a cheap tree. If a tree beats the network on an output, we investigate before trusting that output.
+
+Explanations: the "top features" in `signals.json` are feature families (volume, sentiment, conflict, market, and so on), scored by integrated gradients and checked with permutation importance in the backtest.
 
 ## Evaluation
 
@@ -92,11 +115,12 @@ General ladder rule: a more complex model is only adopted if it beats the previo
 - **Costs and turnover** are included for any trading-style metric.
 - **Calibration** is checked for probability outputs, because the UI will show probabilities.
 - **Multiple-testing discipline:** keep a log of every experiment tried, and hold out the most recent period untouched until a final check.
-- **Paper-trade period:** before trusting any head, score live for a few weeks and compare with the backtest.
+- **Per-output gate.** Each output must beat its naive baseline out of sample before it is shown. An output that fails is displayed as "no validated signal" and does not block the others. A new network version replaces the live one only if no output gets worse and at least one improves.
+- **Paper-trade period:** before trusting any output, score live for a few weeks and compare with the backtest.
 
 ## Serving and UI
 
-- A scoring job runs after each ingestion cycle and writes `signals.json` (per head, with score, confidence, top contributing features and model version).
+- A scoring job runs after each ingestion cycle and writes `signals.json` (per output, with score, confidence, top contributing features and model version).
 - The VPS serves it as static JSON behind a small read-only endpoint (Caddy/nginx), and the SvelteKit frontend adds a "Signals" panel through the existing panel registry and `ServiceClient`. Keeping the app static avoids an app-server rewrite.
 - Each signal shows its backtest metrics and a "last validated" date, so you can see when a model has gone stale.
 - A FastAPI service is the upgrade path if the UI later needs queries beyond static JSON.
@@ -112,13 +136,13 @@ General ladder rule: a more complex model is only adopted if it beats the previo
 
 **Phase 0: Decisions (this doc).** Confirm the market asset list, the VPS provider, and the market data source and its storage terms.
 
-**Phase 1: Start collecting.** `ml/` scaffold, RSS + GDELT + one market source ingestion, raw Parquet store, DuckDB, freshness monitoring, nightly backup. GDELT backfill job. Exit criterion: two weeks of clean, timestamped data with no unexplained gaps.
+**Phase 1: Start collecting.** `ml/` scaffold, RSS + GDELT + one market source ingestion, raw Parquet store, DuckDB, freshness monitoring, nightly backup. GDELT backfill job: as many years of events and GKG themes/tone as storage allows, plus price history for the asset list, because the network needs history from the start. Exit criterion: two weeks of clean, timestamped data with no unexplained gaps.
 
-**Phase 2: First honest backtest.** Point-in-time feature pipeline, walk-forward harness, baselines, then logistic regression and LightGBM for the market-direction and geopolitical-risk heads. Exit criterion: either a head beats its baseline out of sample, or we have a documented "no signal" result and change the target or features.
+**Phase 2: First honest backtest.** Point-in-time feature pipeline, walk-forward harness, naive baselines and per-output LightGBM comparators, then the multi-task network. Exit criterion: at least one output beats its baseline out of sample, or we have a documented "no signal" result and change the targets or features.
 
-**Phase 3: Publish and widen.** Scoring job, `signals.json`, Signals panel in the UI. Add phase 2 sources one at a time with ablations. Add the anomaly head.
+**Phase 3: Publish and widen.** Scoring job, `signals.json`, Signals panel in the UI, with per-output validation badges. Add phase 2 sources one at a time with ablations, retraining the network each time.
 
-**Phase 4: Feedback loop.** Thumbs up/down in the UI feeding the news-ranking head. Embedding features. Consider sequence models only if tree models plateau.
+**Phase 4: Feedback loop.** Thumbs up/down in the UI feeding the importance output. Richer embedding features. Add a temporal layer to the encoder if the plain MLP plateaus.
 
 ## Open questions
 
@@ -127,3 +151,4 @@ General ladder rule: a more complex model is only adopted if it beats the previo
 3. VPS provider and region. Any provider with 2-4 GB RAM and 40+ GB disk works at phase 1 scale.
 4. Should the Python code live in this repo (`ml/`) or in a separate one? The recommendation is the same repo, to keep feature-parity tests simple, with its own CI job.
 5. Embedding model: run locally on the VPS CPU (fine at batch cadence) or rent GPU time only for occasional re-embedding?
+6. How many seeds and what weighting scheme for the network? The defaults above (5 seeds, uncertainty weighting) are a starting point to tune in phase 2.
