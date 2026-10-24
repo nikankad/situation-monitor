@@ -49,6 +49,19 @@ export {
 	type PersonPattern
 } from './analysis';
 
+// Entity registry
+export {
+	ENTITIES,
+	ENTITY_TYPE_LABELS,
+	entityKey,
+	entityPath,
+	getEntity,
+	matchEntities,
+	type Entity,
+	type EntityType,
+	type EntityLocation
+} from './entities';
+
 // Map configuration
 export {
 	HOTSPOTS,
