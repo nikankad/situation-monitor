@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { entityPath, matchEntities } from '$lib/config/entities';
-	import { itemKey } from '$lib/analysis/entity-index';
-	import { timeAgo } from '$lib/utils';
+	import { dedupeItems } from '$lib/analysis/entity-index';
+	import { formatAgo } from '$lib/utils';
 	import type { NewsItem } from '$lib/types';
 
 	interface Props {
@@ -17,32 +17,20 @@
 	let alertsOnly = $state(false);
 	let visibleCount = $state(PAGE_SIZE);
 
-	const latest = $derived.by<NewsItem[]>(() => {
-		const seen = new Set<string>();
-		const unique: NewsItem[] = [];
-		for (const item of [...items].sort((a, b) => b.timestamp - a.timestamp)) {
-			const key = itemKey(item);
-			if (seen.has(key)) continue;
-			seen.add(key);
-			unique.push(item);
-		}
-		return unique;
-	});
+	const latest = $derived(dedupeItems(items));
 
 	const shown = $derived(latest.filter((item) => !alertsOnly || item.isAlert));
 	const visible = $derived(shown.slice(0, visibleCount));
 
 	// One chip per name, so "Iran" the region and "Iran" the topic do not show twice
 	function chipsFor(item: NewsItem) {
-		const seen = new Set<string>();
-		return matchEntities(item.title)
-			.filter((entity) => !seen.has(entity.name) && seen.add(entity.name))
-			.slice(0, CHIPS_PER_ITEM);
-	}
-
-	function ago(timestamp: number): string {
-		const text = timeAgo(timestamp);
-		return text === 'just now' ? text : `${text} ago`;
+		const chips: ReturnType<typeof matchEntities> = [];
+		for (const entity of matchEntities(item.title)) {
+			if (chips.some((chip) => chip.name === entity.name)) continue;
+			chips.push(entity);
+			if (chips.length === CHIPS_PER_ITEM) break;
+		}
+		return chips;
 	}
 </script>
 
@@ -78,7 +66,7 @@
 	{#each visible as item, i (`${i}-${item.link}`)}
 		<div style="padding: 8px 0; border-bottom: 1px solid var(--t-line)">
 			<div class="t-tape-meta">
-				<span>{ago(item.timestamp)}</span>
+				<span>{formatAgo(item.timestamp)}</span>
 				<span>{item.source}</span>
 				{#if item.isAlert}<span><span class="t-alertdot"></span>ALERT</span>{/if}
 			</div>

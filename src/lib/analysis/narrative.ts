@@ -3,7 +3,8 @@
  */
 
 import type { NewsItem } from '$lib/types';
-import { NARRATIVE_PATTERNS, SOURCE_TYPES, type NarrativePattern } from '$lib/config/analysis';
+import { NARRATIVE_PATTERNS, type NarrativePattern } from '$lib/config/analysis';
+import { classifySource } from './sources';
 
 // Types for narrative results
 export interface NarrativeData {
@@ -49,24 +50,6 @@ const narrativeHistory: Record<
  */
 function formatNarrativeName(id: string): string {
 	return id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-/**
- * Classify source type
- */
-export function classifySource(source: string): 'fringe' | 'alternative' | 'mainstream' | null {
-	const lowerSource = source.toLowerCase();
-
-	for (const fringeSource of SOURCE_TYPES.fringe) {
-		if (lowerSource.includes(fringeSource)) return 'fringe';
-	}
-	for (const altSource of SOURCE_TYPES.alternative) {
-		if (lowerSource.includes(altSource)) return 'alternative';
-	}
-	for (const msSource of SOURCE_TYPES.mainstream) {
-		if (lowerSource.includes(msSource)) return 'mainstream';
-	}
-	return null;
 }
 
 /**

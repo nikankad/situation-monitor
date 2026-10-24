@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { MapPanel } from '$lib/components/panels';
-	import { TerminalBar, StatusStrip, EntityTable, NewsTape } from '$lib/components/terminal';
+	import {
+		TerminalBar,
+		StatusStrip,
+		EntityTable,
+		NewsTape,
+		Section
+	} from '$lib/components/terminal';
 	import { allNewsItems, monitors } from '$lib/stores';
 	import { entityIndex } from '$lib/stores/entities';
 </script>
@@ -20,28 +26,19 @@
 		<StatusStrip index={$entityIndex} />
 
 		<div class="t-cols">
-			<section class="t-sec">
-				<div class="t-sec-head">
-					<span class="t-label">Map</span>
-					<span class="t-dim">click a hotspot or news cluster for detail</span>
-				</div>
+			<Section title="Map" hint="click a hotspot or news cluster for detail">
 				<MapPanel monitors={$monitors.monitors} news={$allNewsItems} />
-			</section>
-			<aside class="t-sec">
-				<div class="t-sec-head"><span class="t-label">News tape</span></div>
+			</Section>
+			<Section title="News tape">
 				<div class="tape-scroll">
 					<NewsTape items={$allNewsItems} />
 				</div>
-			</aside>
+			</Section>
 		</div>
 
-		<section class="t-sec">
-			<div class="t-sec-head">
-				<span class="t-label">Everything we track</span>
-				<span class="t-dim">counts are headlines in the current feeds</span>
-			</div>
+		<Section title="Everything we track" hint="counts are headlines in the current feeds">
 			<EntityTable index={$entityIndex} />
-		</section>
+		</Section>
 	</div>
 </div>
 

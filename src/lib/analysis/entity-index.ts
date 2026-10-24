@@ -6,12 +6,12 @@
  */
 
 import type { NewsItem } from '$lib/types';
-import { ENTITIES, entityKey, type Entity } from '$lib/config/entities';
+import { entityKey, matchEntities, type Entity } from '$lib/config/entities';
 import { analyzeHeadline, type SentimentType } from './sentiment';
-import { classifySource } from './narrative';
+import { classifySource } from './sources';
 
 const HOUR_MS = 60 * 60 * 1000;
-export const HISTOGRAM_HOURS = 24;
+const HISTOGRAM_HOURS = 24;
 const RECENT_HOURS = 6;
 const TRACKING_PARAMS = /^(utm_|fbclid$|gclid$|ref$|cmpid$)/i;
 
@@ -72,11 +72,7 @@ export function itemKey(item: Pick<NewsItem, 'link' | 'title' | 'source'>): stri
 	return `${item.source}|${item.title}`.toLowerCase().trim();
 }
 
-function emptySentiment(): Record<SentimentType, number> {
-	return { positive: 0, negative: 0, neutral: 0, critical: 0, alarming: 0 };
-}
-
-export function emptyStats(entity: Entity): EntityStats {
+function emptyStats(entity: Entity): EntityStats {
 	return {
 		entity,
 		items: [],
@@ -90,7 +86,7 @@ export function emptyStats(entity: Entity): EntityStats {
 		sourceMix: { mainstream: 0, alternative: 0, fringe: 0, unclassified: 0 },
 		fringeShare: 0,
 		tone: null,
-		sentiment: emptySentiment(),
+		sentiment: { positive: 0, negative: 0, neutral: 0, critical: 0, alarming: 0 },
 		coMentions: [],
 		hourly: new Array(HISTOGRAM_HOURS).fill(0),
 		alertKeywords: []
@@ -101,15 +97,19 @@ function tally<K>(map: Map<K, number>, key: K): void {
 	map.set(key, (map.get(key) ?? 0) + 1);
 }
 
+interface Bucket {
+	entity: Entity;
+	items: NewsItem[];
+	co: Map<string, CoMention>;
+}
+
 function buildStats(
-	entity: Entity,
-	items: NewsItem[],
-	coCounts: Map<string, number>,
+	bucket: Bucket,
 	scores: Map<NewsItem, { score: number; sentiment: SentimentType }>,
-	byKey: Map<string, Entity>,
 	now: number
 ): EntityStats {
-	const stats = emptyStats(entity);
+	const { items } = bucket;
+	const stats = emptyStats(bucket.entity);
 	stats.items = items;
 	stats.count = items.length;
 
@@ -161,36 +161,35 @@ function buildStats(
 			? 0
 			: Math.round((stats.last6h / Math.max(1, earlierBlockAverage)) * 10) / 10;
 
-	stats.coMentions = [...coCounts.entries()]
-		.map(([key, count]) => ({ entity: byKey.get(key)!, count }))
-		.filter((c) => c.entity)
-		.sort((a, b) => b.count - a.count);
+	stats.coMentions = [...bucket.co.values()].sort((a, b) => b.count - a.count);
 
 	return stats;
+}
+
+/**
+ * Drop repeats of the same article across feeds and categories; newest first
+ */
+export function dedupeItems(items: NewsItem[]): NewsItem[] {
+	const seen = new Set<string>();
+	const unique: NewsItem[] = [];
+	for (const item of [...items].sort((a, b) => b.timestamp - a.timestamp)) {
+		const key = itemKey(item);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		unique.push(item);
+	}
+	return unique;
 }
 
 /**
  * Index the headlines by entity. Only entities with at least one headline appear in the result.
  */
 export function buildEntityIndex(items: NewsItem[], now: number = Date.now()): EntityIndex {
-	const seen = new Set<string>();
-	const unique: NewsItem[] = [];
-	for (const item of items) {
-		const key = itemKey(item);
-		if (seen.has(key)) continue;
-		seen.add(key);
-		unique.push(item);
-	}
-	unique.sort((a, b) => b.timestamp - a.timestamp);
-
-	const itemsByEntity = new Map<string, NewsItem[]>();
-	const coByEntity = new Map<string, Map<string, number>>();
+	const buckets = new Map<string, Bucket>();
 	const scores = new Map<NewsItem, { score: number; sentiment: SentimentType }>();
-	const byKey = new Map<string, Entity>(ENTITIES.map((e) => [entityKey(e), e]));
 
-	for (const item of unique) {
-		const title = item.title || '';
-		const matched = ENTITIES.filter((entity) => entity.matchers.some((m) => m.test(title)));
+	for (const item of dedupeItems(items)) {
+		const matched = matchEntities(item.title || '');
 		if (matched.length === 0) continue;
 
 		const { score, sentiment } = analyzeHeadline(item);
@@ -198,26 +197,25 @@ export function buildEntityIndex(items: NewsItem[], now: number = Date.now()): E
 
 		for (const entity of matched) {
 			const key = entityKey(entity);
-			if (!itemsByEntity.has(key)) {
-				itemsByEntity.set(key, []);
-				coByEntity.set(key, new Map());
+			let bucket = buckets.get(key);
+			if (!bucket) {
+				bucket = { entity, items: [], co: new Map() };
+				buckets.set(key, bucket);
 			}
-			itemsByEntity.get(key)!.push(item);
+			bucket.items.push(item);
 
-			const co = coByEntity.get(key)!;
 			for (const other of matched) {
-				if (other !== entity) tally(co, entityKey(other));
+				if (other === entity) continue;
+				const otherKey = entityKey(other);
+				const co = bucket.co.get(otherKey);
+				if (co) co.count++;
+				else bucket.co.set(otherKey, { entity: other, count: 1 });
 			}
 		}
 	}
 
 	const index: EntityIndex = new Map();
-	for (const [key, entityItems] of itemsByEntity) {
-		index.set(
-			key,
-			buildStats(byKey.get(key)!, entityItems, coByEntity.get(key)!, scores, byKey, now)
-		);
-	}
+	for (const [key, bucket] of buckets) index.set(key, buildStats(bucket, scores, now));
 	return index;
 }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Story } from '$lib/analysis/stories';
-	import { timeAgo } from '$lib/utils';
+	import { formatAgo } from '$lib/utils';
 
 	interface Props {
 		stories: Story[];
@@ -11,11 +11,6 @@
 
 	let showAll = $state(false);
 	const visible = $derived(showAll ? stories : stories.slice(0, limit));
-
-	function ago(timestamp: number): string {
-		const text = timeAgo(timestamp);
-		return text === 'just now' ? text : `${text} ago`;
-	}
 </script>
 
 {#each visible as story, i (`${i}-${story.headline.link}`)}
@@ -26,7 +21,7 @@
 		<div class="t-story-meta">
 			{story.sources.length} source{story.sources.length === 1 ? '' : 's'}
 			· {story.items.length} headline{story.items.length === 1 ? '' : 's'}
-			· latest {ago(story.lastSeen)}
+			· latest {formatAgo(story.lastSeen)}
 			{#if story.alertCount > 0}· <span class="t-down">{story.alertCount} alert</span>{/if}
 		</div>
 		{#if story.items.length > 1}

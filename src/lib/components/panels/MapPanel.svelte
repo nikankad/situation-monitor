@@ -27,6 +27,7 @@
 	import { onMount } from 'svelte';
 	import { Panel, Icon } from '$lib/components/common';
 	import { getIconNodes, type IconName } from '$lib/config/icons';
+	import { haversineKm } from '$lib/analysis/geo';
 	import {
 		HOTSPOTS,
 		CHOKEPOINTS,
@@ -43,14 +44,11 @@
 	} from '$lib/config/map';
 	import { CACHE_TTLS } from '$lib/config/api';
 	import type { CustomMonitor, NewsItem } from '$lib/types';
+	import type { EntityLocation } from '$lib/config/entities';
 	import { getCountryName } from '$lib/config/countries';
 	import { timeAgo } from '$lib/utils';
 
-	interface MapFocus {
-		lat: number;
-		lon: number;
-		zoom: number;
-	}
+	type MapFocus = Pick<EntityLocation, 'lat' | 'lon' | 'zoom'>;
 
 	interface Props {
 		monitors?: CustomMonitor[];
@@ -70,24 +68,6 @@
 	}: Props = $props();
 
 	// Distance-based clustering helper functions
-	function toRadians(degrees: number): number {
-		return degrees * (Math.PI / 180);
-	}
-
-	function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-		const R = 6371; // Earth radius in kilometers
-		const dLat = toRadians(lat2 - lat1);
-		const dLon = toRadians(lon2 - lon1);
-		const a =
-			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-			Math.cos(toRadians(lat1)) *
-				Math.cos(toRadians(lat2)) *
-				Math.sin(dLon / 2) *
-				Math.sin(dLon / 2);
-		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		return R * c;
-	}
-
 	function getDistanceThreshold(zoomScale: number): number {
 		// Exponential decay - more zoom = smaller threshold
 		// Zoom 1.0 → 800km: continent-level clustering
@@ -146,7 +126,7 @@
 
 			for (let i = 0; i < clusters.length; i++) {
 				for (let j = i + 1; j < clusters.length; j++) {
-					const dist = haversineDistance(
+					const dist = haversineKm(
 						clusters[i].lat,
 						clusters[i].lon,
 						clusters[j].lat,
@@ -1184,7 +1164,7 @@
 		const h = selectedHotspot;
 		if (!h) return [];
 		return geoNews
-			.filter((n) => haversineDistance(h.lat, h.lon, n.lat, n.lon) < 600)
+			.filter((n) => haversineKm(h.lat, h.lon, n.lat, n.lon) < 600)
 			.sort((a, b) => Number(b.isAlert) - Number(a.isAlert) || b.timestamp - a.timestamp)
 			.slice(0, 6);
 	});

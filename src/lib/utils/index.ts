@@ -4,6 +4,8 @@
 
 export {
 	timeAgo,
+	formatAgo,
+	formatPrice,
 	getRelativeTime,
 	formatCurrency,
 	formatNumber,

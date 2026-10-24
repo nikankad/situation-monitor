@@ -38,6 +38,19 @@ describe('registry', () => {
 		}
 	});
 
+	it('describes every topic, narrative and asset', () => {
+		for (const entity of ENTITIES) {
+			if (['topic', 'narrative', 'asset'].includes(entity.type)) {
+				expect(entity.summary, `${entity.type}/${entity.id}`).toBeTruthy();
+			}
+		}
+	});
+
+	it('uses acronyms in capitals in names', () => {
+		expect(getEntity('narrative', 'wef-agenda')?.name).toBe('WEF Agenda');
+		expect(getEntity('narrative', 'ai-doom')?.name).toBe('AI Doom');
+	});
+
 	it('returns undefined for an unknown entity', () => {
 		expect(getEntity('region', 'atlantis')).toBeUndefined();
 	});
@@ -79,6 +92,11 @@ describe('matching', () => {
 	it('links assets to headlines that could explain a move', () => {
 		expect(matchedKeys('Bitcoin hits a new record')).toContain('asset/btc');
 		expect(matchedKeys('Crude oil jumps on supply fears')).toContain('asset/crude-oil');
+	});
+
+	it('returns the same matches when a title is looked up again', () => {
+		const first = matchEntities('Iran missile test alarms neighbours');
+		expect(matchEntities('Iran missile test alarms neighbours')).toBe(first);
 	});
 
 	it('returns nothing for empty text', () => {

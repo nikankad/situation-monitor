@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildEntityIndex, getStats, itemKey } from './entity-index';
+import { buildEntityIndex, dedupeItems, getStats, itemKey } from './entity-index';
 import { getEntity, entityKey } from '$lib/config/entities';
 import type { NewsItem } from '$lib/types';
 
@@ -24,6 +24,15 @@ function item(title: string, overrides: Partial<NewsItem> & { hoursAgo?: number 
 }
 
 const iran = getEntity('region', 'iran')!;
+
+describe('dedupeItems', () => {
+	it('keeps one copy of each article, newest first', () => {
+		const a = item('Story A', { hoursAgo: 3 });
+		const b = item('Story B', { hoursAgo: 1 });
+		const copyOfA = { ...a, id: 'other-feed', category: 'intel' as const };
+		expect(dedupeItems([a, b, copyOfA])).toEqual([b, a]);
+	});
+});
 
 describe('buildEntityIndex', () => {
 	it('counts headlines by window and places them in the hourly histogram', () => {

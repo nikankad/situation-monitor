@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import {
@@ -35,13 +36,15 @@
 	}
 
 	const results = $derived.by<Entity[]>(() => {
+		if (!$paletteOpen) return [];
+
 		const text = query.trim().toLowerCase();
 		if (!text) {
-			// Nothing typed yet: offer whatever is most active right now
-			return ENTITIES.filter((e) => $entityIndex.has(entityKey(e)))
-				.sort(
-					(a, b) => $entityIndex.get(entityKey(b))!.count - $entityIndex.get(entityKey(a))!.count
-				)
+			// Nothing typed yet: offer whatever is most active right now. The index is read
+			// once here rather than subscribed to, so a closed palette never triggers rebuilds.
+			const index = get(entityIndex);
+			return ENTITIES.filter((e) => index.has(entityKey(e)))
+				.sort((a, b) => index.get(entityKey(b))!.count - index.get(entityKey(a))!.count)
 				.slice(0, MAX_RESULTS);
 		}
 		return ENTITIES.map((entity) => ({ entity, value: score(entity, text) }))

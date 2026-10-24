@@ -130,14 +130,14 @@ const SMALL_AREAS = new Set([
 	'black_sea'
 ]);
 
-/** Search radius for nearby strategic sites; the default suits a mid-sized country */
+/** Search radius for nearby strategic sites; 0 means no site is tracked there. The default suits a mid-sized country */
 const REGION_RADIUS_KM: Record<string, number> = {
 	usa: 2500,
 	russia: 1500,
 	china: 2200,
-	canada: 1,
-	brazil: 1,
-	australia: 1,
+	canada: 0,
+	brazil: 0,
+	australia: 0,
 	europe: 1800,
 	middle_east: 1800,
 	asia: 2500,
@@ -484,10 +484,21 @@ export function entityPath(entity: Pick<Entity, 'type' | 'id'>): string {
 	return `/e/${entity.type}/${entity.id}`;
 }
 
+const MATCH_CACHE_LIMIT = 4000;
+const matchCache = new Map<string, Entity[]>();
+
 /**
- * Entities a headline mentions
+ * Entities a headline mentions. Results are cached by title, because the same headlines are
+ * matched again on every news update.
  */
 export function matchEntities(title: string): Entity[] {
 	if (!title) return [];
-	return ENTITIES.filter((entity) => entity.matchers.some((matcher) => matcher.test(title)));
+
+	const cached = matchCache.get(title);
+	if (cached) return cached;
+
+	const matched = ENTITIES.filter((entity) => entity.matchers.some((m) => m.test(title)));
+	if (matchCache.size >= MATCH_CACHE_LIMIT) matchCache.clear();
+	matchCache.set(title, matched);
+	return matched;
 }

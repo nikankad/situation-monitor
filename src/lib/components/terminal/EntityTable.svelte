@@ -3,9 +3,10 @@
 	import { getStats, type EntityIndex, type EntityStats } from '$lib/analysis/entity-index';
 	import { findQuote } from '$lib/analysis/quotes';
 	import { markets } from '$lib/stores';
-	import { formatPercentChange } from '$lib/utils';
+	import { formatPercentChange, formatPrice } from '$lib/utils';
 	import EntityLink from './EntityLink.svelte';
-	import MiniBars from './MiniBars.svelte';
+	import Histogram from './Histogram.svelte';
+	import { changeClass, formatMomentum, formatTone, toneClass } from './format';
 
 	interface Props {
 		index: EntityIndex;
@@ -126,11 +127,6 @@
 	function arrow(key: SortKey): string {
 		return sortKey === key ? (descending ? ' ▼' : ' ▲') : '';
 	}
-
-	function changeClass(change: number | null): string {
-		if (change === null) return 't-dim';
-		return change > 0 ? 't-up' : change < 0 ? 't-down' : '';
-	}
 </script>
 
 <div class="t-sec-head">
@@ -189,30 +185,17 @@
 					<td class="r t-num">{row.stats.count}</td>
 					<td class="r t-num">{row.stats.last6h}</td>
 					<td class="r t-num" class:t-up={row.stats.momentum >= 2}>
-						{row.stats.momentum > 0 ? `${row.stats.momentum.toFixed(1)}×` : '—'}
+						{formatMomentum(row.stats.momentum)}
 					</td>
 					<td class="r t-num">{row.stats.sourceCount}</td>
 					<td class="r t-num" class:t-down={row.stats.alertCount > 0}>{row.stats.alertCount}</td>
 					<td class="r t-num">{row.stats.count > 0 ? `${row.stats.fringeShare}%` : '—'}</td>
-					<td
-						class="r t-num"
-						class:t-down={row.stats.tone !== null && row.stats.tone < -10}
-						class:t-up={row.stats.tone !== null && row.stats.tone > 20}
-					>
-						{row.stats.tone === null ? '—' : String(row.stats.tone).replace('-', '−')}
-					</td>
-					<td class="r t-num">
-						{row.price === null
-							? '—'
-							: row.price.toLocaleString('en-US', {
-									minimumFractionDigits: row.price < 100 ? 2 : 0,
-									maximumFractionDigits: row.price < 100 ? 2 : 1
-								})}
-					</td>
+					<td class="r t-num {toneClass(row.stats.tone)}">{formatTone(row.stats.tone)}</td>
+					<td class="r t-num">{row.price === null ? '—' : formatPrice(row.price)}</td>
 					<td class="r t-num {changeClass(row.change)}">
 						{row.change === null ? '—' : formatPercentChange(row.change, 1)}
 					</td>
-					<td><MiniBars values={row.stats.hourly} /></td>
+					<td><Histogram values={row.stats.hourly} compact /></td>
 				</tr>
 			{:else}
 				<tr>

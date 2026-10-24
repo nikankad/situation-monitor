@@ -5,6 +5,7 @@
 	import { formatPercentChange } from '$lib/utils';
 	import type { EntityIndex } from '$lib/analysis/entity-index';
 	import EntityLink from './EntityLink.svelte';
+	import { changeClass } from './format';
 
 	interface Props {
 		index: EntityIndex;
@@ -48,10 +49,6 @@
 			.sort((a, b) => b.count - a.count)
 			.slice(0, ROWS)
 	);
-
-	function changeClass(value: number): string {
-		return value > 0 ? 't-up' : value < 0 ? 't-down' : '';
-	}
 </script>
 
 <section class="t-strip" aria-label="Right now">

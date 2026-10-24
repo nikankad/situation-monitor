@@ -4,8 +4,17 @@
 	import TerminalBar from './TerminalBar.svelte';
 	import EntityLink from './EntityLink.svelte';
 	import Histogram from './Histogram.svelte';
+	import Section from './Section.svelte';
 	import StoryList from './StoryList.svelte';
 	import SourceMix from './SourceMix.svelte';
+	import {
+		changeClass,
+		formatMomentum,
+		formatTone,
+		threatStyle,
+		toneClass,
+		toneLabel
+	} from './format';
 	import { getStats } from '$lib/analysis/entity-index';
 	import { clusterStories } from '$lib/analysis/stories';
 	import { nearbySites, highestThreat, SITE_KIND_LABELS } from '$lib/analysis/geo';
@@ -23,7 +32,7 @@
 	import { allNewsItems, markets, monitors } from '$lib/stores';
 	import { entityIndex } from '$lib/stores/entities';
 	import { predictions } from '$lib/stores/misc';
-	import { formatPercentChange } from '$lib/utils';
+	import { formatPercentChange, formatPrice } from '$lib/utils';
 
 	interface Props {
 		entity: Entity;
@@ -65,33 +74,40 @@
 		})).filter((group) => group.items.length > 0)
 	);
 
+	const figures = $derived([
+		{ label: 'Headlines', value: String(stats.count), cls: '' },
+		{ label: 'Last 6 hours', value: String(stats.last6h), cls: '' },
+		{
+			label: 'Momentum',
+			value: formatMomentum(stats.momentum),
+			cls: stats.momentum >= 2 ? 't-up' : ''
+		},
+		{ label: 'Sources', value: String(stats.sourceCount), cls: '' },
+		{ label: 'Alerts', value: String(stats.alertCount), cls: stats.alertCount > 0 ? 't-down' : '' },
+		{
+			label: 'Fringe share',
+			value: stats.count > 0 ? `${stats.fringeShare}%` : '—',
+			cls: ''
+		},
+		{ label: 'Tone', value: formatTone(stats.tone), cls: toneClass(stats.tone) }
+	]);
+
+	const leaderFacts = $derived(
+		leader
+			? [
+					['Country', leader.country || '—'],
+					['In office since', leader.since],
+					['Party', leader.party],
+					['Term ends', leader.termEnds]
+				].filter((fact): fact is [string, string] => Boolean(fact[1]))
+			: []
+	);
+
 	let showAllSites = $state(false);
 	const visibleSites = $derived(showAllSites ? sites : sites.slice(0, SITE_LIMIT));
 
-	function changeClass(value: number): string {
-		if (value > 0) return 't-up';
-		if (value < 0) return 't-down';
-		return '';
-	}
-
-	function toneLabel(tone: number | null): string {
-		if (tone === null) return 'No data';
-		if (tone <= -60) return 'Alarming';
-		if (tone <= -30) return 'Critical';
-		if (tone < -10) return 'Negative';
-		if (tone > 20) return 'Positive';
-		return 'Neutral';
-	}
-
 	function rangePosition(value: number, low: number, high: number): string {
 		return `${(((value - low) / (high - low)) * 100).toFixed(1)}%`;
-	}
-
-	function formatPrice(price: number): string {
-		return price.toLocaleString('en-US', {
-			minimumFractionDigits: price < 100 ? 2 : 0,
-			maximumFractionDigits: price < 100 ? 2 : 1
-		});
 	}
 
 	function quoteChange(other: Entity): number | null {
@@ -130,10 +146,7 @@
 				<span class="t-muted">{entity.category}</span>
 			{/if}
 			{#if threat}
-				<span
-					class="t-tag"
-					style="color: {THREAT_COLORS[threat]}; border-color: {THREAT_COLORS[threat]}"
-				>
+				<span class="t-tag" style={threatStyle(THREAT_COLORS[threat])}>
 					{threat} threat nearby
 				</span>
 			{/if}
@@ -146,64 +159,24 @@
 		</div>
 
 		<section class="t-stats" aria-label="Key figures">
-			<div>
-				<div class="t-label">Headlines</div>
-				<div class="t-stat-value">{stats.count}</div>
-			</div>
-			<div>
-				<div class="t-label">Last 6 hours</div>
-				<div class="t-stat-value">{stats.last6h}</div>
-			</div>
-			<div>
-				<div class="t-label">Momentum</div>
-				<div class="t-stat-value" class:t-up={stats.momentum >= 2}>
-					{stats.momentum > 0 ? `${stats.momentum.toFixed(1)}×` : '—'}
+			{#each figures as figure (figure.label)}
+				<div>
+					<div class="t-label">{figure.label}</div>
+					<div class="t-stat-value {figure.cls}">{figure.value}</div>
 				</div>
-			</div>
-			<div>
-				<div class="t-label">Sources</div>
-				<div class="t-stat-value">{stats.sourceCount}</div>
-			</div>
-			<div>
-				<div class="t-label">Alerts</div>
-				<div class="t-stat-value" class:t-down={stats.alertCount > 0}>{stats.alertCount}</div>
-			</div>
-			<div>
-				<div class="t-label">Fringe share</div>
-				<div class="t-stat-value">{stats.count > 0 ? `${stats.fringeShare}%` : '—'}</div>
-			</div>
-			<div>
-				<div class="t-label">Tone</div>
-				<div
-					class="t-stat-value"
-					class:t-down={stats.tone !== null && stats.tone < -10}
-					class:t-up={stats.tone !== null && stats.tone > 20}
-				>
-					{stats.tone === null ? '—' : String(stats.tone).replace('-', '−')}
-				</div>
-			</div>
+			{/each}
 		</section>
 
 		<div class="t-cols">
 			<div>
-				<section class="t-sec">
-					<div class="t-sec-head">
-						<span class="t-label">Context</span>
-					</div>
+				<Section title="Context">
 					{#if entity.type === 'person' && leader}
 						{#if leader.bio?.background}
 							<p class="t-prose">{leader.bio.background}</p>
 						{/if}
-						<div class="t-kv"><span>Country</span><span>{leader.country || '—'}</span></div>
-						{#if leader.since}
-							<div class="t-kv"><span>In office since</span><span>{leader.since}</span></div>
-						{/if}
-						{#if leader.party}
-							<div class="t-kv"><span>Party</span><span>{leader.party}</span></div>
-						{/if}
-						{#if leader.termEnds}
-							<div class="t-kv"><span>Term ends</span><span>{leader.termEnds}</span></div>
-						{/if}
+						{#each leaderFacts as [label, value] (label)}
+							<div class="t-kv"><span>{label}</span><span>{value}</span></div>
+						{/each}
 						{#if leader.publicConsensus?.approval}
 							{@const approval = leader.publicConsensus.approval}
 							<div class="t-kv">
@@ -285,48 +258,38 @@
 							key.
 						</p>
 					{/if}
-				</section>
+				</Section>
 
 				{#if entity.location}
-					<section class="t-sec">
-						<div class="t-sec-head">
-							<span class="t-label">Map</span>
-							<span class="t-dim">use + / − or Ctrl+scroll to zoom</span>
-						</div>
+					<Section title="Map" hint="use + / − or Ctrl+scroll to zoom">
 						<MapPanel
 							monitors={$monitors.monitors}
 							news={$allNewsItems}
 							focus={entity.location}
 							title={entity.name}
 						/>
-					</section>
+					</Section>
 
 					{#if sites.length > 0}
-						<section class="t-sec">
-							<div class="t-sec-head">
-								<span class="t-label">Strategic sites within {entity.location.radiusKm} km</span>
-								<span class="t-dim">distance from the region's centre</span>
-							</div>
+						<Section
+							title="Strategic sites within {entity.location.radiusKm} km"
+							hint="distance from the region's centre"
+						>
 							{#each visibleSites as site (`${site.kind}-${site.name}`)}
 								<div class="t-story">
 									<div class="t-story-title">
 										{site.name}
 										<span class="t-tag">{SITE_KIND_LABELS[site.kind]}</span>
 										{#if site.level}
-											<span
-												class="t-tag"
-												style="color: {THREAT_COLORS[site.level]}; border-color: {THREAT_COLORS[
-													site.level
-												]}"
-											>
+											<span class="t-tag" style={threatStyle(THREAT_COLORS[site.level])}>
 												{site.level}
 											</span>
 										{/if}
 									</div>
 									<div class="t-story-meta">{Math.round(site.distanceKm)} km</div>
-									{#if site.desc}<p class="t-prose muted" style="margin: 0">
-											{truncate(site.desc, 260)}
-										</p>{/if}
+									{#if site.desc}
+										<p class="t-prose muted" style="margin: 0">{truncate(site.desc, 260)}</p>
+									{/if}
 								</div>
 							{/each}
 							{#if sites.length > SITE_LIMIT}
@@ -338,52 +301,38 @@
 									{showAllSites ? 'Show fewer' : `Show all ${sites.length} sites`}
 								</button>
 							{/if}
-						</section>
+						</Section>
 					{/if}
 				{/if}
 
-				<section class="t-sec">
-					<div class="t-sec-head">
-						<span class="t-label">Stories · grouped from {stats.count} headlines</span>
-						<span class="t-dim">most sources first</span>
-					</div>
+				<Section title="Stories · grouped from {stats.count} headlines" hint="most sources first">
 					<StoryList {stories} />
-				</section>
+				</Section>
 
-				<section class="t-sec">
-					<div class="t-sec-head">
-						<span class="t-label">Headlines by hour</span>
-						<span class="t-dim">current feed window, last 24 hours</span>
-					</div>
+				<Section title="Headlines by hour" hint="current feed window, last 24 hours">
 					<Histogram values={stats.hourly} />
-				</section>
+				</Section>
 
-				<section class="t-sec">
-					<div class="t-sec-head"><span class="t-label">Mentions over time</span></div>
+				<Section title="Mentions over time">
 					<div class="t-slot">
 						<b>Longer history arrives with the data service.</b><br />
 						The browser only sees the headlines in the feeds right now, so days or weeks of trend need
 						the stored history from the collection pipeline. This stays empty until then instead of showing
 						an invented curve.
 					</div>
-				</section>
+				</Section>
 			</div>
 
 			<aside>
-				<section class="t-sec">
-					<div class="t-sec-head"><span class="t-label">Who is reporting it</span></div>
+				<Section title="Who is reporting it">
 					{#if stats.count > 0}
 						<SourceMix {stats} />
 					{:else}
 						<div class="t-slot">No headlines yet.</div>
 					{/if}
-				</section>
+				</Section>
 
-				<section class="t-sec">
-					<div class="t-sec-head">
-						<span class="t-label">Tone</span>
-						<span class="t-dim">keyword based</span>
-					</div>
+				<Section title="Tone" hint="keyword based">
 					{#if stats.count > 0}
 						<div class="t-mix" role="img" aria-label="Tone distribution">
 							{#each SENTIMENTS as sentiment (sentiment)}
@@ -404,50 +353,42 @@
 					{:else}
 						<div class="t-slot">No headlines yet.</div>
 					{/if}
-				</section>
+				</Section>
 
 				{#if stats.alertKeywords.length > 0}
-					<section class="t-sec">
-						<div class="t-sec-head"><span class="t-label">Alert keywords</span></div>
+					<Section title="Alert keywords">
 						<div class="t-chips">
 							{#each stats.alertKeywords as alert (alert.keyword)}
 								<span class="t-chip">{alert.keyword} · {alert.count}</span>
 							{/each}
 						</div>
-					</section>
+					</Section>
 				{/if}
 
 				{#each together as group (group.type)}
-					<section class="t-sec">
-						<div class="t-sec-head">
-							<span class="t-label">Appears with · {group.label.toLowerCase()}</span>
-							<span class="t-dim">shared headlines</span>
-						</div>
+					<Section title="Appears with · {group.label.toLowerCase()}" hint="shared headlines">
 						{#each group.items as item (entityKey(item.entity))}
 							{@const change = quoteChange(item.entity)}
 							<div class="t-kv">
-								<span
-									><EntityLink
+								<span>
+									<EntityLink
 										entity={item.entity}
 										showType={item.entity.type === 'topic' || item.entity.type === 'region'}
-									/></span
-								>
+									/>
+								</span>
 								<span class="t-num">
 									{#if change !== null}
-										<span class={changeClass(change)}>
-											{formatPercentChange(change, 1)}
-										</span>
+										<span class={changeClass(change)}>{formatPercentChange(change, 1)}</span>
 										·
 									{/if}
 									{item.count}
 								</span>
 							</div>
 						{/each}
-					</section>
+					</Section>
 				{/each}
 
-				<section class="t-sec">
-					<div class="t-sec-head"><span class="t-label">Prediction markets</span></div>
+				<Section title="Prediction markets">
 					{#each linkedMarkets as market (market.id)}
 						<div class="t-kv">
 							<a href={market.url} target="_blank" rel="noopener noreferrer">
@@ -458,7 +399,7 @@
 					{:else}
 						<div class="t-slot">No open market mentions this.</div>
 					{/each}
-				</section>
+				</Section>
 			</aside>
 		</div>
 
