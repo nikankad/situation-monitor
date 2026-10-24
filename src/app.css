@@ -99,7 +99,7 @@ a:hover {
 	overflow: hidden;
 }
 
-.map-container svg {
+.map-container > svg {
 	display: block;
 	width: 100%;
 	height: auto;

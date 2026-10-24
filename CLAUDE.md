@@ -44,6 +44,15 @@ npm run format       # Auto-format with Prettier
 - **`stores/`** - Svelte stores for settings, news, markets, monitors, refresh orchestration
 - **`types/`** - TypeScript interfaces
 
+### Routes and Entity Pages
+
+- `/` - overview: status strip, map, sortable entity table, news tape
+- `/e/[type]/[id]` - one prerendered page per entity (region, topic, narrative, asset, person); `entries()` in its `+page.ts` enumerates them from the registry
+- `/dashboard` - the original panel grid
+- Data loading lives in `src/lib/services/dataLoader.ts`, started once from the root layout
+- `src/lib/config/entities.ts` is the entity registry, built from the map, analysis, markets and leaders config. `src/lib/analysis/entity-index.ts` indexes current headlines by entity; entity page sections read from it
+- Terminal view components are in `src/lib/components/terminal/`, styled by `src/lib/styles/terminal.css` (the accent colour is the single `--t-accent` token)
+
 ### Path Aliases
 
 ```typescript
@@ -91,6 +100,8 @@ Unique business logic for intelligence analysis:
 ## Deployment
 
 GitHub Actions workflow builds with `BASE_PATH=/situation-monitor` and deploys to GitHub Pages at `https://hipcityreg.github.io/situation-monitor/`
+
+Pushes to `feature/**` branches run `.github/workflows/preview.yml`, which publishes `main` at the site root and the branch at `/preview/<branch-name>/` (the base path comes from `BASE_PATH`, defaulting to `/situation-monitor`). Pages hosts one site, so the most recent deployment replaces earlier previews, and the next deploy from `main` removes them.
 
 ## External Dependencies
 

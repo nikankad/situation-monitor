@@ -1,0 +1,94 @@
+name: Deploy branch preview to GitHub Pages
+
+# Publishes main at the site root and the pushed feature branch under /preview/<name>/.
+# Pages hosts one site, so each deployment replaces the previous one: the preview shown is
+# the most recently pushed feature branch, and the next deploy from main removes it.
+
+on:
+  push:
+    branches: ['feature/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      slug: ${{ steps.slug.outputs.slug }}
+    steps:
+      - name: Checkout this branch
+        uses: actions/checkout@v7
+
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: main-src
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Name the preview path
+        id: slug
+        run: echo "slug=$(echo "${GITHUB_REF_NAME#feature/}" | sed 's#[^A-Za-z0-9._-]#-#g')" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run check
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Build this branch under the preview path
+        run: npm run build
+        env:
+          BASE_PATH: /situation-monitor/preview/${{ steps.slug.outputs.slug }}
+          VITE_FINNHUB_API_KEY: ${{ secrets.VITE_FINNHUB_API_KEY }}
+
+      - name: Build main for the site root
+        working-directory: main-src
+        run: |
+          npm ci
+          npm run build
+        env:
+          VITE_FINNHUB_API_KEY: ${{ secrets.VITE_FINNHUB_API_KEY }}
+
+      - name: Assemble the site
+        run: |
+          mkdir -p "site/preview/${{ steps.slug.outputs.slug }}"
+          cp -a main-src/build/. site/
+          cp -a build/. "site/preview/${{ steps.slug.outputs.slug }}/"
+          touch site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: './site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Show the preview URL
+        run: |
+          echo "Preview URL: ${{ steps.deployment.outputs.page_url }}preview/${{ needs.build.outputs.slug }}/" >> "$GITHUB_STEP_SUMMARY"

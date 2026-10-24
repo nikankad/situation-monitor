@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import { isRefreshing, lastRefresh } from '$lib/stores';
 	import { Icon } from '$lib/components/common';
 
@@ -60,6 +61,7 @@
 	<header class="header">
 		<div class="header-left">
 			<h1 class="logo">SITUATION MONITOR</h1>
+			<a class="overview-link" href="{base}/">Overview</a>
 		</div>
 
 		<div class="header-center"></div>
@@ -114,6 +116,18 @@
 		z-index: 100;
 		background: var(--surface);
 		border-bottom: 1px solid var(--border);
+	}
+
+	.overview-link {
+		margin-left: 1rem;
+		font-size: 0.65rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--text-secondary);
+	}
+
+	.overview-link:hover {
+		color: var(--accent);
 	}
 
 	.header {

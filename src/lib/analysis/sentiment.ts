@@ -199,7 +199,7 @@ const GEOPOLITICAL_THEMES = {
 /**
  * Analyze sentiment of a single headline
  */
-function analyzeHeadline(item: NewsItem): HeadlineSentiment {
+export function analyzeHeadline(item: NewsItem): HeadlineSentiment {
 	const title = (item.title || '').toLowerCase();
 	const foundKeywords: string[] = [];
 	let score = 0;
@@ -260,6 +260,17 @@ function analyzeHeadline(item: NewsItem): HeadlineSentiment {
 }
 
 /**
+ * Classify an average headline score (-1 to 1) as a sentiment
+ */
+export function classifyScore(score: number): SentimentType {
+	if (score <= -0.6) return 'alarming';
+	if (score <= -0.3) return 'critical';
+	if (score < -0.1) return 'negative';
+	if (score > 0.2) return 'positive';
+	return 'neutral';
+}
+
+/**
  * Analyze top headlines and return sentiment summary
  */
 export function analyzeSentiment(news: NewsItem[], limit: number = 20): SentimentSummary | null {
@@ -297,24 +308,14 @@ export function analyzeSentiment(news: NewsItem[], limit: number = 20): Sentimen
 
 	// Calculate overall sentiment
 	const avgScore = totalScore / analyzed.length;
-	let overall: SentimentType;
-	if (avgScore <= -0.6) overall = 'alarming';
-	else if (avgScore <= -0.3) overall = 'critical';
-	else if (avgScore < -0.1) overall = 'negative';
-	else if (avgScore > 0.2) overall = 'positive';
-	else overall = 'neutral';
+	const overall = classifyScore(avgScore);
 
 	// Build theme summary with sentiment
 	const themes = Object.entries(themeCounts)
 		.filter(([theme]) => theme !== 'General')
 		.map(([theme, data]) => {
 			const avgThemeScore = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
-			let themeSentiment: SentimentType;
-			if (avgThemeScore <= -0.6) themeSentiment = 'alarming';
-			else if (avgThemeScore <= -0.3) themeSentiment = 'critical';
-			else if (avgThemeScore < -0.1) themeSentiment = 'negative';
-			else if (avgThemeScore > 0.2) themeSentiment = 'positive';
-			else themeSentiment = 'neutral';
+			const themeSentiment = classifyScore(avgThemeScore);
 
 			return { theme, count: data.count, sentiment: themeSentiment };
 		})

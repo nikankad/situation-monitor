@@ -1,7 +1,33 @@
+<script module lang="ts">
+	import { fetchConflictEventsFromGDELT, type GdeltConflictEvent } from '$lib/api/gdelt-conflicts';
+
+	// Shared by every map on the page and between pages, so opening an entity page does not
+	// call the rate-limited GDELT API again
+	const CONFLICT_CACHE_MS = 5 * 60 * 1000;
+	let conflictCache: { data: GdeltConflictEvent[]; fetchedAt: number } | null = null;
+	let conflictRequest: Promise<GdeltConflictEvent[]> | null = null;
+
+	function fetchConflictsShared(): Promise<GdeltConflictEvent[]> {
+		if (conflictCache && Date.now() - conflictCache.fetchedAt < CONFLICT_CACHE_MS) {
+			return Promise.resolve(conflictCache.data);
+		}
+		conflictRequest ??= fetchConflictEventsFromGDELT({ timespan: '48h', maxRecords: 250 })
+			.then((data) => {
+				conflictCache = { data, fetchedAt: Date.now() };
+				return data;
+			})
+			.finally(() => {
+				conflictRequest = null;
+			});
+		return conflictRequest;
+	}
+</script>
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Panel, Icon } from '$lib/components/common';
 	import { getIconNodes, type IconName } from '$lib/config/icons';
+	import { haversineKm } from '$lib/analysis/geo';
 	import {
 		HOTSPOTS,
 		CHOKEPOINTS,
@@ -16,39 +42,32 @@
 		type Hotspot,
 		type WeatherCondition
 	} from '$lib/config/map';
-	import { fetchConflictEventsFromGDELT, type GdeltConflictEvent } from '$lib/api/gdelt-conflicts';
 	import { CACHE_TTLS } from '$lib/config/api';
 	import type { CustomMonitor, NewsItem } from '$lib/types';
+	import type { EntityLocation } from '$lib/config/entities';
 	import { getCountryName } from '$lib/config/countries';
 	import { timeAgo } from '$lib/utils';
+
+	type MapFocus = Pick<EntityLocation, 'lat' | 'lon' | 'zoom'>;
 
 	interface Props {
 		monitors?: CustomMonitor[];
 		news?: NewsItem[];
 		error?: string | null;
+		/** Centre and zoom the map on a point, for example a region's page */
+		focus?: MapFocus | null;
+		title?: string;
 	}
 
-	let { monitors = [], news = [], error = null }: Props = $props();
+	let {
+		monitors = [],
+		news = [],
+		error = null,
+		focus = null,
+		title = 'World Map'
+	}: Props = $props();
 
 	// Distance-based clustering helper functions
-	function toRadians(degrees: number): number {
-		return degrees * (Math.PI / 180);
-	}
-
-	function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-		const R = 6371; // Earth radius in kilometers
-		const dLat = toRadians(lat2 - lat1);
-		const dLon = toRadians(lon2 - lon1);
-		const a =
-			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-			Math.cos(toRadians(lat1)) *
-				Math.cos(toRadians(lat2)) *
-				Math.sin(dLon / 2) *
-				Math.sin(dLon / 2);
-		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		return R * c;
-	}
-
 	function getDistanceThreshold(zoomScale: number): number {
 		// Exponential decay - more zoom = smaller threshold
 		// Zoom 1.0 → 800km: continent-level clustering
@@ -107,7 +126,7 @@
 
 			for (let i = 0; i < clusters.length; i++) {
 				for (let j = i + 1; j < clusters.length; j++) {
-					const dist = haversineDistance(
+					const dist = haversineKm(
 						clusters[i].lat,
 						clusters[i].lon,
 						clusters[j].lat,
@@ -268,6 +287,7 @@
 	let path: any = null;
 	let zoom: any = null;
 	/* eslint-enable @typescript-eslint/no-explicit-any */
+	let mapReady = $state(false);
 
 	const WIDTH = 800;
 	const HEIGHT = 400;
@@ -645,6 +665,8 @@
 			drawNewsClusters();
 		} catch (err) {
 			console.error('Failed to load map data:', err);
+		} finally {
+			mapReady = true;
 		}
 	}
 
@@ -1060,6 +1082,24 @@
 		svg.transition().duration(300).call(zoom.transform, d3Module.zoomIdentity);
 	}
 
+	// Centre the map on the focus point, clamped to the same bounds the zoom behaviour uses
+	function applyFocus(target: MapFocus): void {
+		if (!svg || !zoom || !projection || !d3Module) return;
+		const [x, y] = projection([target.lon, target.lat]) ?? [WIDTH / 2, HEIGHT / 2];
+		const k = target.zoom;
+		const tx = Math.min(0, Math.max(WIDTH - k * WIDTH, WIDTH / 2 - k * x));
+		const ty = Math.min(0, Math.max(HEIGHT - k * HEIGHT, HEIGHT / 2 - k * y));
+		svg
+			.transition()
+			.duration(500)
+			.call(zoom.transform, d3Module.zoomIdentity.translate(tx, ty).scale(k));
+	}
+
+	// Follow the focus prop, including after the map finishes loading
+	$effect(() => {
+		if (focus && mapReady) applyFocus(focus);
+	});
+
 	// Reactively update monitors when they change
 	$effect(() => {
 		// Track monitors changes
@@ -1090,10 +1130,7 @@
 		conflictsError = null;
 
 		try {
-			gdeltConflicts = await fetchConflictEventsFromGDELT({
-				timespan: '48h',
-				maxRecords: 250
-			});
+			gdeltConflicts = await fetchConflictsShared();
 
 			if (mapGroup && projection) {
 				drawMapIcons();
@@ -1127,7 +1164,7 @@
 		const h = selectedHotspot;
 		if (!h) return [];
 		return geoNews
-			.filter((n) => haversineDistance(h.lat, h.lon, n.lat, n.lon) < 600)
+			.filter((n) => haversineKm(h.lat, h.lon, n.lat, n.lon) < 600)
 			.sort((a, b) => Number(b.isAlert) - Number(a.isAlert) || b.timestamp - a.timestamp)
 			.slice(0, 6);
 	});
@@ -1140,7 +1177,7 @@
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && showDetailModal && closeDetailModal()} />
 
-<Panel id="map" title="World Map" {error}>
+<Panel id="map" {title} {error}>
 	<div class="map-container" bind:this={mapContainer}>
 		<svg class="map-svg" role="img" aria-label="World map of conflicts, hotspots and news"></svg>
 		{#if tooltipVisible && tooltipContent}

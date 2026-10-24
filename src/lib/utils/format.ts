@@ -17,6 +17,24 @@ export function timeAgo(dateInput: string | number | Date): string {
 }
 
 /**
+ * Relative time phrased for a sentence, for example "5m ago"
+ */
+export function formatAgo(dateInput: string | number | Date): string {
+	const text = timeAgo(dateInput);
+	return text === 'just now' ? text : `${text} ago`;
+}
+
+/**
+ * Format a price with two decimals under 100 and none above
+ */
+export function formatPrice(price: number): string {
+	return price.toLocaleString('en-US', {
+		minimumFractionDigits: price < 100 ? 2 : 0,
+		maximumFractionDigits: price < 100 ? 2 : 1
+	});
+}
+
+/**
  * Get relative time with more detail
  */
 export function getRelativeTime(dateInput: string | number | Date): string {
