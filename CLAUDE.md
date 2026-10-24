@@ -101,6 +101,8 @@ Unique business logic for intelligence analysis:
 
 GitHub Actions workflow builds with `BASE_PATH=/situation-monitor` and deploys to GitHub Pages at `https://hipcityreg.github.io/situation-monitor/`
 
+Pushes to `feature/**` branches run `.github/workflows/preview.yml`, which publishes `main` at the site root and the branch at `/preview/<branch-name>/` (the base path comes from `BASE_PATH`, defaulting to `/situation-monitor`). Pages hosts one site, so the most recent deployment replaces earlier previews, and the next deploy from `main` removes them.
+
 ## External Dependencies
 
 - **D3.js** for interactive map visualization

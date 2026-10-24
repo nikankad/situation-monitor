@@ -15,7 +15,8 @@ const config = {
 			strict: true
 		}),
 		paths: {
-			base: '/situation-monitor'
+			// Branch previews are built under a sub-path via BASE_PATH
+			base: process.env.BASE_PATH || '/situation-monitor'
 		},
 		alias: {
 			$lib: 'src/lib',
