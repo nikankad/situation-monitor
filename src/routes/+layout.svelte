@@ -1,8 +1,10 @@
 <script lang="ts">
 	import '../app.css';
+	import '$lib/styles/terminal.css';
 	import { onMount } from 'svelte';
 	import { startDataLoading } from '$lib/services/dataLoader';
 	import { appReady } from '$lib/stores/misc';
+	import { CommandPalette } from '$lib/components/terminal';
 
 	interface Props {
 		children: import('svelte').Snippet;
@@ -16,6 +18,7 @@
 <div class="layout-wrapper">
 	{#if $appReady}
 		{@render children()}
+		<CommandPalette />
 	{:else}
 		<div class="loading-screen">
 			<div class="loading-content">
