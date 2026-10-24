@@ -54,7 +54,7 @@ function formatNarrativeName(id: string): string {
 /**
  * Classify source type
  */
-function classifySource(source: string): 'fringe' | 'alternative' | 'mainstream' | null {
+export function classifySource(source: string): 'fringe' | 'alternative' | 'mainstream' | null {
 	const lowerSource = source.toLowerCase();
 
 	for (const fringeSource of SOURCE_TYPES.fringe) {

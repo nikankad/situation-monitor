@@ -199,7 +199,7 @@ const GEOPOLITICAL_THEMES = {
 /**
  * Analyze sentiment of a single headline
  */
-function analyzeHeadline(item: NewsItem): HeadlineSentiment {
+export function analyzeHeadline(item: NewsItem): HeadlineSentiment {
 	const title = (item.title || '').toLowerCase();
 	const foundKeywords: string[] = [];
 	let score = 0;

@@ -68,6 +68,9 @@ export {
 	type CustomMarket
 } from './market-settings';
 
+// Entity index store
+export { entityIndex } from './entities';
+
 // Refresh store
 export {
 	refresh,
