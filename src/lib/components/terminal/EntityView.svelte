@@ -49,6 +49,8 @@
 			: []
 	);
 	const threat = $derived(highestThreat(sites));
+	// Regions have no written summary; the nearest hotspot's description says what is at stake
+	const regionSummary = $derived(sites.find((s) => s.kind === 'hotspot')?.desc ?? sites[0]?.desc);
 	const quote = $derived(entity.symbol ? findQuote($markets, entity.symbol) : null);
 	const leader = $derived(
 		entity.leaderId ? WORLD_LEADERS.find((l) => l.id === entity.leaderId) : undefined
@@ -229,7 +231,9 @@
 						{/if}
 					{:else if entity.summary}
 						<p class="t-prose">{entity.summary}</p>
-					{:else if entity.type === 'region' && sites.length === 0}
+					{:else if regionSummary}
+						<p class="t-prose">{regionSummary}</p>
+					{:else if entity.type === 'region'}
 						<p class="t-prose muted">No hotspot or strategic site is tracked near here yet.</p>
 					{/if}
 
@@ -390,7 +394,7 @@
 							{/each}
 						</div>
 						<div class="t-legend">
-							<span>{toneLabel(stats.tone)}</span>
+							<span>Overall: {toneLabel(stats.tone)}</span>
 							{#each SENTIMENTS as sentiment (sentiment)}
 								{#if stats.sentiment[sentiment] > 0}
 									<span>{sentiment} {stats.sentiment[sentiment]}</span>

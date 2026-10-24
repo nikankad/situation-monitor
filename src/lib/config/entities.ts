@@ -85,8 +85,15 @@ function stateless(pattern: RegExp): RegExp {
 	return new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ''));
 }
 
+const ACRONYMS = new Set(['ai', 'wef', 'cbdc', 'nato', 'us', 'uk', 'eu']);
+
 function titleCase(id: string): string {
-	return id.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+	return id
+		.split(/[-_]/)
+		.map((word) =>
+			ACRONYMS.has(word) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)
+		)
+		.join(' ');
 }
 
 function slug(id: string): string {

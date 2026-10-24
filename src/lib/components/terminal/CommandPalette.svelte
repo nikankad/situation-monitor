@@ -109,13 +109,14 @@
 <svelte:window onkeydown={onKeydown} />
 
 {#if $paletteOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div
-		class="t-pal"
-		onclick={(event) => {
-			if (event.target === event.currentTarget) close();
-		}}
-	>
+	<div class="t-pal">
+		<button
+			class="t-pal-backdrop"
+			type="button"
+			tabindex="-1"
+			aria-label="Close search"
+			onclick={close}
+		></button>
 		<div class="t-pal-box" role="dialog" aria-modal="true" aria-label="Find an entity">
 			<input
 				bind:this={input}
